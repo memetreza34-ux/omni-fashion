@@ -32,6 +32,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Die App benötigt Zugriff auf deine Fotos, um Kleidung in den digitalen Schrank hochzuladen.",
+          "cameraPermission": "Die App benötigt Zugriff auf deine Kamera, um neue Kleidungsstücke zu fotografieren."
+        }
       ]
     ],
     "experiments": {
