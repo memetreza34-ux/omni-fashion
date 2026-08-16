@@ -12,7 +12,8 @@
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf lib",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify": "npm run typecheck && npm run build"
+    "test": "node --test test/*.test.mjs",
+    "verify": "npm run typecheck && npm run build && npm test"
   },
   "dependencies": {
     "@google/genai": "2.15.0",
