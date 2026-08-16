@@ -173,6 +173,22 @@ export const sendSwapOffer = onCall(
           'Du kannst dein eigenes Listing nicht ertauschen.',
         );
       }
+
+      const [requesterBlocksOwner, ownerBlocksRequester] = await Promise.all([
+        transaction.get(
+          db.collection('blocks').doc(`${requesterId}_${listingOwnerId}`),
+        ),
+        transaction.get(
+          db.collection('blocks').doc(`${listingOwnerId}_${requesterId}`),
+        ),
+      ]);
+      if (requesterBlocksOwner.exists || ownerBlocksRequester.exists) {
+        throw new HttpsError(
+          'permission-denied',
+          'Zwischen diesen Konten sind keine neuen Tauschangebote möglich.',
+        );
+      }
+
       if (listing.status !== 'active') {
         throw new HttpsError(
           'failed-precondition',
