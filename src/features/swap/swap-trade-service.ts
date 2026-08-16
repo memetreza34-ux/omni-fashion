@@ -1,6 +1,8 @@
 import {
   collection,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   Timestamp,
   where,
@@ -39,6 +41,8 @@ import type {
   SwapTransaction,
   SwapTransactionStatus,
 } from './types';
+
+const SWAP_HISTORY_LIMIT = 100;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -287,15 +291,11 @@ function subscribeMapped<T>(
   return onSnapshot(
     queryValue,
     (snapshot) => {
-      const values = snapshot.docs
-        .map(mapper)
-        .filter((value): value is T => value !== null)
-        .sort((a, b) => {
-          const first = a as { createdAt?: string };
-          const second = b as { createdAt?: string };
-          return (second.createdAt ?? '').localeCompare(first.createdAt ?? '');
-        });
-      onChange(values);
+      onChange(
+        snapshot.docs
+          .map(mapper)
+          .filter((value): value is T => value !== null),
+      );
     },
     (error) => onError(error),
   );
@@ -308,7 +308,12 @@ export function subscribeToIncomingSwapOffers(
 ): () => void {
   const { db } = getFirebaseServices();
   return subscribeMapped(
-    query(collection(db, 'swapOffers'), where('listingOwnerId', '==', ownerId)),
+    query(
+      collection(db, 'swapOffers'),
+      where('listingOwnerId', '==', ownerId),
+      orderBy('createdAt', 'desc'),
+      limit(SWAP_HISTORY_LIMIT),
+    ),
     mapOffer,
     onChange,
     onError,
@@ -322,7 +327,12 @@ export function subscribeToOutgoingSwapOffers(
 ): () => void {
   const { db } = getFirebaseServices();
   return subscribeMapped(
-    query(collection(db, 'swapOffers'), where('requesterId', '==', requesterId)),
+    query(
+      collection(db, 'swapOffers'),
+      where('requesterId', '==', requesterId),
+      orderBy('createdAt', 'desc'),
+      limit(SWAP_HISTORY_LIMIT),
+    ),
     mapOffer,
     onChange,
     onError,
@@ -339,6 +349,8 @@ export function subscribeToSwapTransactions(
     query(
       collection(db, 'swapTransactions'),
       where('participantIds', 'array-contains', userId),
+      orderBy('createdAt', 'desc'),
+      limit(SWAP_HISTORY_LIMIT),
     ),
     mapTransaction,
     onChange,
