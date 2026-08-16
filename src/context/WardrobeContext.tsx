@@ -56,7 +56,10 @@ async function hydrateImageUrls(items: WardrobeItem[]): Promise<WardrobeItem[]> 
           imageUrl: await getWardrobeImageUrl(item.imagePath),
         };
       } catch (error: unknown) {
-        console.error(`Failed to resolve image for wardrobe item ${item.id}`, error);
+        console.error(
+          `Failed to resolve image for wardrobe item ${item.id}`,
+          error,
+        );
         return item;
       }
     }),
@@ -195,6 +198,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         aiStatus: 'not_requested',
         aiConfidence: null,
         aiModelVersion: null,
+        aiPromptVersion: null,
+        aiAnalyzedAt: null,
+        aiErrorCode: null,
         isListedForSwap: false,
         swapListingId: null,
         createdAt: now,
@@ -223,6 +229,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       aiStatus: 'not_requested',
       aiConfidence: null,
       aiModelVersion: null,
+      aiPromptVersion: null,
+      aiAnalyzedAt: null,
+      aiErrorCode: null,
       isListedForSwap: false,
       swapListingId: null,
       createdAt: now,
@@ -242,7 +251,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (updatedItem.ownerId !== user.id) {
-      throw new Error('WARDROBE_OWNER_MISMATCH: Cannot edit another wardrobe.');
+      throw new Error(
+        'WARDROBE_OWNER_MISMATCH: Cannot edit another wardrobe.',
+      );
     }
 
     if (isCloudBacked) {
@@ -282,7 +293,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (item.ownerId !== user.id) {
-      throw new Error('WARDROBE_OWNER_MISMATCH: Cannot delete another wardrobe.');
+      throw new Error(
+        'WARDROBE_OWNER_MISMATCH: Cannot delete another wardrobe.',
+      );
     }
 
     if (isCloudBacked) {
@@ -293,12 +306,17 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       } catch (cleanupError: unknown) {
         // The document deletion is the user-visible source of truth. An orphaned
         // Storage object can be cleaned by a future backend maintenance job.
-        console.error('Failed to delete wardrobe image after item deletion', cleanupError);
+        console.error(
+          'Failed to delete wardrobe image after item deletion',
+          cleanupError,
+        );
       }
       return;
     }
 
-    const nextItems = itemsRef.current.filter((candidate) => candidate.id !== id);
+    const nextItems = itemsRef.current.filter(
+      (candidate) => candidate.id !== id,
+    );
     replaceItems(nextItems);
     await saveLocalWardrobe(nextItems);
   };
