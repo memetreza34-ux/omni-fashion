@@ -1,415 +1,471 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
   Text,
   TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  Image,
+  View,
 } from 'react-native';
-import {
-  SwapItem,
-  SwapTradeProposal,
-  UserSwapProfileStats,
-  EcoImpactMetrics,
-} from '../types/swap';
-import {
-  mockSwapItems,
-  mockTradeProposals,
-  mockUserProfileStats,
-  mockEcoImpactMetrics,
-} from '../data/swap-data';
-import { SwapDeckCard } from '../components/swap/SwapDeckCard';
-import { TradeStudioModal } from '../components/swap/TradeStudioModal';
-import { ClosetHubView } from '../components/swap/ClosetHubView';
-import { EcoImpactBanner } from '../components/swap/EcoImpactBanner';
 
-export default function SwapScreen(): React.ReactElement {
-  const [activeTab, setActiveTab] = useState<'deck' | 'closets' | 'trades'>('deck');
-  const [deckItems, setDeckItems] = useState<SwapItem[]>(mockSwapItems);
-  const [userItems] = useState<SwapItem[]>(mockSwapItems.slice(0, 3)); // User's own items
-  const [savedItemIds, setSavedItemIds] = useState<string[]>(['item-1', 'item-3']);
-  const [tradeProposals, setTradeProposals] = useState<SwapTradeProposal[]>(
-    mockTradeProposals
-  );
-  const [tradeStudioTargetItem, setTradeStudioTargetItem] = useState<SwapItem | null>(
-    null
-  );
-  const [communityMetrics] = useState<EcoImpactMetrics>(mockEcoImpactMetrics);
-  const [userStats] = useState<UserSwapProfileStats>(mockUserProfileStats);
-  const [proposalStatusFilter, setProposalStatusFilter] = useState<
-    'all' | 'pending' | 'accepted' | 'declined'
-  >('all');
+import { useSwap } from '@/context/SwapContext';
+import { useWardrobe } from '@/context/WardrobeContext';
+import { CreateSwapListingModal } from '@/features/swap/components/CreateSwapListingModal';
+import { SendSwapOfferModal } from '@/features/swap/components/SendSwapOfferModal';
+import type { SwapListing, SwapOffer } from '@/features/swap/types';
 
-  const handleSwipeLeft = (item: SwapItem): void => {
-    setDeckItems((prev) => prev.filter((i) => i.id !== item.id));
+function money(valueCents: number | null): string | null {
+  if (valueCents === null) {
+    return null;
+  }
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(valueCents / 100);
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    active: 'Aktiv',
+    paused: 'Pausiert',
+    reserved: 'Reserviert',
+    traded: 'Getauscht',
+    removed: 'Entfernt',
+    sent: 'Gesendet',
+    accepted: 'Angenommen',
+    declined: 'Abgelehnt',
+    cancelled: 'Storniert',
+    expired: 'Abgelaufen',
+    address_or_meetup: 'Übergabe planen',
+    shipped: 'Versendet',
+    received: 'Erhalten',
+    completed: 'Abgeschlossen',
+    disputed: 'Klärungsfall',
   };
+  return labels[status] ?? status;
+}
 
-  const handleSwipeRight = (item: SwapItem): void => {
-    setTradeStudioTargetItem(item);
-  };
-
-  const handleToggleSave = (item: SwapItem): void => {
-    setSavedItemIds((prev) =>
-      prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
-    );
-  };
-
-  const resetDeck = (): void => {
-    setDeckItems(mockSwapItems);
-  };
-
-  const handleProposeTrade = (
-    proposal: Omit<SwapTradeProposal, 'id' | 'createdAt'>
-  ): void => {
-    const newProposal: SwapTradeProposal = {
-      ...proposal,
-      id: `tp-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    setTradeProposals((prev) => [newProposal, ...prev]);
-  };
-
-  const handleUpdateProposalStatus = (
-    id: string,
-    newStatus: 'accepted' | 'declined'
-  ): void => {
-    setTradeProposals((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
-    );
-  };
-
-  const getItemById = (id: string): SwapItem | undefined => {
-    return mockSwapItems.find((i) => i.id === id);
-  };
-
-  const filteredProposals = tradeProposals.filter((p) => {
-    if (proposalStatusFilter === 'all') return true;
-    return p.status === proposalStatusFilter;
-  });
+function ListingCard({
+  listing,
+  actionLabel,
+  onAction,
+}: {
+  listing: SwapListing;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  const value = money(listing.estimatedValueCents);
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-950 text-white">
-      <ScrollView
-        className="flex-1 px-4 py-4 space-y-5 gap-4"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* OmniSwap Hub Header */}
-        <View className="flex-row items-center justify-between pt-2">
-          <View>
-            <View className="flex-row items-center space-x-2 gap-2">
-              <Text className="text-2xl font-black text-white">OmniSwap Hub</Text>
-              <View className="bg-indigo-600/30 border border-indigo-500/50 px-2.5 py-0.5 rounded-full">
-                <Text className="text-[10px] font-bold text-indigo-300 uppercase">
-                  CIRCULAR
-                </Text>
-              </View>
-            </View>
-            <Text className="text-xs text-zinc-400">
-              Cashless Peer-to-Peer Garment Exchange
-            </Text>
-          </View>
-
-          <View className="bg-emerald-950/80 border border-emerald-500/40 px-3 py-1.5 rounded-full flex-row items-center space-x-1 gap-1">
-            <Text className="text-xs font-bold text-emerald-300">
-              🌿 {userStats.totalCo2SavedKg} kg Saved
-            </Text>
-          </View>
-        </View>
-
-        {/* Sub-Navigation Bar */}
-        <View className="flex-row bg-zinc-900 border border-zinc-800 p-1.5 rounded-2xl">
-          <TouchableOpacity
-            onPress={() => setActiveTab('deck')}
-            className={`flex-1 py-2.5 rounded-xl items-center flex-row justify-center space-x-1 gap-1 ${
-              activeTab === 'deck' ? 'bg-indigo-600 shadow-md' : ''
-            }`}
-          >
-            <Text className="text-sm">🃏</Text>
-            <Text
-              className={`text-xs font-bold ${
-                activeTab === 'deck' ? 'text-white' : 'text-zinc-400'
-              }`}
-            >
-              Swipe Deck
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('closets')}
-            className={`flex-1 py-2.5 rounded-xl items-center flex-row justify-center space-x-1 gap-1 ${
-              activeTab === 'closets' ? 'bg-indigo-600 shadow-md' : ''
-            }`}
-          >
-            <Text className="text-sm">👗</Text>
-            <Text
-              className={`text-xs font-bold ${
-                activeTab === 'closets' ? 'text-white' : 'text-zinc-400'
-              }`}
-            >
-              Peer Closets
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('trades')}
-            className={`flex-1 py-2.5 rounded-xl items-center flex-row justify-center space-x-1 gap-1 ${
-              activeTab === 'trades' ? 'bg-indigo-600 shadow-md' : ''
-            }`}
-          >
-            <Text className="text-sm">🤝</Text>
-            <Text
-              className={`text-xs font-bold ${
-                activeTab === 'trades' ? 'text-white' : 'text-zinc-400'
-              }`}
-            >
-              My Trades ({tradeProposals.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Tab 1: Swipe Deck */}
-        {activeTab === 'deck' && (
-          <View className="space-y-5 gap-4">
-            {/* Live Eco Banner */}
-            <EcoImpactBanner metrics={communityMetrics} userStats={userStats} />
-
-            {/* Deck Card Container */}
-            <View className="items-center justify-center my-2">
-              {deckItems.length > 0 ? (
-                <View className="w-full max-w-sm aspect-[3/4] relative items-center justify-center">
-                  {/* Background Card Preview */}
-                  {deckItems.length > 1 && (
-                    <View className="absolute top-3 w-[92%] aspect-[3/4] rounded-3xl bg-zinc-800 border border-zinc-700 opacity-60 scale-95" />
-                  )}
-                  {/* Top Interactive Card */}
-                  <SwapDeckCard
-                    key={deckItems[0].id}
-                    item={deckItems[0]}
-                    onSwipeLeft={handleSwipeLeft}
-                    onSwipeRight={handleSwipeRight}
-                    onOpenTradeStudio={(item) => setTradeStudioTargetItem(item)}
-                    onToggleSave={handleToggleSave}
-                    isSaved={savedItemIds.includes(deckItems[0].id)}
-                    isTopCard={true}
-                  />
-                </View>
-              ) : (
-                <View className="w-full max-w-sm p-8 bg-zinc-900 border border-zinc-800 rounded-3xl items-center justify-center text-center space-y-4 gap-3">
-                  <Text className="text-5xl">🌿</Text>
-                  <Text className="text-lg font-bold text-white text-center">
-                    You've Swiped All Available Items!
-                  </Text>
-                  <Text className="text-xs text-zinc-400 text-center">
-                    Great job exploring community wardrobes. You can reset the deck to review again or browse peer closets directly.
-                  </Text>
-                  <TouchableOpacity
-                    onPress={resetDeck}
-                    className="px-5 py-3 bg-indigo-600 rounded-full shadow-lg"
-                  >
-                    <Text className="text-xs font-bold text-white">
-                      🔄 Reset Swipe Deck
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Tab 2: Peer Closets */}
-        {activeTab === 'closets' && (
-          <ClosetHubView
-            items={mockSwapItems}
-            onOpenTradeStudio={(item) => setTradeStudioTargetItem(item)}
-            savedItemIds={savedItemIds}
-            onToggleSave={handleToggleSave}
+    <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden mb-4">
+      <View className="h-64 bg-zinc-100 dark:bg-zinc-800 items-center justify-center">
+        {listing.publicImageUrl ? (
+          <Image
+            source={{ uri: listing.publicImageUrl }}
+            className="w-full h-full"
+            resizeMode="contain"
           />
+        ) : (
+          <Text className="text-zinc-400">Bild nicht verfügbar</Text>
         )}
+      </View>
+      <View className="p-5">
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1 pr-3">
+            <Text className="text-black dark:text-white text-xl font-extrabold">
+              {listing.title}
+            </Text>
+            <Text className="text-zinc-500 text-xs mt-1">
+              {listing.category} · {listing.color}
+              {listing.size ? ` · Größe ${listing.size}` : ''}
+            </Text>
+          </View>
+          <View className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-3 py-1.5">
+            <Text className="text-zinc-600 dark:text-zinc-300 text-[10px] font-bold">
+              {statusLabel(listing.status)}
+            </Text>
+          </View>
+        </View>
 
-        {/* Tab 3: Trade Proposals Dashboard */}
-        {activeTab === 'trades' && (
-          <View className="space-y-4 gap-3">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-bold text-white">
-                Active Trade Proposals
-              </Text>
-              <Text className="text-xs text-zinc-400">
-                {tradeProposals.length} total proposals
+        {listing.description ? (
+          <Text className="text-zinc-600 dark:text-zinc-300 text-sm mt-4 leading-6">
+            {listing.description}
+          </Text>
+        ) : null}
+
+        <View className="flex-row flex-wrap mt-4">
+          <View className="bg-indigo-500/10 rounded-full px-3 py-2 mr-2 mb-2">
+            <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+              {listing.city}
+            </Text>
+          </View>
+          {listing.shippingEnabled ? (
+            <View className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-3 py-2 mr-2 mb-2">
+              <Text className="text-zinc-600 dark:text-zinc-300 text-xs">
+                Versand
               </Text>
             </View>
+          ) : null}
+          {listing.meetupEnabled ? (
+            <View className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-3 py-2 mr-2 mb-2">
+              <Text className="text-zinc-600 dark:text-zinc-300 text-xs">
+                Übergabe
+              </Text>
+            </View>
+          ) : null}
+          {value ? (
+            <View className="bg-emerald-500/10 rounded-full px-3 py-2 mb-2">
+              <Text className="text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                Schätzwert {value}
+              </Text>
+            </View>
+          ) : null}
+        </View>
 
-            {/* Proposal Filter Tabs */}
-            <View className="flex-row space-x-2 gap-2">
-              {(['all', 'pending', 'accepted', 'declined'] as const).map((st) => (
-                <TouchableOpacity
-                  key={st}
-                  onPress={() => setProposalStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-full border ${
-                    proposalStatusFilter === st
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-400'
-                  }`}
+        {actionLabel && onAction ? (
+          <TouchableOpacity
+            onPress={onAction}
+            className="bg-indigo-600 rounded-2xl py-4 items-center mt-3"
+          >
+            <Text className="text-white font-extrabold">{actionLabel}</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function OfferCard({
+  offer,
+  incoming,
+  onAccept,
+  onDecline,
+}: {
+  offer: SwapOffer;
+  incoming: boolean;
+  onAccept?: () => void;
+  onDecline?: () => void;
+}) {
+  return (
+    <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-3">
+      <View className="flex-row justify-between items-start mb-3">
+        <Text className="text-black dark:text-white font-bold flex-1 pr-3">
+          {incoming ? 'Eingehendes Angebot' : 'Dein Angebot'}
+        </Text>
+        <Text className="text-zinc-500 text-xs font-bold">
+          {statusLabel(offer.status)}
+        </Text>
+      </View>
+      <Text className="text-zinc-500 text-[11px] uppercase font-bold mb-1">
+        Gewünschtes Teil
+      </Text>
+      <Text className="text-black dark:text-white text-sm font-semibold">
+        {offer.requestedSnapshot.title}
+      </Text>
+      <Text className="text-zinc-500 text-xs mt-1 mb-3">
+        {offer.requestedSnapshot.category} · {offer.requestedSnapshot.color}
+      </Text>
+      <Text className="text-zinc-500 text-[11px] uppercase font-bold mb-1">
+        Angebot
+      </Text>
+      <Text className="text-black dark:text-white text-sm font-semibold">
+        {offer.offeredSnapshot.title}
+      </Text>
+      <Text className="text-zinc-500 text-xs mt-1">
+        {offer.offeredSnapshot.category} · {offer.offeredSnapshot.color}
+      </Text>
+
+      {incoming && offer.status === 'sent' && onAccept && onDecline ? (
+        <View className="flex-row mt-4">
+          <TouchableOpacity
+            onPress={onAccept}
+            className="flex-1 bg-emerald-600 rounded-xl py-3 items-center mr-2"
+          >
+            <Text className="text-white font-bold text-xs">Annehmen</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onDecline}
+            className="flex-1 bg-red-500/10 border border-red-500/30 rounded-xl py-3 items-center"
+          >
+            <Text className="text-red-500 font-bold text-xs">Ablehnen</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+export default function SwapScreen() {
+  const { items } = useWardrobe();
+  const {
+    marketplaceListings,
+    ownListings,
+    incomingOffers,
+    outgoingOffers,
+    transactions,
+    isLoading,
+    error,
+    isCloudBacked,
+    createListing,
+    sendOffer,
+    respondToOffer,
+  } = useSwap();
+  const [tab, setTab] = useState<'market' | 'mine' | 'trades'>('market');
+  const [listingModalVisible, setListingModalVisible] = useState(false);
+  const [offerTarget, setOfferTarget] = useState<SwapListing | null>(null);
+  const [respondingOfferId, setRespondingOfferId] = useState<string | null>(null);
+
+  const lockedOfferedIds = useMemo(
+    () =>
+      new Set(
+        outgoingOffers
+          .filter((offer) => offer.status === 'sent' || offer.status === 'accepted')
+          .map((offer) => offer.offeredWardrobeItemId),
+      ),
+    [outgoingOffers],
+  );
+
+  const eligibleListingItems = items.filter(
+    (item) => item.imagePath && !item.isListedForSwap && !lockedOfferedIds.has(item.id),
+  );
+  const eligibleOfferItems = eligibleListingItems;
+
+  const handleRespond = async (offer: SwapOffer, decision: 'accept' | 'decline') => {
+    if (respondingOfferId) {
+      return;
+    }
+
+    setRespondingOfferId(offer.id);
+    try {
+      const transactionId = await respondToOffer({ offerId: offer.id, decision });
+      if (decision === 'accept') {
+        Alert.alert(
+          'Tausch reserviert',
+          transactionId
+            ? 'OmniSwap hat eine echte Trade-Transaktion angelegt. Der nächste Schritt ist die sichere Übergabe-/Versandabwicklung.'
+            : 'Das Angebot wurde angenommen.',
+        );
+      }
+    } catch (respondError: unknown) {
+      console.error('Failed to respond to OmniSwap offer', respondError);
+      Alert.alert(
+        'Antwort nicht gespeichert',
+        'Der Status wurde nicht verändert. Bitte erneut versuchen.',
+      );
+    } finally {
+      setRespondingOfferId(null);
+    }
+  };
+
+  return (
+    <View className="flex-1 bg-zinc-50 dark:bg-zinc-950 pt-16 px-4">
+      <View className="flex-row justify-between items-start mb-5">
+        <View className="flex-1 pr-3">
+          <Text className="text-black dark:text-white text-3xl font-black">
+            OmniSwap
+          </Text>
+          <Text className="text-zinc-500 text-xs mt-1">
+            Echte Wardrobe-Listings und servergeschützte Tauschangebote.
+          </Text>
+        </View>
+        {isCloudBacked ? (
+          <TouchableOpacity
+            onPress={() => setListingModalVisible(true)}
+            className="bg-indigo-600 rounded-xl px-4 py-3"
+          >
+            <Text className="text-white font-bold text-xs">Teil listen</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {!isCloudBacked ? (
+        <View className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
+          <Text className="text-amber-700 dark:text-amber-300 font-bold">
+            OmniSwap benötigt das echte Cloud-Backend
+          </Text>
+          <Text className="text-zinc-600 dark:text-zinc-400 text-sm mt-2 leading-6">
+            Im Development-Demo-Modus werden keine erfundenen Marketplace-Nutzer, Listings oder Trades mehr angezeigt.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <View className="flex-row bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-1 mb-4">
+            {([
+              ['market', 'Marktplatz'],
+              ['mine', `Meine Listings (${ownListings.length})`],
+              ['trades', `Trades (${incomingOffers.length + outgoingOffers.length})`],
+            ] as const).map(([value, label]) => (
+              <TouchableOpacity
+                key={value}
+                onPress={() => setTab(value)}
+                className={`flex-1 py-3 rounded-xl items-center ${
+                  tab === value ? 'bg-black dark:bg-white' : ''
+                }`}
+              >
+                <Text
+                  className={
+                    tab === value
+                      ? 'text-white dark:text-black text-[11px] font-bold'
+                      : 'text-zinc-500 text-[11px] font-bold'
+                  }
                 >
-                  <Text className="text-xs font-bold capitalize text-white">
-                    {st}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Trade Proposal List */}
-            {filteredProposals.length === 0 ? (
-              <View className="py-10 items-center justify-center bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6">
-                <Text className="text-3xl mb-2">🤝</Text>
-                <Text className="text-sm font-bold text-white">
-                  No Proposals in '{proposalStatusFilter}' State
+                  {label}
                 </Text>
-              </View>
-            ) : (
-              filteredProposals.map((prop) => {
-                const offered = getItemById(prop.offeredItemId);
-                const requested = getItemById(prop.requestedItemId);
+              </TouchableOpacity>
+            ))}
+          </View>
 
-                return (
-                  <View
-                    key={prop.id}
-                    className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl space-y-3 gap-2 shadow-md"
-                  >
-                    {/* Proposal Status Header */}
-                    <View className="flex-row items-center justify-between border-b border-zinc-800 pb-2">
-                      <Text className="text-[10px] font-mono text-zinc-400">
-                        Proposal #{prop.id} • {new Date(prop.createdAt).toLocaleDateString()}
+          {error ? (
+            <View className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
+              <Text className="text-red-500 text-xs">{error}</Text>
+            </View>
+          ) : null}
+
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color="#4f46e5" />
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 100 }}
+            >
+              {tab === 'market' ? (
+                marketplaceListings.length > 0 ? (
+                  marketplaceListings.map((listing) => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                      actionLabel="Tausch anbieten"
+                      onAction={() => setOfferTarget(listing)}
+                    />
+                  ))
+                ) : (
+                  <View className="bg-white dark:bg-zinc-900 rounded-3xl p-8 items-center border border-zinc-200 dark:border-zinc-800">
+                    <Text className="text-black dark:text-white font-bold text-lg">
+                      Noch keine fremden aktiven Listings
+                    </Text>
+                    <Text className="text-zinc-500 text-sm text-center mt-2 leading-6">
+                      Der Feed bleibt leer, bis echte Nutzer Kleidungsstücke veröffentlichen.
+                    </Text>
+                  </View>
+                )
+              ) : null}
+
+              {tab === 'mine' ? (
+                <>
+                  {ownListings.length === 0 ? (
+                    <View className="bg-white dark:bg-zinc-900 rounded-3xl p-8 items-center border border-zinc-200 dark:border-zinc-800">
+                      <Text className="text-black dark:text-white font-bold text-lg">
+                        Noch nichts gelistet
                       </Text>
-                      <View
-                        className={`px-2.5 py-0.5 rounded-full ${
-                          prop.status === 'accepted'
-                            ? 'bg-emerald-500/20 border border-emerald-500/40'
-                            : prop.status === 'declined'
-                            ? 'bg-rose-500/20 border border-rose-500/40'
-                            : 'bg-amber-500/20 border border-amber-500/40'
-                        }`}
+                      <Text className="text-zinc-500 text-sm text-center mt-2 leading-6 mb-4">
+                        Wähle ein noch verfügbares Kleidungsstück aus deinem Schrank.
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => setListingModalVisible(true)}
+                        className="bg-indigo-600 rounded-xl px-5 py-3"
                       >
-                        <Text
-                          className={`text-xs font-bold capitalize ${
-                            prop.status === 'accepted'
-                              ? 'text-emerald-400'
-                              : prop.status === 'declined'
-                              ? 'text-rose-400'
-                              : 'text-amber-400'
-                          }`}
-                        >
-                          {prop.status}
+                        <Text className="text-white font-bold">Erstes Listing</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    ownListings.map((listing) => (
+                      <ListingCard key={listing.id} listing={listing} />
+                    ))
+                  )}
+                </>
+              ) : null}
+
+              {tab === 'trades' ? (
+                <>
+                  <Text className="text-black dark:text-white text-xl font-extrabold mb-3">
+                    Eingehend
+                  </Text>
+                  {incomingOffers.length === 0 ? (
+                    <Text className="text-zinc-500 text-sm mb-6">
+                      Noch keine eingehenden Angebote.
+                    </Text>
+                  ) : (
+                    incomingOffers.map((offer) => (
+                      <OfferCard
+                        key={offer.id}
+                        offer={offer}
+                        incoming
+                        onAccept={() => void handleRespond(offer, 'accept')}
+                        onDecline={() => void handleRespond(offer, 'decline')}
+                      />
+                    ))
+                  )}
+
+                  <Text className="text-black dark:text-white text-xl font-extrabold mt-4 mb-3">
+                    Ausgehend
+                  </Text>
+                  {outgoingOffers.length === 0 ? (
+                    <Text className="text-zinc-500 text-sm mb-6">
+                      Du hast noch keine Tauschangebote gesendet.
+                    </Text>
+                  ) : (
+                    outgoingOffers.map((offer) => (
+                      <OfferCard key={offer.id} offer={offer} incoming={false} />
+                    ))
+                  )}
+
+                  <Text className="text-black dark:text-white text-xl font-extrabold mt-4 mb-3">
+                    Transaktionen
+                  </Text>
+                  {transactions.length === 0 ? (
+                    <Text className="text-zinc-500 text-sm">
+                      Noch keine angenommenen Trades.
+                    </Text>
+                  ) : (
+                    transactions.map((transaction) => (
+                      <View
+                        key={transaction.id}
+                        className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-3"
+                      >
+                        <View className="flex-row justify-between items-center">
+                          <Text className="text-indigo-800 dark:text-indigo-200 font-bold">
+                            Trade #{transaction.id.slice(0, 6)}
+                          </Text>
+                          <Text className="text-indigo-600 dark:text-indigo-300 text-xs font-bold">
+                            {statusLabel(transaction.status)}
+                          </Text>
+                        </View>
+                        <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-2 leading-5">
+                          Die eigentliche Versand-/Übergabe- und Abschlussstrecke wird auf dieser echten Transaktion aufgebaut. Eigentum wird noch nicht vorzeitig übertragen.
                         </Text>
                       </View>
-                    </View>
+                    ))
+                  )}
+                </>
+              ) : null}
+            </ScrollView>
+          )}
+        </>
+      )}
 
-                    {/* Garments Comparison */}
-                    <View className="flex-row items-center justify-between">
-                      {/* Offered Garment */}
-                      <View className="flex-1 flex-row items-center space-x-2 gap-2">
-                        {offered ? (
-                          <>
-                            <Image
-                              source={{ uri: offered.imageUrl }}
-                              className="w-12 h-12 rounded-xl bg-zinc-800"
-                            />
-                            <View className="flex-1">
-                              <Text className="text-[10px] text-zinc-400 font-bold">
-                                YOU OFFER
-                              </Text>
-                              <Text
-                                numberOfLines={1}
-                                className="text-xs font-bold text-white truncate"
-                              >
-                                {offered.title}
-                              </Text>
-                              <Text className="text-[10px] text-emerald-400 font-bold">
-                                ${offered.estimatedValue}
-                              </Text>
-                            </View>
-                          </>
-                        ) : (
-                          <Text className="text-xs text-zinc-500">Offered Item</Text>
-                        )}
-                      </View>
-
-                      {/* Swap Arrow */}
-                      <View className="px-2">
-                        <Text className="text-lg text-indigo-400">🔄</Text>
-                      </View>
-
-                      {/* Requested Garment */}
-                      <View className="flex-1 flex-row items-center space-x-2 gap-2">
-                        {requested ? (
-                          <>
-                            <Image
-                              source={{ uri: requested.imageUrl }}
-                              className="w-12 h-12 rounded-xl bg-zinc-800"
-                            />
-                            <View className="flex-1">
-                              <Text className="text-[10px] text-indigo-400 font-bold">
-                                FOR ITEM
-                              </Text>
-                              <Text
-                                numberOfLines={1}
-                                className="text-xs font-bold text-white truncate"
-                              >
-                                {requested.title}
-                              </Text>
-                              <Text className="text-[10px] text-emerald-400 font-bold">
-                                ${requested.estimatedValue}
-                              </Text>
-                            </View>
-                          </>
-                        ) : (
-                          <Text className="text-xs text-zinc-500">Requested Item</Text>
-                        )}
-                      </View>
-                    </View>
-
-                    {/* Action Controls for Pending Proposals */}
-                    {prop.status === 'pending' && (
-                      <View className="flex-row space-x-2 gap-2 pt-2 border-t border-zinc-800">
-                        <TouchableOpacity
-                          onPress={() =>
-                            handleUpdateProposalStatus(prop.id, 'accepted')
-                          }
-                          className="flex-1 bg-emerald-600 py-2 rounded-xl items-center"
-                        >
-                          <Text className="text-xs font-bold text-white">
-                            ✓ Accept Proposal
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() =>
-                            handleUpdateProposalStatus(prop.id, 'declined')
-                          }
-                          className="flex-1 bg-rose-600/30 border border-rose-500/40 py-2 rounded-xl items-center"
-                        >
-                          <Text className="text-xs font-bold text-rose-300">
-                            ✕ Decline
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                );
-              })
-            )}
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Global Trade Studio Modal */}
-      <TradeStudioModal
-        visible={tradeStudioTargetItem !== null}
-        targetItem={tradeStudioTargetItem}
-        userItems={userItems}
-        onClose={() => setTradeStudioTargetItem(null)}
-        onProposeTrade={handleProposeTrade}
+      <CreateSwapListingModal
+        visible={listingModalVisible}
+        items={eligibleListingItems}
+        onClose={() => setListingModalVisible(false)}
+        onCreate={createListing}
       />
-    </SafeAreaView>
+
+      <SendSwapOfferModal
+        visible={offerTarget !== null}
+        listing={offerTarget}
+        eligibleItems={eligibleOfferItems}
+        onClose={() => setOfferTarget(null)}
+        onSend={async (listingId, wardrobeItemId) =>
+          sendOffer({
+            requestedListingId: listingId,
+            offeredWardrobeItemId: wardrobeItemId,
+          })
+        }
+      />
+    </View>
   );
 }
