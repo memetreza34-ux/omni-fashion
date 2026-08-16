@@ -36,6 +36,16 @@ const SEASONS: readonly WardrobeItem['season'][] = [
   'All',
 ];
 
+const CONDITIONS: readonly {
+  value: WardrobeItem['condition'];
+  label: string;
+}[] = [
+  { value: 'new_with_tags', label: 'Neu mit Etikett' },
+  { value: 'like_new', label: 'Wie neu' },
+  { value: 'good', label: 'Gut' },
+  { value: 'worn', label: 'Getragen' },
+];
+
 export function ItemDetailsModal({
   visible,
   item,
@@ -51,16 +61,26 @@ export function ItemDetailsModal({
     item?.season ?? 'All',
   );
   const [color, setColor] = useState(item?.color ?? 'Unbekannt');
+  const [brand, setBrand] = useState(item?.brand ?? '');
+  const [material, setMaterial] = useState(item?.material ?? '');
+  const [size, setSize] = useState(item?.size ?? '');
+  const [condition, setCondition] = useState<WardrobeItem['condition']>(
+    item?.condition ?? 'good',
+  );
 
   useEffect(() => {
     if (!item) {
       return;
     }
 
-    setName(item.name ?? '');
-    setCategory(item.category ?? 'Other');
-    setSeason(item.season ?? 'All');
-    setColor(item.color ?? 'Unbekannt');
+    setName(item.name);
+    setCategory(item.category);
+    setSeason(item.season);
+    setColor(item.color);
+    setBrand(item.brand ?? '');
+    setMaterial(item.material ?? '');
+    setSize(item.size ?? '');
+    setCondition(item.condition);
   }, [item]);
 
   if (!item) {
@@ -70,10 +90,14 @@ export function ItemDetailsModal({
   const handleSave = () => {
     onSave({
       ...item,
-      name,
+      name: name.trim() || 'Neues Kleidungsstück',
       category,
       season,
-      color,
+      color: color.trim() || 'Unbekannt',
+      brand: brand.trim() || null,
+      material: material.trim() || null,
+      size: size.trim() || null,
+      condition,
     });
   };
 
@@ -85,25 +109,31 @@ export function ItemDetailsModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end bg-black/50">
-        <View className="bg-white dark:bg-zinc-900 rounded-t-3xl h-[85%] overflow-hidden">
+        <View className="bg-white dark:bg-zinc-900 rounded-t-3xl h-[88%] overflow-hidden">
           <View className="flex-row justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-800">
             <TouchableOpacity onPress={onClose} className="p-2">
               <Text className="text-zinc-500">Abbrechen</Text>
             </TouchableOpacity>
             <Text className="font-bold text-lg dark:text-white">
-              Item Details
+              Kleidungsstück
             </Text>
             <TouchableOpacity onPress={handleSave} className="p-2">
               <Text className="text-blue-500 font-bold">Speichern</Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="p-6">
-            <Image
-              source={{ uri: item.imageUrl }}
-              className="w-full h-64 rounded-2xl mb-6"
-              resizeMode="cover"
-            />
+          <ScrollView className="p-6" keyboardShouldPersistTaps="handled">
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                className="w-full h-64 rounded-2xl mb-6 bg-zinc-100 dark:bg-zinc-800"
+                resizeMode="contain"
+              />
+            ) : (
+              <View className="w-full h-64 rounded-2xl mb-6 bg-zinc-100 dark:bg-zinc-800 items-center justify-center">
+                <Text className="text-zinc-400">Bild nicht verfügbar</Text>
+              </View>
+            )}
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Name
@@ -112,7 +142,7 @@ export function ItemDetailsModal({
               value={name}
               onChangeText={setName}
               placeholder="Name des Kleidungsstücks..."
-              className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-6 dark:text-white"
+              className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-5 dark:text-white"
             />
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
@@ -121,7 +151,42 @@ export function ItemDetailsModal({
             <TextInput
               value={color}
               onChangeText={setColor}
-              placeholder="z.B. Schwarz, Weiß, Blau..."
+              placeholder="z. B. Schwarz"
+              className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-5 dark:text-white"
+            />
+
+            <View className="flex-row gap-3 mb-5">
+              <View className="flex-1">
+                <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
+                  Marke
+                </Text>
+                <TextInput
+                  value={brand}
+                  onChangeText={setBrand}
+                  placeholder="Optional"
+                  className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl dark:text-white"
+                />
+              </View>
+              <View className="w-28">
+                <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
+                  Größe
+                </Text>
+                <TextInput
+                  value={size}
+                  onChangeText={setSize}
+                  placeholder="z. B. M"
+                  className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl dark:text-white"
+                />
+              </View>
+            </View>
+
+            <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
+              Material
+            </Text>
+            <TextInput
+              value={material}
+              onChangeText={setMaterial}
+              placeholder="z. B. Baumwolle"
               className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-6 dark:text-white"
             />
 
@@ -155,7 +220,7 @@ export function ItemDetailsModal({
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Saison
             </Text>
-            <View className="flex-row flex-wrap mb-8">
+            <View className="flex-row flex-wrap mb-6">
               {SEASONS.map((currentSeason) => (
                 <TouchableOpacity
                   key={currentSeason}
@@ -179,11 +244,40 @@ export function ItemDetailsModal({
               ))}
             </View>
 
+            <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
+              Zustand
+            </Text>
+            <View className="flex-row flex-wrap mb-8">
+              {CONDITIONS.map((entry) => (
+                <TouchableOpacity
+                  key={entry.value}
+                  onPress={() => setCondition(entry.value)}
+                  className={`px-4 py-2 rounded-full mr-2 mb-2 ${
+                    condition === entry.value
+                      ? 'bg-black dark:bg-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800'
+                  }`}
+                >
+                  <Text
+                    className={
+                      condition === entry.value
+                        ? 'text-white dark:text-black font-bold'
+                        : 'text-black dark:text-white'
+                    }
+                  >
+                    {entry.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <TouchableOpacity
               onPress={() => onDelete(item.id)}
               className="bg-red-500/10 border border-red-500 p-4 rounded-xl items-center mb-10"
             >
-              <Text className="text-red-500 font-bold">Item löschen</Text>
+              <Text className="text-red-500 font-bold">
+                Kleidungsstück löschen
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
