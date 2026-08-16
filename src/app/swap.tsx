@@ -9,11 +9,14 @@ import {
   View,
 } from 'react-native';
 
+import { useAuth } from '@/context/AuthContext';
 import { useSwap } from '@/context/SwapContext';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { CreateSwapListingModal } from '@/features/swap/components/CreateSwapListingModal';
 import { SendSwapOfferModal } from '@/features/swap/components/SendSwapOfferModal';
+import { SwapTransactionCard } from '@/features/swap/components/SwapTransactionCard';
 import type {
+  AdvanceSwapTransactionAction,
   SetSwapListingStatusInput,
   SwapListing,
   SwapOffer,
@@ -261,6 +264,7 @@ function OfferCard({
 }
 
 export default function SwapScreen() {
+  const { user } = useAuth();
   const { items } = useWardrobe();
   const {
     marketplaceListings,
@@ -276,6 +280,7 @@ export default function SwapScreen() {
     sendOffer,
     cancelOffer,
     respondToOffer,
+    advanceTransaction,
   } = useSwap();
   const [tab, setTab] = useState<'market' | 'mine' | 'trades'>('market');
   const [listingModalVisible, setListingModalVisible] = useState(false);
@@ -283,6 +288,9 @@ export default function SwapScreen() {
   const [respondingOfferId, setRespondingOfferId] = useState<string | null>(null);
   const [changingListingId, setChangingListingId] = useState<string | null>(null);
   const [cancellingOfferId, setCancellingOfferId] = useState<string | null>(null);
+  const [advancingTransactionId, setAdvancingTransactionId] = useState<
+    string | null
+  >(null);
 
   const lockedOfferedIds = useMemo(
     () =>
@@ -292,6 +300,14 @@ export default function SwapScreen() {
           .map((offer) => offer.offeredWardrobeItemId),
       ),
     [outgoingOffers],
+  );
+
+  const offersById = useMemo(
+    () =>
+      new Map(
+        [...incomingOffers, ...outgoingOffers].map((offer) => [offer.id, offer]),
+      ),
+    [incomingOffers, outgoingOffers],
   );
 
   const eligibleListingItems = items.filter(
@@ -317,7 +333,7 @@ export default function SwapScreen() {
         Alert.alert(
           'Tausch reserviert',
           transactionId
-            ? 'OmniSwap hat eine echte Trade-Transaktion angelegt. Der nächste Schritt ist die sichere Übergabe-/Versandabwicklung.'
+            ? 'OmniSwap hat eine echte Trade-Transaktion angelegt. Beide Seiten müssen jetzt den Tauschweg und die Übergabe bestätigen.'
             : 'Das Angebot wurde angenommen.',
         );
       }
@@ -385,6 +401,30 @@ export default function SwapScreen() {
       );
     } finally {
       setCancellingOfferId(null);
+    }
+  };
+
+  const handleAdvanceTransaction = async (
+    transactionId: string,
+    action: AdvanceSwapTransactionAction,
+  ) => {
+    if (advancingTransactionId) {
+      return;
+    }
+
+    setAdvancingTransactionId(transactionId);
+    try {
+      await advanceTransaction({ transactionId, action });
+    } catch (advanceError: unknown) {
+      console.error('Failed to advance OmniSwap transaction', advanceError);
+      Alert.alert(
+        'Trade-Schritt nicht abgeschlossen',
+        action.type === 'retry_finalize'
+          ? 'Die Eigentumsübertragung konnte noch nicht sicher abgeschlossen werden. Der Trade bleibt im Fehlerstatus und kann erneut versucht werden.'
+          : 'Der serverseitige Trade-Zustand wurde nicht als erfolgreich bestätigt. Bitte prüfe den aktuellen Status und versuche es erneut.',
+      );
+    } finally {
+      setAdvancingTransactionId(null);
     }
   };
 
@@ -580,26 +620,20 @@ export default function SwapScreen() {
                     <Text className="text-zinc-500 text-sm">
                       Noch keine angenommenen Trades.
                     </Text>
-                  ) : (
+                  ) : user ? (
                     transactions.map((transaction) => (
-                      <View
+                      <SwapTransactionCard
                         key={transaction.id}
-                        className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-3"
-                      >
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-indigo-800 dark:text-indigo-200 font-bold">
-                            Trade #{transaction.id.slice(0, 6)}
-                          </Text>
-                          <Text className="text-indigo-600 dark:text-indigo-300 text-xs font-bold">
-                            {statusLabel(transaction.status)}
-                          </Text>
-                        </View>
-                        <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-2 leading-5">
-                          Eigentum wird erst nach einer beidseitig bestätigten Übergabe und sicherer Migration der privaten Bilder übertragen.
-                        </Text>
-                      </View>
+                        transaction={transaction}
+                        offer={offersById.get(transaction.offerId) ?? null}
+                        currentUserId={user.id}
+                        busy={advancingTransactionId === transaction.id}
+                        onAdvance={(action) =>
+                          handleAdvanceTransaction(transaction.id, action)
+                        }
+                      />
                     ))
-                  )}
+                  ) : null}
                 </>
               ) : null}
             </ScrollView>
