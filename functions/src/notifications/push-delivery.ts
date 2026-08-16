@@ -121,17 +121,6 @@ async function claimDelivery(
   }
 }
 
-async function disableDevice(deviceId: string, errorCode: string): Promise<void> {
-  await getFirestore().collection('pushDevices').doc(deviceId).set(
-    {
-      enabled: false,
-      lastErrorCode: errorCode,
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true },
-  );
-}
-
 export const onNotificationCreatedPushDelivery = onDocumentCreated(
   {
     document: 'notifications/{notificationId}',
@@ -157,6 +146,17 @@ export const onNotificationCreatedPushDelivery = onDocumentCreated(
 
     ensureAdminInitialized();
     const db = getFirestore();
+    const preferenceSnapshot = await db
+      .collection('notificationPreferences')
+      .doc(userId)
+      .get();
+    const preference = preferenceSnapshot.data();
+
+    // Remote push is opt-in. In-app notifications remain available regardless.
+    if (!preference || preference.pushEnabled !== true) {
+      return;
+    }
+
     const devicesSnapshot = await db
       .collection('pushDevices')
       .where('userId', '==', userId)
@@ -243,9 +243,8 @@ export const onNotificationCreatedPushDelivery = onDocumentCreated(
     }
 
     const payload: unknown = await response.json();
-    const rawTickets = isRecord(payload) && Array.isArray(payload.data)
-      ? payload.data
-      : [];
+    const rawTickets =
+      isRecord(payload) && Array.isArray(payload.data) ? payload.data : [];
 
     const batch = db.batch();
     for (let index = 0; index < claims.length; index += 1) {
@@ -323,12 +322,5 @@ export const onNotificationCreatedPushDelivery = onDocumentCreated(
       }
     }
     await batch.commit();
-
-    for (let index = 0; index < claims.length; index += 1) {
-      const ticket = ticketFromUnknown(rawTickets[index]);
-      if (ticket?.details?.error === 'DeviceNotRegistered') {
-        await disableDevice(claims[index].device.id, 'DeviceNotRegistered');
-      }
-    }
   },
 );
