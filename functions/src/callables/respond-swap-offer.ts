@@ -211,6 +211,12 @@ export const respondSwapOffer = onCall(
           'Listing-Eigentümerprüfung fehlgeschlagen.',
         );
       }
+      if (listing.shippingEnabled !== true && listing.meetupEnabled !== true) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Das Listing hat keinen gültigen Tauschweg.',
+        );
+      }
       if (offeredItem.ownerId !== requesterId) {
         throw new HttpsError(
           'failed-precondition',
@@ -248,6 +254,8 @@ export const respondSwapOffer = onCall(
         listingOwnerId,
         requestedWardrobeItemId,
         offeredWardrobeItemId,
+        shippingEnabled: listing.shippingEnabled === true,
+        meetupEnabled: listing.meetupEnabled === true,
         status: 'accepted',
         fulfilmentMode: null,
         modeConfirmedByIds: [],
