@@ -1,8 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 
-import {
-  GARMENT_ANALYSIS_MODEL,
-} from '../contracts.js';
+import { GARMENT_ANALYSIS_MODEL } from '../contracts.js';
 import type {
   GarmentAnalysisResult,
   GarmentVisionInput,
@@ -58,32 +56,30 @@ export class GeminiGarmentVisionProvider implements GarmentVisionProvider {
 
   async analyze(input: GarmentVisionInput): Promise<GarmentAnalysisResult> {
     try {
-      const response = await withTimeout(
-        this.client.models.generateContent({
+      const interaction = await withTimeout(
+        this.client.interactions.create({
           model: GARMENT_ANALYSIS_MODEL,
-          contents: [
+          input: [
             {
-              inlineData: {
-                mimeType: input.mimeType,
-                data: input.imageBase64,
-              },
+              type: 'image',
+              data: input.imageBase64,
+              mime_type: input.mimeType,
             },
-            { text: GARMENT_ANALYSIS_PROMPT },
+            {
+              type: 'text',
+              text: GARMENT_ANALYSIS_PROMPT,
+            },
           ],
-          config: {
-            temperature: 0.1,
-            responseFormat: {
-              text: {
-                mimeType: 'application/json',
-                schema: GARMENT_ANALYSIS_JSON_SCHEMA,
-              },
-            },
+          response_format: {
+            type: 'text',
+            mime_type: 'application/json',
+            schema: GARMENT_ANALYSIS_JSON_SCHEMA,
           },
         }),
         PROVIDER_TIMEOUT_MS,
       );
 
-      const rawText = response.text;
+      const rawText = interaction.output_text;
       if (typeof rawText !== 'string' || !rawText.trim()) {
         throw new GarmentAnalysisError(
           'INVALID_PROVIDER_OUTPUT',
