@@ -1,0 +1,35 @@
+name: Export Review Callable Once
+
+on:
+  push:
+    branches:
+      - docs/app-development-a-z
+    paths:
+      - .github/workflows/export-review-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: docs/app-development-a-z
+
+      - name: Export callable and remove bootstrap workflow
+        run: |
+          if ! grep -q "submitSwapReview" functions/src/index.ts; then
+            printf "\nexport { submitSwapReview } from './callables/submit-swap-review.js';\n" >> functions/src/index.ts
+          fi
+          rm .github/workflows/export-review-once.yml
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions/src/index.ts .github/workflows/export-review-once.yml
+          git commit -m "feat: export completed-trade review callable"
+          git push origin HEAD:docs/app-development-a-z
