@@ -92,6 +92,35 @@ function validUserProfile(displayName) {
   };
 }
 
+function validWardrobeItem(ownerId, itemId) {
+  const now = Timestamp.now();
+
+  return {
+    ownerId,
+    imagePath: `users/${ownerId}/wardrobe/${itemId}/original.jpg`,
+    name: 'Schwarze Jacke',
+    category: 'Outerwear',
+    subcategory: null,
+    color: 'Schwarz',
+    secondaryColors: [],
+    brand: null,
+    material: null,
+    size: null,
+    season: 'All',
+    condition: 'good',
+    styleTags: [],
+    source: 'camera',
+    aiStatus: 'not_requested',
+    aiConfidence: null,
+    aiModelVersion: null,
+    isListedForSwap: false,
+    swapListingId: null,
+    createdAt: now,
+    updatedAt: now,
+    schemaVersion: 1,
+  };
+}
+
 async function run() {
   const owner = createClient('rules-owner');
   const stranger = createClient('rules-stranger');
@@ -124,49 +153,83 @@ async function run() {
       'anonymous reads private profile',
     );
 
-    // Wardrobe: owner can create/read/update/delete own item.
-    const wardrobeRef = doc(owner.db, 'wardrobeItems', 'owner-item-1');
-    await setDoc(wardrobeRef, {
-      ownerId,
-      name: 'Schwarze Jacke',
-      category: 'Outerwear',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
+    // Wardrobe: owner can create/read/update/delete a valid own item.
+    const itemId = 'owner-item-1';
+    const wardrobeRef = doc(owner.db, 'wardrobeItems', itemId);
+    await setDoc(wardrobeRef, validWardrobeItem(ownerId, itemId));
     assert.equal((await getDoc(wardrobeRef)).exists(), true);
 
     await updateDoc(wardrobeRef, {
       name: 'Schwarze Lederjacke',
+      brand: 'Vintage',
+      material: 'Leder',
       updatedAt: Timestamp.now(),
     });
 
     // Another user cannot read/update/delete a private wardrobe item.
     await expectPermissionDenied(
-      getDoc(doc(stranger.db, 'wardrobeItems', 'owner-item-1')),
+      getDoc(doc(stranger.db, 'wardrobeItems', itemId)),
       'stranger reads private wardrobe item',
     );
     await expectPermissionDenied(
-      updateDoc(doc(stranger.db, 'wardrobeItems', 'owner-item-1'), {
+      updateDoc(doc(stranger.db, 'wardrobeItems', itemId), {
         name: 'Manipulated',
       }),
       'stranger updates private wardrobe item',
     );
     await expectPermissionDenied(
-      deleteDoc(doc(stranger.db, 'wardrobeItems', 'owner-item-1')),
+      deleteDoc(doc(stranger.db, 'wardrobeItems', itemId)),
       'stranger deletes private wardrobe item',
     );
 
-    // Owner cannot transfer ownership by editing ownerId.
+    // Owner cannot transfer ownership or point the private record at another
+    // user's Storage path.
     await expectPermissionDenied(
       updateDoc(wardrobeRef, { ownerId: strangerId }),
       'owner changes wardrobe ownerId',
     );
+    await expectPermissionDenied(
+      updateDoc(wardrobeRef, {
+        imagePath: `users/${strangerId}/wardrobe/${itemId}/original.jpg`,
+      }),
+      'owner changes wardrobe image ownership path',
+    );
 
-    // Marketplace: active listings are intentionally public-readable.
+    // AI and marketplace state are trusted-system fields, not user-editable
+    // metadata.
+    await expectPermissionDenied(
+      updateDoc(wardrobeRef, {
+        aiStatus: 'completed',
+        aiConfidence: 0.99,
+        aiModelVersion: 'fake-client-model',
+      }),
+      'client forges AI result',
+    );
+    await expectPermissionDenied(
+      updateDoc(wardrobeRef, {
+        isListedForSwap: true,
+        swapListingId: 'fake-listing',
+      }),
+      'client forges swap linkage',
+    );
+
+    // A malformed create cannot start with fake AI/Swap state.
+    await expectPermissionDenied(
+      setDoc(doc(owner.db, 'wardrobeItems', 'forged-item'), {
+        ...validWardrobeItem(ownerId, 'forged-item'),
+        aiStatus: 'completed',
+        aiConfidence: 1,
+        aiModelVersion: 'client-forged',
+      }),
+      'client creates wardrobe item with forged AI state',
+    );
+
+    // Marketplace: active listings are intentionally public-readable, while
+    // the private wardrobe document behind them remains hidden.
     const listingRef = doc(owner.db, 'swapListings', 'listing-1');
     await setDoc(listingRef, {
       ownerId,
-      wardrobeItemId: 'owner-item-1',
+      wardrobeItemId: itemId,
       title: 'Schwarze Lederjacke',
       status: 'active',
       createdAt: Timestamp.now(),
@@ -214,7 +277,6 @@ async function run() {
       'unknown collection write',
     );
 
-    // Ensure auth state is clean before deleting app instances.
     await signOut(owner.auth);
     await signOut(stranger.auth);
 
