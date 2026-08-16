@@ -120,6 +120,16 @@ export interface CreateSwapListingResponse {
   status: 'active';
 }
 
+export interface SetSwapListingStatusInput {
+  listingId: string;
+  action: 'pause' | 'resume' | 'remove';
+}
+
+export interface SetSwapListingStatusResponse {
+  listingId: string;
+  status: 'active' | 'paused' | 'removed';
+}
+
 export interface SendSwapOfferInput {
   requestedListingId: string;
   offeredWardrobeItemId: string;
@@ -128,6 +138,15 @@ export interface SendSwapOfferInput {
 export interface SendSwapOfferResponse {
   offerId: string;
   status: 'sent';
+}
+
+export interface CancelSwapOfferInput {
+  offerId: string;
+}
+
+export interface CancelSwapOfferResponse {
+  offerId: string;
+  status: 'cancelled';
 }
 
 export interface RespondSwapOfferInput {
