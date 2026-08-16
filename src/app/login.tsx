@@ -1,13 +1,9 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/context/AuthContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import { normalizeAuthError } from '@/features/auth/services/auth-errors';
 
 type AuthMode = 'login' | 'register' | 'reset';
@@ -161,6 +157,7 @@ export default function LoginScreen() {
       <View className="mb-6">
         {mode === 'register' ? (
           <TextInput
+            accessibilityLabel="Anzeigename"
             placeholder="Anzeigename"
             placeholderTextColor="#a1a1aa"
             value={displayName}
@@ -173,6 +170,7 @@ export default function LoginScreen() {
         ) : null}
 
         <TextInput
+          accessibilityLabel="E-Mail-Adresse"
           placeholder="E-Mail"
           placeholderTextColor="#a1a1aa"
           value={email}
@@ -180,90 +178,86 @@ export default function LoginScreen() {
           className="bg-zinc-100 dark:bg-zinc-900 p-4 rounded-2xl text-black dark:text-white"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
           autoComplete="email"
           editable={!isLoading}
         />
 
         {mode !== 'reset' ? (
           <TextInput
+            accessibilityLabel={
+              mode === 'register' ? 'Neues Passwort' : 'Passwort'
+            }
             placeholder="Passwort"
             placeholderTextColor="#a1a1aa"
             value={password}
             onChangeText={setPassword}
             className="bg-zinc-100 dark:bg-zinc-900 p-4 rounded-2xl text-black dark:text-white mt-3"
             secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
             autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
             editable={!isLoading}
           />
         ) : null}
 
         {errorMessage ? (
-          <View className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mt-3">
-            <Text className="text-red-600 dark:text-red-300">
-              {errorMessage}
-            </Text>
+          <View className="mt-3">
+            <StatusBanner tone="danger" title="Aktion nicht möglich" message={errorMessage} />
           </View>
         ) : null}
 
         {successMessage ? (
-          <View className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 mt-3">
-            <Text className="text-emerald-700 dark:text-emerald-300">
-              {successMessage}
-            </Text>
+          <View className="mt-3">
+            <StatusBanner tone="success" title="E-Mail angefordert" message={successMessage} />
           </View>
         ) : null}
 
         {!isBackendConfigured && __DEV__ ? (
-          <View className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mt-3">
-            <Text className="text-amber-700 dark:text-amber-300 text-sm">
-              Entwicklungsmodus: Login kann den lokalen Demo-Nutzer öffnen.
-              Registrierung und Passwort-Reset benötigen das echte Firebase-Dev-Projekt.
-            </Text>
+          <View className="mt-3">
+            <StatusBanner
+              tone="warning"
+              title="Entwicklungsmodus"
+              message="Login kann den lokalen Demo-Nutzer öffnen. Registrierung und Passwort-Reset benötigen das echte Firebase-Dev-Projekt."
+            />
           </View>
         ) : null}
       </View>
 
-      <TouchableOpacity
+      <AppButton
+        label={primaryLabel}
+        loading={isLoading}
         onPress={() => void handlePrimaryAction()}
-        disabled={isLoading}
-        className="bg-black dark:bg-white p-4 rounded-2xl items-center"
-      >
-        {isLoading ? (
-          <ActivityIndicator />
-        ) : (
-          <Text className="text-white dark:text-black font-bold text-lg">
-            {primaryLabel}
-          </Text>
-        )}
-      </TouchableOpacity>
+      />
 
       {mode === 'login' ? (
         <>
-          <TouchableOpacity
-            onPress={() => switchMode('reset')}
-            disabled={isLoading}
-            className="p-4 items-center"
-          >
-            <Text className="text-zinc-500">Passwort vergessen?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => switchMode('register')}
-            disabled={isLoading}
-            className="border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl items-center"
-          >
-            <Text className="text-black dark:text-white font-semibold">
-              Neues Omni-Fashion-Konto
-            </Text>
-          </TouchableOpacity>
+          <View className="mt-3">
+            <AppButton
+              label="Passwort vergessen?"
+              variant="ghost"
+              disabled={isLoading}
+              onPress={() => switchMode('reset')}
+            />
+          </View>
+          <View className="mt-1">
+            <AppButton
+              label="Neues Omni-Fashion-Konto"
+              variant="secondary"
+              disabled={isLoading}
+              onPress={() => switchMode('register')}
+            />
+          </View>
         </>
       ) : (
-        <TouchableOpacity
-          onPress={() => switchMode('login')}
-          disabled={isLoading}
-          className="p-4 items-center"
-        >
-          <Text className="text-zinc-500">Zurück zur Anmeldung</Text>
-        </TouchableOpacity>
+        <View className="mt-3">
+          <AppButton
+            label="Zurück zur Anmeldung"
+            variant="ghost"
+            disabled={isLoading}
+            onPress={() => switchMode('login')}
+          />
+        </View>
       )}
     </View>
   );
