@@ -112,11 +112,26 @@ export async function createUserProfileIfMissing(
   const snapshot = await getDoc(profileRef);
 
   if (snapshot.exists()) {
+    const existingProfile = mapProfileDocument(snapshot.id, snapshot.data());
+    const desiredDisplayName = input.displayName?.trim() ?? '';
+
+    if (
+      existingProfile &&
+      existingProfile.displayName.trim().length === 0 &&
+      desiredDisplayName.length > 0
+    ) {
+      await updateDoc(profileRef, {
+        displayName: desiredDisplayName,
+        updatedAt: serverTimestamp(),
+        schemaVersion: USER_PROFILE_SCHEMA_VERSION,
+      });
+    }
+
     return;
   }
 
   await setDoc(profileRef, {
-    displayName: input.displayName ?? '',
+    displayName: input.displayName?.trim() ?? '',
     avatarUrl: null,
     locale: input.locale,
     country: null,
