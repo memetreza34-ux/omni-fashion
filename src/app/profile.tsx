@@ -1,188 +1,548 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import * as ImagePicker from 'expo-image-picker';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-interface StyleDNA {
-  archetype: string;
-  name: string;
-  vibe: string[];
-  colors: string[];
-  description: string;
+import { useAuth } from '@/context/AuthContext';
+import { useStyleProfile } from '@/context/StyleProfileContext';
+import { STYLE_LABELS } from '@/features/style-profile/style-profile-engine';
+import {
+  FIT_PREFERENCES,
+  STYLE_COLOR_OPTIONS,
+  STYLE_PREFERENCES,
+  STYLE_QUESTIONNAIRE_VERSION,
+} from '@/features/style-profile/types';
+import type {
+  FitPreference,
+  StyleColorOption,
+  StylePreference,
+  StyleQuestionnaire,
+} from '@/features/style-profile/types';
+
+const FIT_LABELS: Record<FitPreference, string> = {
+  slim: 'Schmal',
+  regular: 'Regular',
+  oversized: 'Oversized',
+};
+
+const AXIS_OPTIONS = [
+  { value: 0.2, left: 'Casual', right: 'Minimal' },
+  { value: 0.5, left: 'Ausgeglichen', right: 'Ausgeglichen' },
+  { value: 0.8, left: 'Formal', right: 'Bold' },
+] as const;
+
+function defaultQuestionnaire(): StyleQuestionnaire {
+  return {
+    preferredStyles: [],
+    preferredColors: [],
+    avoidedColors: [],
+    fitPreferences: ['regular'],
+    formalVsCasual: 0.5,
+    minimalVsBold: 0.5,
+    questionnaireVersion: STYLE_QUESTIONNAIRE_VERSION,
+  };
 }
 
-const DUMMY_PROFILES: StyleDNA[] = [
-  {
-    archetype: 'The Architect',
-    name: 'Urban Minimalist',
-    vibe: ['Clean', 'Monochrom', 'Zeitlos'],
-    colors: ['bg-black', 'bg-zinc-100', 'bg-zinc-400'],
-    description: 'Du bevorzugst klare Linien und verzichtest auf laute Logos. Dein Style ist unaufgeregt, aber extrem hochwertig.'
-  },
-  {
-    archetype: 'The Rebel',
-    name: 'Y2K Streetwear',
-    vibe: ['Oversized', 'Vintage', 'Bold'],
-    colors: ['bg-purple-500', 'bg-black', 'bg-pink-400'],
-    description: 'Du mischst Retro-Einflüsse aus den 2000ern mit modernen Baggy-Silhouetten. Auffällig und selbstbewusst.'
-  },
-  {
-    archetype: 'The Scholar',
-    name: 'Dark Academia',
-    vibe: ['Preppy', 'Herbstlich', 'Intellektuell'],
-    colors: ['bg-amber-900', 'bg-stone-800', 'bg-emerald-900'],
-    description: 'Dein Vibe erinnert an alte Bibliotheken. Karomuster, Rollkragenpullover und schwere Stoffe prägen deinen Look.'
+function toggleValue<T extends string>(
+  values: T[],
+  value: T,
+  maxItems?: number,
+): T[] {
+  if (values.includes(value)) {
+    return values.filter((entry) => entry !== value);
   }
-];
+  if (maxItems !== undefined && values.length >= maxItems) {
+    return values;
+  }
+  return [...values, value];
+}
+
+function ChoiceChip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className={`px-4 py-2.5 rounded-full mr-2 mb-2 border ${
+        selected
+          ? 'bg-black dark:bg-white border-black dark:border-white'
+          : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
+      }`}
+    >
+      <Text
+        className={
+          selected
+            ? 'text-white dark:text-black font-bold'
+            : 'text-zinc-700 dark:text-zinc-200'
+        }
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function AxisSelector({
+  title,
+  value,
+  labels,
+  onChange,
+}: {
+  title: string;
+  value: number;
+  labels: readonly [string, string, string];
+  onChange: (value: number) => void;
+}) {
+  const values = [0.2, 0.5, 0.8] as const;
+
+  return (
+    <View className="mb-6">
+      <Text className="text-zinc-500 mb-3 uppercase text-xs font-bold">
+        {title}
+      </Text>
+      <View className="flex-row gap-2">
+        {values.map((currentValue, index) => {
+          const selected = Math.abs(value - currentValue) < 0.1;
+          return (
+            <TouchableOpacity
+              key={currentValue}
+              onPress={() => onChange(currentValue)}
+              className={`flex-1 rounded-xl py-3 items-center border ${
+                selected
+                  ? 'bg-black dark:bg-white border-black dark:border-white'
+                  : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
+              }`}
+            >
+              <Text
+                className={
+                  selected
+                    ? 'text-white dark:text-black font-bold text-xs'
+                    : 'text-zinc-600 dark:text-zinc-300 text-xs'
+                }
+              >
+                {labels[index]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
-  const [isScanning, setIsScanning] = useState(false);
-  const [styleProfile, setStyleProfile] = useState<StyleDNA | null>(null);
-  const [uploadedMedia, setUploadedMedia] = useState<string | null>(null);
+  const {
+    profile,
+    isLoading,
+    isSaving,
+    error,
+    isCloudBacked,
+    wardrobeNeedsRefresh,
+    saveQuestionnaire,
+    refreshFromWardrobe,
+  } = useStyleProfile();
+  const [editing, setEditing] = useState(false);
+  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(
+    defaultQuestionnaire(),
+  );
 
-  const startScan = async () => {
-    // Erlaube Bilder und Videos
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Berechtigung fehlt', 'Wir benötigen Zugriff auf deine Fotos/Videos.');
+  useEffect(() => {
+    if (profile) {
+      setQuestionnaire(profile.questionnaire);
+    }
+  }, [profile]);
+
+  const handlePreferredColor = (color: StyleColorOption) => {
+    setQuestionnaire((current) => ({
+      ...current,
+      preferredColors: toggleValue(current.preferredColors, color, 8),
+      avoidedColors: current.avoidedColors.filter((entry) => entry !== color),
+    }));
+  };
+
+  const handleAvoidedColor = (color: StyleColorOption) => {
+    setQuestionnaire((current) => ({
+      ...current,
+      avoidedColors: toggleValue(current.avoidedColors, color, 8),
+      preferredColors: current.preferredColors.filter((entry) => entry !== color),
+    }));
+  };
+
+  const handleSave = async () => {
+    if (questionnaire.preferredStyles.length === 0) {
+      Alert.alert(
+        'Style fehlt',
+        'Wähle mindestens eine Stilrichtung, damit Omni Fashion dein Profil sinnvoll aufbauen kann.',
+      );
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'], // Erlaube Foto und Video!
-      allowsEditing: true,
-      quality: 0.8,
-    });
+    if (questionnaire.fitPreferences.length === 0) {
+      Alert.alert(
+        'Passform fehlt',
+        'Wähle mindestens eine bevorzugte Passform.',
+      );
+      return;
+    }
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setUploadedMedia(result.assets[0].uri);
-      processScan(result.assets[0].uri);
+    try {
+      await saveQuestionnaire(questionnaire);
+      setEditing(false);
+    } catch {
+      Alert.alert(
+        'Nicht gespeichert',
+        'Deine Style-DNA konnte nicht gespeichert werden. Bitte erneut versuchen.',
+      );
     }
   };
 
-  const processScan = async (uri: string) => {
-    setIsScanning(true);
-    
-    // Simuliere komplexe Vision-KI Analyse (Dauer: 3 Sekunden)
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Wähle ein zufälliges Profil als Ergebnis
-    const randomProfile = DUMMY_PROFILES[Math.floor(Math.random() * DUMMY_PROFILES.length)];
-    setStyleProfile(randomProfile);
-    setIsScanning(false);
+  const handleRefresh = async () => {
+    try {
+      await refreshFromWardrobe();
+    } catch {
+      Alert.alert(
+        'Auswertung fehlgeschlagen',
+        'Der Kleiderschrank konnte gerade nicht neu ausgewertet werden.',
+      );
+    }
   };
 
-  const resetProfile = () => {
-    setStyleProfile(null);
-    setUploadedMedia(null);
-  };
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white dark:bg-zinc-900 items-center justify-center">
+        <ActivityIndicator size="large" />
+        <Text className="text-zinc-500 mt-4">Style-DNA wird geladen…</Text>
+      </View>
+    );
+  }
+
+  const showEditor = !profile || editing;
 
   return (
     <View className="flex-1 bg-white dark:bg-zinc-900">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        
-        {/* Header */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 110 }}
+      >
         <View className="pt-16 px-4 mb-6 flex-row justify-between items-start">
-          <View>
-            <Text className="text-4xl font-bold text-black dark:text-white">Style-DNA</Text>
-            <Text className="text-zinc-500 mt-2 text-base">Dein persönliches Fashion-Profil</Text>
+          <View className="flex-1 pr-4">
+            <Text className="text-4xl font-bold text-black dark:text-white">
+              Style-DNA
+            </Text>
+            <Text className="text-zinc-500 mt-2 text-base">
+              Deine Präferenzen + dein echter Kleiderschrank
+            </Text>
           </View>
-          <TouchableOpacity onPress={logout} className="bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-xl">
+          <TouchableOpacity
+            onPress={() => void logout()}
+            className="bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-xl"
+          >
             <Text className="text-red-500 font-bold">Logout</Text>
           </TouchableOpacity>
         </View>
 
-        {!styleProfile && !isScanning && (
-          <View className="px-4 mt-8 items-center">
-            <View className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full items-center justify-center mb-6">
-              <Text className="text-4xl">🧬</Text>
+        <View className="px-4 mb-4">
+          <View className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+            <Text className="text-blue-700 dark:text-blue-300 font-bold text-sm">
+              {isCloudBacked ? 'Cloud StyleProfile' : 'Entwicklungsprofil lokal'}
+            </Text>
+            <Text className="text-zinc-600 dark:text-zinc-300 text-xs mt-1 leading-5">
+              Deine Style-DNA entsteht aus deinen Antworten und den erkannten
+              Eigenschaften deiner echten Kleidungsstücke. Ein Foto-Scan wird
+              nicht als fertige KI-Funktion vorgetäuscht.
+            </Text>
+          </View>
+        </View>
+
+        {error ? (
+          <View className="px-4 mb-4">
+            <View className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+              <Text className="text-red-500 text-sm">{error}</Text>
             </View>
-            <Text className="text-2xl font-bold text-center text-black dark:text-white mb-4">
-              Wer bist du wirklich?
-            </Text>
-            <Text className="text-zinc-500 text-center mb-8 px-4 leading-relaxed">
-              Lade ein Foto oder ein kurzes Video von deinem Lieblingsoutfit hoch. Unsere Vision-KI analysiert Schnitte, Farben und Vibe und extrahiert deine einzigartige Style-DNA.
-            </Text>
-
-            <TouchableOpacity 
-              onPress={startScan}
-              className="bg-black dark:bg-white px-8 py-4 rounded-2xl w-full items-center shadow-lg flex-row justify-center space-x-2"
-            >
-              <Text className="text-xl">📸</Text>
-              <Text className="text-white dark:text-black font-bold text-lg ml-2">Outfit scannen</Text>
-            </TouchableOpacity>
           </View>
-        )}
+        ) : null}
 
-        {isScanning && (
-          <View className="px-4 mt-16 items-center justify-center">
-            {uploadedMedia && (
-               <Image source={{ uri: uploadedMedia }} className="w-32 h-32 rounded-2xl mb-8 opacity-50" blurRadius={10} />
-            )}
-            <ActivityIndicator size="large" color="#208AEF" />
-            <Text className="text-xl font-bold text-black dark:text-white mt-6 mb-2">Analysiere Vibe...</Text>
-            <Text className="text-zinc-500 text-center">Vision-KI extrahiert Farben, Schnitte und Archetypen.</Text>
-          </View>
-        )}
-
-        {styleProfile && !isScanning && (
-          <View className="px-4 mt-2">
-            
-            {/* The Result Card */}
-            <View className="bg-zinc-100 dark:bg-zinc-800 rounded-3xl p-6 shadow-sm mb-6 border border-zinc-200 dark:border-zinc-700">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Dein Archetyp</Text>
-                <Text className="text-xl">✨</Text>
-              </View>
-              
-              <Text className="text-3xl font-bold text-black dark:text-white mb-1">{styleProfile.name}</Text>
-              <Text className="text-blue-600 dark:text-blue-400 font-medium text-lg mb-6">{styleProfile.archetype}</Text>
-              
-              <Text className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-6">
-                {styleProfile.description}
+        {!showEditor && profile ? (
+          <View className="px-4">
+            <View className="bg-zinc-100 dark:bg-zinc-800 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-700 mb-5">
+              <Text className="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-3">
+                Dein Style-Profil
+              </Text>
+              <Text className="text-3xl font-bold text-black dark:text-white mb-1">
+                {profile.summary.title}
+              </Text>
+              <Text className="text-blue-600 dark:text-blue-400 font-semibold text-lg mb-5">
+                {profile.summary.archetype}
+              </Text>
+              <Text className="text-zinc-600 dark:text-zinc-300 leading-6 mb-5">
+                {profile.summary.description}
               </Text>
 
-              {/* Tags */}
-              <View className="flex-row flex-wrap gap-2 mb-6">
-                {styleProfile.vibe.map((tag, i) => (
-                  <View key={i} className="bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700">
-                    <Text className="text-black dark:text-white text-sm">{tag}</Text>
+              <Text className="text-zinc-500 uppercase text-xs font-bold mb-2">
+                Stärkste Richtungen
+              </Text>
+              <View className="flex-row flex-wrap mb-4">
+                {profile.summary.topStyles.map((style) => (
+                  <View
+                    key={style}
+                    className="bg-white dark:bg-zinc-900 px-3 py-2 rounded-full mr-2 mb-2 border border-zinc-200 dark:border-zinc-700"
+                  >
+                    <Text className="text-black dark:text-white text-sm font-medium">
+                      {STYLE_LABELS[style]}
+                    </Text>
                   </View>
                 ))}
               </View>
 
-              {/* Color Palette */}
-              <Text className="text-sm font-bold text-zinc-500 mb-3 uppercase tracking-wider">Kern-Farbpalette</Text>
-              <View className="flex-row gap-3">
-                {styleProfile.colors.map((colorClass, i) => (
-                  <View key={i} className={`w-10 h-10 rounded-full shadow-sm ${colorClass} border border-zinc-200 dark:border-zinc-700`} />
+              {profile.questionnaire.preferredColors.length > 0 ? (
+                <>
+                  <Text className="text-zinc-500 uppercase text-xs font-bold mb-2">
+                    Lieblingsfarben
+                  </Text>
+                  <Text className="text-black dark:text-white mb-5">
+                    {profile.questionnaire.preferredColors.join(' · ')}
+                  </Text>
+                </>
+              ) : null}
+
+              <Text className="text-zinc-500 uppercase text-xs font-bold mb-2">
+                Passform
+              </Text>
+              <Text className="text-black dark:text-white">
+                {profile.questionnaire.fitPreferences
+                  .map((fit) => FIT_LABELS[fit])
+                  .join(' · ')}
+              </Text>
+            </View>
+
+            <View className="bg-zinc-950 dark:bg-black rounded-3xl p-5 mb-5">
+              <Text className="text-white font-bold text-lg mb-1">
+                Wardrobe Intelligence
+              </Text>
+              <Text className="text-zinc-400 text-sm mb-4">
+                {profile.wardrobeSignals.analyzedItemCount} von{' '}
+                {profile.wardrobeSignals.totalItemCount} Teilen wurden bereits
+                mit echter Kleidungsanalyse ausgewertet.
+              </Text>
+
+              {profile.wardrobeSignals.dominantColors.length > 0 ? (
+                <View className="mb-3">
+                  <Text className="text-zinc-500 uppercase text-[10px] font-bold mb-1">
+                    Häufige Farben
+                  </Text>
+                  <Text className="text-white text-sm">
+                    {profile.wardrobeSignals.dominantColors.join(' · ')}
+                  </Text>
+                </View>
+              ) : null}
+
+              {profile.wardrobeSignals.dominantStyleTags.length > 0 ? (
+                <View>
+                  <Text className="text-zinc-500 uppercase text-[10px] font-bold mb-1">
+                    Erkannte Style-Signale
+                  </Text>
+                  <Text className="text-white text-sm">
+                    {profile.wardrobeSignals.dominantStyleTags.join(' · ')}
+                  </Text>
+                </View>
+              ) : null}
+
+              {wardrobeNeedsRefresh ? (
+                <TouchableOpacity
+                  disabled={isSaving}
+                  onPress={() => void handleRefresh()}
+                  className="bg-white rounded-xl py-3 items-center mt-5"
+                >
+                  {isSaving ? (
+                    <ActivityIndicator color="#000" />
+                  ) : (
+                    <Text className="text-black font-bold">
+                      Schrank neu auswerten
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ) : (
+                <Text className="text-emerald-400 text-xs mt-4 font-semibold">
+                  Style-DNA ist mit deinem Schrank synchron.
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setEditing(true)}
+              className="bg-black dark:bg-white rounded-2xl py-4 items-center mb-4"
+            >
+              <Text className="text-white dark:text-black font-bold">
+                Präferenzen bearbeiten
+              </Text>
+            </TouchableOpacity>
+
+            <View className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-4">
+              <Text className="font-bold text-black dark:text-white mb-1">
+                Foto-Style-Scan & 3D-Avatar
+              </Text>
+              <Text className="text-zinc-500 text-sm leading-5">
+                Diese Funktionen bleiben bewusst nachgelagert. Sie werden erst
+                aktiviert, wenn sie echte Daten liefern und den Kernfluss besser
+                machen – nicht als Demo-Button.
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View className="px-4">
+            <View className="mb-7">
+              <Text className="text-2xl font-bold text-black dark:text-white mb-2">
+                Welche Styles trägst du gern?
+              </Text>
+              <Text className="text-zinc-500 mb-4">
+                Wähle bis zu fünf. Deine Auswahl zählt stärker als automatisch
+                erkannte Wardrobe-Tags.
+              </Text>
+              <View className="flex-row flex-wrap">
+                {STYLE_PREFERENCES.map((style) => (
+                  <ChoiceChip
+                    key={style}
+                    label={STYLE_LABELS[style]}
+                    selected={questionnaire.preferredStyles.includes(style)}
+                    onPress={() =>
+                      setQuestionnaire((current) => ({
+                        ...current,
+                        preferredStyles: toggleValue<StylePreference>(
+                          current.preferredStyles,
+                          style,
+                          5,
+                        ),
+                      }))
+                    }
+                  />
                 ))}
               </View>
             </View>
 
-            {/* 3D Avatar Teaser */}
-            <View className="bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-3xl p-6 items-center">
-              <View className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full items-center justify-center mb-4">
-                <Text className="text-2xl">🧍</Text>
-              </View>
-              <Text className="text-lg font-bold text-black dark:text-white mb-2">Dein 3D-Avatar</Text>
-              <Text className="text-zinc-500 text-center mb-4 text-sm">
-                Basierend auf deiner DNA können wir einen Avatar für Virtual Try-On generieren. Gib dafür im nächsten Schritt deine Körpermaße ein.
+            <View className="mb-7">
+              <Text className="text-zinc-500 mb-3 uppercase text-xs font-bold">
+                Lieblingsfarben
               </Text>
-              <TouchableOpacity className="bg-zinc-100 dark:bg-zinc-800 px-6 py-2 rounded-xl">
-                <Text className="text-black dark:text-white font-semibold">Maße eingeben</Text>
-              </TouchableOpacity>
+              <View className="flex-row flex-wrap">
+                {STYLE_COLOR_OPTIONS.map((color) => (
+                  <ChoiceChip
+                    key={color}
+                    label={color}
+                    selected={questionnaire.preferredColors.includes(color)}
+                    onPress={() => handlePreferredColor(color)}
+                  />
+                ))}
+              </View>
             </View>
 
-            {/* Retake Button */}
-            <TouchableOpacity onPress={resetProfile} className="mt-8 items-center">
-              <Text className="text-zinc-400 font-medium">Scan wiederholen</Text>
+            <View className="mb-7">
+              <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
+                Farben, die du vermeiden möchtest
+              </Text>
+              <Text className="text-zinc-400 text-xs mb-3">
+                Optional – dieselbe Farbe kann nicht gleichzeitig bevorzugt und
+                vermieden sein.
+              </Text>
+              <View className="flex-row flex-wrap">
+                {STYLE_COLOR_OPTIONS.map((color) => (
+                  <ChoiceChip
+                    key={color}
+                    label={color}
+                    selected={questionnaire.avoidedColors.includes(color)}
+                    onPress={() => handleAvoidedColor(color)}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View className="mb-7">
+              <Text className="text-zinc-500 mb-3 uppercase text-xs font-bold">
+                Bevorzugte Passform
+              </Text>
+              <View className="flex-row flex-wrap">
+                {FIT_PREFERENCES.map((fit) => (
+                  <ChoiceChip
+                    key={fit}
+                    label={FIT_LABELS[fit]}
+                    selected={questionnaire.fitPreferences.includes(fit)}
+                    onPress={() =>
+                      setQuestionnaire((current) => ({
+                        ...current,
+                        fitPreferences: toggleValue<FitPreference>(
+                          current.fitPreferences,
+                          fit,
+                          3,
+                        ),
+                      }))
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+
+            <AxisSelector
+              title="Alltag: Casual bis Formal"
+              value={questionnaire.formalVsCasual}
+              labels={[AXIS_OPTIONS[0].left, AXIS_OPTIONS[1].left, AXIS_OPTIONS[2].left]}
+              onChange={(value) =>
+                setQuestionnaire((current) => ({
+                  ...current,
+                  formalVsCasual: value,
+                }))
+              }
+            />
+
+            <AxisSelector
+              title="Look: Minimal bis Bold"
+              value={questionnaire.minimalVsBold}
+              labels={[AXIS_OPTIONS[0].right, AXIS_OPTIONS[1].right, AXIS_OPTIONS[2].right]}
+              onChange={(value) =>
+                setQuestionnaire((current) => ({
+                  ...current,
+                  minimalVsBold: value,
+                }))
+              }
+            />
+
+            <TouchableOpacity
+              disabled={isSaving}
+              onPress={() => void handleSave()}
+              className="bg-black dark:bg-white rounded-2xl py-4 items-center mt-2"
+            >
+              {isSaving ? (
+                <ActivityIndicator />
+              ) : (
+                <Text className="text-white dark:text-black font-bold text-base">
+                  Style-DNA speichern
+                </Text>
+              )}
             </TouchableOpacity>
 
+            {profile ? (
+              <TouchableOpacity
+                onPress={() => {
+                  setQuestionnaire(profile.questionnaire);
+                  setEditing(false);
+                }}
+                className="items-center py-4"
+              >
+                <Text className="text-zinc-500 font-medium">Abbrechen</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         )}
-
       </ScrollView>
     </View>
   );
