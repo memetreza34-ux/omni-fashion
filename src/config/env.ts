@@ -36,6 +36,13 @@ export const firebaseClientEnvironment: FirebaseClientEnvironment = {
   appId: normalize(process.env.EXPO_PUBLIC_FIREBASE_APP_ID),
 };
 
+// Provisional EU default until the real Firebase projects are created. The
+// chosen production region must later be aligned with Functions/Firestore
+// deployment and documented before launch.
+export const firebaseFunctionsRegion =
+  normalize(process.env.EXPO_PUBLIC_FIREBASE_FUNCTIONS_REGION) ||
+  'europe-west1';
+
 export const isFirebaseConfigured = Object.values(
   firebaseClientEnvironment,
 ).every((value) => value.length > 0);
