@@ -379,7 +379,9 @@ service cloud.firestore {
         && ownerIdIsUnchanged()
         && wardrobeItemHasValidShape()
         && wardrobeProtectedFieldsAreUnchanged();
-      allow delete: if ownsExistingDocument();
+      allow delete: if ownsExistingDocument()
+        && resource.data.isListedForSwap == false
+        && !exists(/databases/$(database)/documents/swapLocks/$(itemId));
     }
 
     match /outfits/{outfitId} {
@@ -392,13 +394,10 @@ service cloud.firestore {
     match /swapListings/{listingId} {
       allow read: if resource.data.status == 'active'
         || (signedIn() && resource.data.ownerId == request.auth.uid);
-      allow create: if ownsIncomingDocument()
-        && request.resource.data.status in ['draft', 'active'];
-      allow update: if ownsExistingDocument()
-        && ownerIdIsUnchanged()
-        && request.resource.data.status in ['draft', 'active', 'paused', 'removed'];
-      allow delete: if ownsExistingDocument()
-        && resource.data.status in ['draft', 'paused', 'removed'];
+
+      // Public listing media and Wardrobe linkage must remain in sync, so all
+      // listing mutations are reserved for trusted backend commands.
+      allow create, update, delete: if false;
     }
 
     match /swapOffers/{offerId} {
