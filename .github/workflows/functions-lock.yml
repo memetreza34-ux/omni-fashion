@@ -24,8 +24,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '22.13.x'
-          cache: npm
-          cache-dependency-path: functions/package-lock.json
+          package-manager-cache: false
 
       - name: Generate package-lock
         working-directory: functions
