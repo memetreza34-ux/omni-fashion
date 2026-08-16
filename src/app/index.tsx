@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
-import { StyleDeciderModal } from '../components/StyleDeciderModal';
 import { useWardrobe } from '../context/WardrobeContext';
 import type { WardrobeItem, WardrobeSource } from '../types/wardrobe';
 
@@ -43,7 +42,6 @@ export default function WardrobeScreen() {
   } = useWardrobe();
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
-  const [showStyleDecider, setShowStyleDecider] = useState(false);
 
   useEffect(() => {
     if (!selectedItem) {
@@ -122,8 +120,6 @@ export default function WardrobeScreen() {
       if (isCloudBacked) {
         void analyzeItem(newItem.id).catch((analysisError: unknown) => {
           console.error('Automatic garment analysis failed', analysisError);
-          // The trusted backend persists a stable failed state when analysis
-          // itself started. The item remains safely stored either way.
         });
       }
     } catch (saveError: unknown) {
@@ -167,26 +163,14 @@ export default function WardrobeScreen() {
 
   return (
     <View className="flex-1 bg-zinc-50 dark:bg-zinc-950 pt-16 px-4">
-      <View className="flex-row justify-between items-center mb-4">
-        <View>
-          <Text className="text-3xl font-extrabold text-black dark:text-white">
-            Mein Schrank
-          </Text>
-          <Text className="text-zinc-500 text-xs mt-0.5">
-            {items.length} digitalisierte Teile
-            {isCloudBacked ? ' · Cloud + KI' : ' · Entwicklung lokal'}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => setShowStyleDecider(true)}
-          className="bg-purple-600/15 border border-purple-500/40 px-3.5 py-2 rounded-2xl flex-row items-center shadow-sm"
-        >
-          <Text className="text-sm mr-1.5">🔮</Text>
-          <Text className="text-purple-600 dark:text-purple-300 font-bold text-xs">
-            Style vorgeben
-          </Text>
-        </TouchableOpacity>
+      <View className="mb-5">
+        <Text className="text-3xl font-extrabold text-black dark:text-white">
+          Mein Schrank
+        </Text>
+        <Text className="text-zinc-500 text-xs mt-0.5">
+          {items.length} digitalisierte Teile
+          {isCloudBacked ? ' · Cloud + KI' : ' · Entwicklung lokal'}
+        </Text>
       </View>
 
       {error ? (
@@ -197,27 +181,14 @@ export default function WardrobeScreen() {
         </View>
       ) : null}
 
-      <TouchableOpacity
-        onPress={() => setShowStyleDecider(true)}
-        className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-500/30 rounded-2xl p-3.5 mb-5 flex-row items-center justify-between"
-      >
-        <View className="flex-row items-center flex-1 mr-2">
-          <View className="w-10 h-10 rounded-xl bg-purple-600/30 items-center justify-center mr-3 border border-purple-400/30">
-            <Text className="text-lg">🧠</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="text-white font-bold text-xs">
-              Keine Ahnung was du anziehen sollst?
-            </Text>
-            <Text className="text-purple-200/80 text-[11px]">
-              Outfit-Auswahl aus deinem Schrank
-            </Text>
-          </View>
-        </View>
-        <View className="bg-purple-600 px-3 py-1.5 rounded-xl">
-          <Text className="text-white font-extrabold text-[11px]">Wählen</Text>
-        </View>
-      </TouchableOpacity>
+      <View className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 mb-5">
+        <Text className="text-indigo-700 dark:text-indigo-300 font-bold text-sm">
+          Dein Schrank ist die Basis des Stylists
+        </Text>
+        <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-1 leading-5">
+          Je vollständiger Kategorie, Farbe und Stil gepflegt sind, desto besser kann Omni Fashion echte Outfits aus deinen eigenen Teilen bilden.
+        </Text>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="flex-row flex-wrap justify-between mb-24">
@@ -259,7 +230,7 @@ export default function WardrobeScreen() {
                     </View>
                   ) : null}
 
-                  <View className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md rounded-lg py-1 px-2">
+                  <View className="absolute bottom-2 left-2 right-2 bg-black/60 rounded-lg py-1 px-2">
                     <Text
                       className="text-white text-[10px] font-bold text-center"
                       numberOfLines={1}
@@ -307,11 +278,6 @@ export default function WardrobeScreen() {
         onSave={(item) => void handleSaveItem(item)}
         onDelete={(id) => void handleDeleteItem(id)}
         onAnalyze={analyzeItem}
-      />
-
-      <StyleDeciderModal
-        visible={showStyleDecider}
-        onClose={() => setShowStyleDecider(false)}
       />
     </View>
   );
