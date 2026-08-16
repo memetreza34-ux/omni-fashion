@@ -25,6 +25,7 @@ interface Props {
 const CATEGORIES: readonly WardrobeItem['category'][] = [
   'Top',
   'Bottom',
+  'Dress',
   'Shoes',
   'Accessory',
   'Outerwear',

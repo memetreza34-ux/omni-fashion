@@ -271,7 +271,7 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 120
         && request.resource.data.category in [
-          'Top', 'Bottom', 'Shoes', 'Accessory', 'Outerwear', 'Other'
+          'Top', 'Bottom', 'Dress', 'Shoes', 'Accessory', 'Outerwear', 'Other'
         ]
         && isNullableString(request.resource.data.subcategory)
         && request.resource.data.color is string

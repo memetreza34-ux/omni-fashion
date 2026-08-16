@@ -166,6 +166,18 @@ async function run() {
       updatedAt: Timestamp.now(),
     });
 
+    // Dress is a first-class wardrobe category and remains user-editable.
+    await updateDoc(wardrobeRef, {
+      category: 'Dress',
+      subcategory: 'Midikleid',
+      updatedAt: Timestamp.now(),
+    });
+    await updateDoc(wardrobeRef, {
+      category: 'Outerwear',
+      subcategory: null,
+      updatedAt: Timestamp.now(),
+    });
+
     await expectPermissionDenied(
       getDoc(doc(stranger.db, 'wardrobeItems', itemId)),
       'stranger reads private wardrobe item',
