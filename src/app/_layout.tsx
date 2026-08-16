@@ -6,6 +6,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { SavedOutfitsProvider } from '@/context/SavedOutfitsContext';
 import { StyleProfileProvider } from '@/context/StyleProfileContext';
 import { WardrobeProvider } from '@/context/WardrobeContext';
 import { VerifyEmailScreen } from '@/features/auth/components/VerifyEmailScreen';
@@ -36,8 +37,10 @@ function RootContent() {
   return (
     <WardrobeProvider>
       <StyleProfileProvider>
-        <AnimatedSplashOverlay />
-        <AppTabs />
+        <SavedOutfitsProvider>
+          <AnimatedSplashOverlay />
+          <AppTabs />
+        </SavedOutfitsProvider>
       </StyleProfileProvider>
     </WardrobeProvider>
   );
