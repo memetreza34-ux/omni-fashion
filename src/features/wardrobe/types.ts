@@ -70,6 +70,9 @@ export interface WardrobeItem {
   aiStatus: WardrobeAiStatus;
   aiConfidence: number | null;
   aiModelVersion: string | null;
+  aiPromptVersion: string | null;
+  aiAnalyzedAt: string | null;
+  aiErrorCode: string | null;
   isListedForSwap: boolean;
   swapListingId: string | null;
   createdAt: string;
@@ -118,6 +121,9 @@ export interface PersistedWardrobeItem {
   aiStatus: WardrobeAiStatus;
   aiConfidence: number | null;
   aiModelVersion: string | null;
+  aiPromptVersion: string | null;
+  aiAnalyzedAt: string | null;
+  aiErrorCode: string | null;
   isListedForSwap: boolean;
   swapListingId: string | null;
   createdAt: string;
