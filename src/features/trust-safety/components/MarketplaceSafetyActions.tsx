@@ -22,9 +22,11 @@ const REPORT_OPTIONS: readonly { value: ReportReason; label: string }[] = [
 export function MarketplaceSafetyActions({
   listingId,
   ownerId,
+  onBlocked,
 }: {
   listingId: string;
   ownerId: string;
+  onBlocked?: () => void;
 }) {
   const { blockUser, report } = useTrustSafety();
   const [showReasons, setShowReasons] = useState(false);
@@ -59,6 +61,26 @@ export function MarketplaceSafetyActions({
     }
   };
 
+  const runBlock = async () => {
+    if (blocking) {
+      return;
+    }
+
+    setBlocking(true);
+    try {
+      await blockUser(ownerId);
+      onBlocked?.();
+    } catch (error: unknown) {
+      console.error('Failed to block marketplace user', error);
+      Alert.alert(
+        'Blockierung fehlgeschlagen',
+        'Das Konto wurde nicht als blockiert markiert. Bitte erneut versuchen.',
+      );
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   const confirmBlock = () => {
     Alert.alert(
       'Konto blockieren?',
@@ -72,25 +94,6 @@ export function MarketplaceSafetyActions({
         },
       ],
     );
-  };
-
-  const runBlock = async () => {
-    if (blocking) {
-      return;
-    }
-
-    setBlocking(true);
-    try {
-      await blockUser(ownerId);
-    } catch (error: unknown) {
-      console.error('Failed to block marketplace user', error);
-      Alert.alert(
-        'Blockierung fehlgeschlagen',
-        'Das Konto wurde nicht als blockiert markiert. Bitte erneut versuchen.',
-      );
-    } finally {
-      setBlocking(false);
-    }
   };
 
   return (
