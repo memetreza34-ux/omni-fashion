@@ -102,6 +102,9 @@ function normalizeLocalItem(raw: unknown, ownerId: string): WardrobeItem | null 
     aiConfidence:
       typeof raw.aiConfidence === 'number' ? raw.aiConfidence : null,
     aiModelVersion: readNullableString(raw.aiModelVersion),
+    aiPromptVersion: readNullableString(raw.aiPromptVersion),
+    aiAnalyzedAt: readNullableString(raw.aiAnalyzedAt),
+    aiErrorCode: readNullableString(raw.aiErrorCode),
     isListedForSwap:
       typeof raw.isListedForSwap === 'boolean' ? raw.isListedForSwap : false,
     swapListingId: readNullableString(raw.swapListingId),
