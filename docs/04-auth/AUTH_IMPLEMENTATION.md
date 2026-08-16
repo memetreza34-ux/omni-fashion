@@ -2,130 +2,120 @@
 
 ## Ziel
 
-Der aktuelle Dummy-Login wird kontrolliert in ein echtes Firebase-Auth-System überführt, ohne die App während der Entwicklung unbenutzbar zu machen.
+Der frühere Dummy-Login wird schrittweise durch eine echte Omni-Fashion-Accountschicht ersetzt. Authentifizierung, Produktprofil, Verifizierung und spätere Accountlöschung werden bewusst getrennt behandelt.
 
 ---
 
-# 1. Aktueller Stand
-
-Bereits im Repo:
+# 1. Aktueller Code
 
 ```text
 src/features/auth/types.ts
 src/features/auth/services/auth-service.ts
+src/features/auth/services/auth-errors.ts
+src/features/auth/components/VerifyEmailScreen.tsx
+src/features/profile/types.ts
+src/features/profile/services/profile-service.ts
 src/context/AuthContext.tsx
 src/app/login.tsx
+src/app/_layout.tsx
 src/services/firebase/app.ts
 ```
 
-Bereits verbessert:
+Bereits umgesetzt:
 
-- `any` aus AuthContext entfernt
-- `AuthUser` Domain-Typ eingeführt
-- Credentials werden wirklich an Auth Service übergeben
-- Firebase `onAuthStateChanged` vorbereitet
-- Firebase E-Mail/Passwort-Login vorbereitet
-- Firebase Logout vorbereitet
-- React-Native Session-Persistenz vorbereitet
-- lokaler Demo-Zugang nur im Development-Fall
-- Release-Build ohne Firebase darf nicht still auf Dummy Auth zurückfallen
+- typisierter `AuthUser`
+- kein `any` im AuthContext
+- echtes Credential-Interface
+- Firebase Auth State Listener
+- E-Mail/Passwort Login
+- Registrierung
+- Display Name Update in Firebase Auth
+- automatische Verification Mail
+- Verification Mail erneut senden
+- Auth User neu laden
+- Passwort-Reset
+- Logout
+- zentrale Fehler-Normalisierung
+- `UserProfile` in Firestore
+- Profile Repair bei unvollständigem Profil
+- Login/Register/Reset UI
+- Verification Screen
+- Root Gate: unverifizierte echte Nutzer gelangen nicht in die Haupt-App
+- Development-Demo nur in `__DEV__`
 
 ---
 
-# 2. Warum der Dev-Demo-Modus noch existiert
+# 2. Entwicklungs-Demo
 
-Ohne echte Firebase-Projektwerte könnte die restliche Prototyp-App sonst nicht mehr geöffnet werden.
-
-Der Dev-Demo-Modus ist daher nur ein Entwicklungswerkzeug.
-
-Regel:
+Solange das echte Firebase-Development-Projekt noch nicht konfiguriert ist, bleibt ein lokaler Demo-Login verfügbar.
 
 ```text
 __DEV__ + Firebase fehlt
 → lokaler Development Demo User möglich
 
-Production + Firebase fehlt
-→ Fehler / kein Fake Login
+Release + Firebase fehlt
+→ kein stiller Fake Login
 ```
 
-Vor Release wird geprüft, ob dieser Pfad in Production wirklich unerreichbar ist.
+Registrierung, Verification und Passwort-Reset benötigen bewusst ein echtes Firebase-Projekt und werden nicht gefälscht.
 
 ---
 
-# 3. Nächster Auth-Schritt – Registrierung
+# 3. Registrierungsflow
 
-Service ergänzen um:
-
-```text
-registerWithEmail(email, password)
-```
-
-Ablauf:
+Aktuell implementierter Zielablauf:
 
 ```text
-createUserWithEmailAndPassword
-→ UserProfile erzeugen
+Name + E-Mail + Passwort
+→ createUserWithEmailAndPassword
+→ Auth displayName setzen
 → Verification Mail senden
-→ UI zeigt Verification State
+→ UserProfile sicherstellen
+→ Root zeigt Verification Screen
 ```
 
-Wichtig:
-
-Wenn Auth User erstellt wurde, aber Firestore Profile-Erstellung fehlschlägt, muss der Zustand wiederherstellbar sein.
-
-Darum soll Login später prüfen:
-
-```text
-Auth User vorhanden
-→ UserProfile vorhanden?
-→ wenn nein: Profile Repair / ensureUserProfile
-```
+`createUserProfileIfMissing()` ist reparierbar: Sollte der Auth-State schneller feuern als das Profil vollständig aufgebaut ist, kann ein späterer Aufruf einen fehlenden Anzeigenamen nachtragen.
 
 ---
 
 # 4. E-Mail-Verifizierung
 
-Nach Registrierung:
-
 ```text
 Account erstellt
-→ sendEmailVerification
 → Verification Screen
-→ Nutzer bestätigt Link
-→ App lädt User neu
+→ E-Mail öffnen
+→ Link bestätigen
+→ "Ich habe bestätigt"
+→ Firebase User reload
 → emailVerified == true
-→ Onboarding
+→ Haupt-App / später Onboarding-State
 ```
 
-Entscheidung für Release 1:
+Vor Release noch ergänzen:
 
-- Wardrobe/Stylist erst nach bestätigter E-Mail freigeben.
-- Resend Button mit Cooldown.
-- Abmelden muss auf Verification Screen möglich sein.
+- Resend Cooldown
+- bessere Deep-Link-Rückkehr in die App
+- finaler Onboarding-State nach erfolgreicher Verification
 
 ---
 
-# 5. Passwort vergessen
-
-Flow:
+# 5. Passwort-Reset
 
 ```text
 Login
 → Passwort vergessen
-→ E-Mail eingeben
+→ E-Mail
 → sendPasswordResetEmail
 → neutrale Erfolgsmeldung
 ```
 
-Die UI sollte nicht unnötig verraten, ob eine E-Mail registriert ist.
+Die Erfolgsmeldung ist bewusst neutral formuliert, damit die UI nicht unnötig verrät, ob eine bestimmte E-Mail als Konto existiert.
 
 ---
 
-# 6. UserProfile
+# 6. Auth vs UserProfile
 
-Auth und Produktprofil sind getrennt.
-
-Firebase Auth liefert:
+Firebase Auth ist Identität:
 
 ```text
 uid
@@ -134,7 +124,7 @@ displayName
 emailVerified
 ```
 
-Firestore `users/{uid}` liefert Omni-Fashion-spezifische Daten:
+Firestore `users/{uid}` ist das Omni-Fashion-Produktprofil:
 
 ```text
 displayName
@@ -148,20 +138,22 @@ updatedAt
 schemaVersion
 ```
 
-Repo enthält dafür bereits:
-
-```text
-src/features/profile/types.ts
-src/features/profile/services/profile-service.ts
-```
+Später werden StyleProfile, Reputation und Privacy Settings bewusst getrennt modelliert.
 
 ---
 
-# 7. Auth State Machine
+# 7. Ziel-State-Machine
 
-Langfristig soll Root UI nicht nur `user / no user` kennen.
+Die Root-UI kennt aktuell praktisch:
 
-Empfohlene Zustände:
+```text
+LOADING
+UNAUTHENTICATED
+AUTHENTICATED_UNVERIFIED
+READY / DEV_DEMO
+```
+
+Später erweitern auf:
 
 ```text
 BOOTING
@@ -172,15 +164,15 @@ AUTHENTICATED_NEEDS_ONBOARDING
 READY
 ```
 
-Dadurch lassen sich Login, Verification und Onboarding sauber trennen.
+Die Onboarding-Stufen werden erst ergänzt, wenn deren Datenmodell definiert ist.
 
 ---
 
 # 8. Routing-Ziel
 
-Aktuell rendert `_layout.tsx` bei fehlendem User direkt `LoginScreen`.
+Die jetzige direkte Root-Gate-Struktur wird zunächst beibehalten, damit während der Fundament-Migration kein unnötiger Router-Rewrite entsteht.
 
-Zielstruktur:
+Späteres Ziel:
 
 ```text
 src/app/
@@ -198,83 +190,105 @@ src/app/
 └── _layout.tsx
 ```
 
-Diese Router-Migration erfolgt kontrolliert, weil aktuell eigene Tab-Komponenten verwendet werden.
+Router-Gruppen erst migrieren, wenn Auth gegen Firebase real validiert ist.
 
 ---
 
 # 9. Fehlercodes
 
-Firebase-Fehler werden nicht roh angezeigt.
-
-Geplante App-Fehler:
+Aktuell normalisiert:
 
 ```text
 INVALID_CREDENTIALS
 EMAIL_ALREADY_IN_USE
+INVALID_EMAIL
 WEAK_PASSWORD
 TOO_MANY_ATTEMPTS
 NETWORK_UNAVAILABLE
-EMAIL_NOT_VERIFIED
+USER_DISABLED
 BACKEND_NOT_CONFIGURED
 UNKNOWN
 ```
 
-UI erhält lokalisierte Texte.
+Provider-Fehler werden nicht roh an Nutzer ausgegeben.
 
 ---
 
-# 10. Security
+# 10. Native Session Persistence – offener Integrationspunkt
 
-Auth schützt Identität, nicht automatisch Daten.
+Firebase dokumentiert für React Native `initializeAuth(...getReactNativePersistence(...))`. Im aktuellen Projekt-Typecheck mit Firebase 12 ist dieser Export jedoch nicht konsistent über `firebase/auth` typisiert, obwohl die öffentliche Firebase-Referenz ihn listet.
 
-Zusätzlich notwendig:
+Entscheidung:
+
+- kein `@ts-ignore`
+- kein erfundener Type Patch nur um CI grün zu machen
+- aktueller Bootstrap verwendet `getAuth(app)`
+- sobald das echte Firebase-Dev-Projekt existiert, wird Session Restore auf echten Android-/iOS-Builds getestet
+- falls Persistenz fehlt, wird eine versionskompatible native Initialisierung anhand der dann installierten Firebase-/Expo-Kombination implementiert und in CI + Device Test abgesichert
+
+**Auth ist deshalb noch nicht DONE.**
+
+---
+
+# 11. Security
+
+Auth allein schützt keine Daten.
+
+Bereits vorbereitet:
 
 - Firestore Rules
 - Storage Rules
-- serverseitige Trade Commands
+- private UserProfile/Wardrobe-Struktur
+- kritische SwapOffer-/Trade-Schreibzugriffe nicht direkt für Client geöffnet
+
+Noch erforderlich:
+
+- Rules Tests
+- App Check
 - Re-Authentication vor sensiblen Aktionen
-- Rate Limits / Abuse Schutz
+- Trusted Backend für Account Delete / Trade Commands
+- Abuse/Rate-Limit-Konzept
 
 ---
 
-# 11. Accountlöschung
+# 12. Accountlöschung
 
-Späterer Flow:
+Geplanter produktiver Flow:
 
 ```text
 Account löschen
 → Re-Authentication
 → aktive Trades prüfen
 → neue Trades blockieren
-→ Backend Cleanup Job
-→ Wardrobe Bilder löschen
-→ private Firestore Daten löschen/anonymisieren
+→ Trusted Backend Cleanup
+→ Wardrobe Images löschen
+→ private Daten löschen/anonymisieren
 → Auth User löschen
 → lokale Session löschen
 ```
 
-Nicht einfach nur `deleteUser(auth.currentUser)` aufrufen, weil sonst abhängige Daten zurückbleiben könnten.
+Nicht nur `deleteUser()` aufrufen, weil sonst abhängige Daten zurückbleiben können.
 
 ---
 
-# 12. Tests
+# 13. Testplan
 
-Mindestens:
-
-### Unit
+## Unit
 
 - Auth User Mapping
 - Fehler-Mapping
 - State Machine
+- Profile Mapping / Repair
 
-### Integration
+## Integration
 
 - Registrierung + Profile Creation
 - Login + Session Restore
+- Verification / Reload
 - Reset Mail
-- Verification
+- Firestore Rules
 
-### E2E
+## E2E
 
 ```text
 Register
@@ -287,19 +301,24 @@ Register
 
 ---
 
-# 13. Definition of Done
+# 14. Definition of Done
 
-- [ ] echtes Firebase Projekt verbunden
-- [x] Login Service vorbereitet
-- [x] Logout Service vorbereitet
-- [x] Auth State Listener vorbereitet
+- [ ] echtes Firebase Dev-Projekt verbunden
+- [x] Login Service
+- [x] Registrierung Service
+- [x] Verification Mail
+- [x] Verification Gate UI
+- [x] Password Reset Service/UI
+- [x] Logout
+- [x] Auth State Listener
 - [x] typed AuthContext
-- [ ] Registrierung implementiert
-- [ ] Verification Flow implementiert
-- [ ] Reset Flow implementiert
-- [x] UserProfile Domain vorbereitet
-- [x] UserProfile Firestore Service vorbereitet
-- [ ] Root Auth State Machine implementiert
-- [ ] Auth Router Gruppen implementiert
-- [ ] Account Delete Backend implementiert
-- [ ] Auth Tests grün
+- [x] UserProfile Domain
+- [x] UserProfile Firestore Service
+- [x] Profile Repair
+- [x] Auth Error Mapping
+- [ ] native Session Restore auf Android getestet
+- [ ] native Session Restore auf iOS getestet
+- [ ] Onboarding State integriert
+- [ ] Account Delete Backend
+- [ ] Auth/Rules Tests grün
+- [ ] finale Router-Gruppen, falls weiterhin sinnvoll
