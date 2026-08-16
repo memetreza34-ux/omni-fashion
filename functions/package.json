@@ -1,6 +1,7 @@
 {
   "name": "omni-fashion-functions",
   "version": "0.1.0",
+  "description": "Trusted backend for Omni Fashion callable commands and AI workflows.",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
