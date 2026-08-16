@@ -24,6 +24,7 @@ import {
 } from '../types';
 import type {
   UpdateWardrobeItemInput,
+  WardrobeAiFieldConfidence,
   WardrobeAiStatus,
   WardrobeCategory,
   WardrobeCondition,
@@ -109,6 +110,50 @@ function readNullableNumber(
   return value === null || typeof value === 'number' ? value : null;
 }
 
+function readNullableAiFieldConfidence(
+  record: Record<string, unknown>,
+): WardrobeAiFieldConfidence | null {
+  const value = record.aiFieldConfidence;
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const keys: readonly (keyof WardrobeAiFieldConfidence)[] = [
+    'category',
+    'subcategory',
+    'color',
+    'brand',
+    'material',
+    'season',
+    'styleTags',
+  ];
+
+  for (const key of keys) {
+    const confidence = value[key];
+    if (
+      typeof confidence !== 'number' ||
+      confidence < 0 ||
+      confidence > 1
+    ) {
+      return null;
+    }
+  }
+
+  return {
+    category: value.category as number,
+    subcategory: value.subcategory as number,
+    color: value.color as number,
+    brand: value.brand as number,
+    material: value.material as number,
+    season: value.season as number,
+    styleTags: value.styleTags as number,
+  };
+}
+
 function mapWardrobeDocument(
   snapshot: QueryDocumentSnapshot<DocumentData>,
 ): WardrobeItem | null {
@@ -169,6 +214,7 @@ function mapWardrobeDocument(
     source,
     aiStatus: aiStatus as WardrobeAiStatus,
     aiConfidence: readNullableNumber(raw, 'aiConfidence'),
+    aiFieldConfidence: readNullableAiFieldConfidence(raw),
     aiModelVersion: readNullableString(raw, 'aiModelVersion'),
     aiPromptVersion: readNullableString(raw, 'aiPromptVersion'),
     aiAnalyzedAt: readNullableTimestampIso(raw, 'aiAnalyzedAt'),
@@ -234,6 +280,7 @@ export async function createCloudWardrobeItem(
     source: input.source,
     aiStatus: 'not_requested' satisfies WardrobeAiStatus,
     aiConfidence: null,
+    aiFieldConfidence: null,
     aiModelVersion: null,
     aiPromptVersion: null,
     aiAnalyzedAt: null,
@@ -254,8 +301,6 @@ export async function updateCloudWardrobeItem(
   const { db } = getFirebaseServices();
   const itemRef = doc(db, 'wardrobeItems', itemId);
 
-  // The ownerId write is deliberate: Security Rules verify it is unchanged,
-  // and this makes ownership intent explicit in every mutation.
   await updateDoc(itemRef, {
     ...input,
     ownerId,
