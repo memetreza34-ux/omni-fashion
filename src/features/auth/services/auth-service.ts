@@ -2,12 +2,12 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-  User,
 } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 
 import { getFirebaseServices } from '@/services/firebase/app';
 
-import { AuthUser, LoginCredentials } from '../types';
+import type { AuthUser, LoginCredentials } from '../types';
 
 function mapFirebaseUser(user: User): AuthUser {
   return {
