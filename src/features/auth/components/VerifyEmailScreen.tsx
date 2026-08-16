@@ -1,21 +1,13 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Text, View } from 'react-native';
 
-import { normalizeAuthError } from '@/features/auth/services/auth-errors';
 import { useAuth } from '@/context/AuthContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
+import { normalizeAuthError } from '@/features/auth/services/auth-errors';
 
 export function VerifyEmailScreen() {
-  const {
-    user,
-    refreshUser,
-    resendVerification,
-    logout,
-  } = useAuth();
+  const { user, refreshUser, resendVerification, logout } = useAuth();
   const [isChecking, setIsChecking] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -50,6 +42,8 @@ export function VerifyEmailScreen() {
     }
   };
 
+  const blocked = isChecking || isResending;
+
   return (
     <View className="flex-1 bg-white dark:bg-zinc-950 justify-center px-8">
       <View className="mb-10">
@@ -69,56 +63,50 @@ export function VerifyEmailScreen() {
       </View>
 
       {message ? (
-        <View className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 mb-4">
-          <Text className="text-emerald-700 dark:text-emerald-300">
-            {message}
-          </Text>
+        <View className="mb-4">
+          <StatusBanner
+            tone="success"
+            title="E-Mail gesendet"
+            message={message}
+          />
         </View>
       ) : null}
 
       {errorMessage ? (
-        <View className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-4">
-          <Text className="text-red-600 dark:text-red-300">
-            {errorMessage}
-          </Text>
+        <View className="mb-4">
+          <StatusBanner
+            tone="danger"
+            title="Aktion nicht möglich"
+            message={errorMessage}
+          />
         </View>
       ) : null}
 
-      <TouchableOpacity
+      <AppButton
+        label="Ich habe bestätigt"
+        loading={isChecking}
+        disabled={isResending}
         onPress={() => void handleRefresh()}
-        disabled={isChecking || isResending}
-        className="bg-black dark:bg-white rounded-2xl p-4 items-center mb-3"
-      >
-        {isChecking ? (
-          <ActivityIndicator />
-        ) : (
-          <Text className="text-white dark:text-black font-bold text-base">
-            Ich habe bestätigt
-          </Text>
-        )}
-      </TouchableOpacity>
+      />
 
-      <TouchableOpacity
-        onPress={() => void handleResend()}
-        disabled={isChecking || isResending}
-        className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl p-4 items-center mb-3"
-      >
-        {isResending ? (
-          <ActivityIndicator />
-        ) : (
-          <Text className="text-black dark:text-white font-semibold">
-            E-Mail erneut senden
-          </Text>
-        )}
-      </TouchableOpacity>
+      <View className="mt-3">
+        <AppButton
+          label="E-Mail erneut senden"
+          variant="secondary"
+          loading={isResending}
+          disabled={isChecking}
+          onPress={() => void handleResend()}
+        />
+      </View>
 
-      <TouchableOpacity
-        onPress={() => void logout()}
-        disabled={isChecking || isResending}
-        className="p-4 items-center"
-      >
-        <Text className="text-zinc-500">Mit anderem Konto anmelden</Text>
-      </TouchableOpacity>
+      <View className="mt-2">
+        <AppButton
+          label="Mit anderem Konto anmelden"
+          variant="ghost"
+          disabled={blocked}
+          onPress={() => void logout()}
+        />
+      </View>
     </View>
   );
 }
