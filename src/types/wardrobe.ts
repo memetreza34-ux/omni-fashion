@@ -2,6 +2,7 @@ export type {
   CreateWardrobeItemInput,
   PersistedWardrobeItem,
   UpdateWardrobeItemInput,
+  WardrobeAiFieldConfidence,
   WardrobeAiStatus,
   WardrobeCategory,
   WardrobeCondition,
