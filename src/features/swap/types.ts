@@ -5,7 +5,7 @@ import type {
 
 export const SWAP_LISTING_SCHEMA_VERSION = 1 as const;
 export const SWAP_OFFER_SCHEMA_VERSION = 1 as const;
-export const SWAP_TRANSACTION_SCHEMA_VERSION = 1 as const;
+export const SWAP_TRANSACTION_SCHEMA_VERSION = 2 as const;
 
 export const SWAP_LISTING_STATUSES = [
   'active',
@@ -33,10 +33,21 @@ export const SWAP_TRANSACTION_STATUSES = [
   'disputed',
 ] as const;
 
+export const SWAP_FINALIZATION_STATES = [
+  'pending',
+  'ready',
+  'processing',
+  'completed',
+  'failed',
+] as const;
+
 export type SwapListingStatus = (typeof SWAP_LISTING_STATUSES)[number];
 export type SwapOfferStatus = (typeof SWAP_OFFER_STATUSES)[number];
 export type SwapTransactionStatus =
   (typeof SWAP_TRANSACTION_STATUSES)[number];
+export type SwapFinalizationState =
+  (typeof SWAP_FINALIZATION_STATES)[number];
+export type SwapFulfilmentMode = 'shipping' | 'meetup';
 
 export interface SwapListing {
   id: string;
@@ -99,7 +110,12 @@ export interface SwapTransaction {
   requestedWardrobeItemId: string;
   offeredWardrobeItemId: string;
   status: SwapTransactionStatus;
-  fulfilmentMode: 'shipping' | 'meetup' | null;
+  fulfilmentMode: SwapFulfilmentMode | null;
+  modeConfirmedByIds: string[];
+  shippedByIds: string[];
+  receivedByIds: string[];
+  finalizationState: SwapFinalizationState;
+  finalizationErrorCode: string | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
@@ -158,4 +174,21 @@ export interface RespondSwapOfferResponse {
   offerId: string;
   status: 'accepted' | 'declined';
   transactionId: string | null;
+}
+
+export type AdvanceSwapTransactionAction =
+  | { type: 'confirm_mode'; mode: SwapFulfilmentMode }
+  | { type: 'mark_shipped' }
+  | { type: 'mark_received' }
+  | { type: 'retry_finalize' };
+
+export interface AdvanceSwapTransactionInput {
+  transactionId: string;
+  action: AdvanceSwapTransactionAction;
+}
+
+export interface AdvanceSwapTransactionResponse {
+  transactionId: string;
+  status: SwapTransactionStatus;
+  finalizationState: SwapFinalizationState;
 }
