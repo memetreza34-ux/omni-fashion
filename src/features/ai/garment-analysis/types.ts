@@ -1,4 +1,5 @@
 import type {
+  WardrobeAiFieldConfidence,
   WardrobeCategory,
   WardrobeSeason,
 } from '@/features/wardrobe/types';
@@ -10,15 +11,7 @@ export interface GarmentAnalysisRequest {
   schemaVersion: typeof GARMENT_ANALYSIS_SCHEMA_VERSION;
 }
 
-export interface GarmentFieldConfidence {
-  category: number;
-  subcategory: number;
-  color: number;
-  brand: number;
-  material: number;
-  season: number;
-  styleTags: number;
-}
+export type GarmentFieldConfidence = WardrobeAiFieldConfidence;
 
 export interface GarmentAnalysisResult {
   category: WardrobeCategory;
