@@ -13,6 +13,10 @@ import {
   subscribeToOwnSwapListings,
 } from '@/features/swap/swap-listing-service';
 import {
+  cancelSwapOffer,
+  setSwapListingStatus,
+} from '@/features/swap/swap-lifecycle-service';
+import {
   respondSwapOffer,
   sendSwapOffer,
   subscribeToIncomingSwapOffers,
@@ -20,9 +24,11 @@ import {
   subscribeToSwapTransactions,
 } from '@/features/swap/swap-trade-service';
 import type {
+  CancelSwapOfferInput,
   CreateSwapListingInput,
   RespondSwapOfferInput,
   SendSwapOfferInput,
+  SetSwapListingStatusInput,
   SwapListing,
   SwapOffer,
   SwapTransaction,
@@ -39,7 +45,9 @@ interface SwapContextType {
   error: string | null;
   isCloudBacked: boolean;
   createListing: (input: CreateSwapListingInput) => Promise<string>;
+  changeListingStatus: (input: SetSwapListingStatusInput) => Promise<void>;
   sendOffer: (input: SendSwapOfferInput) => Promise<string>;
+  cancelOffer: (input: CancelSwapOfferInput) => Promise<void>;
   respondToOffer: (input: RespondSwapOfferInput) => Promise<string | null>;
 }
 
@@ -160,10 +168,22 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
     return response.listingId;
   };
 
+  const changeListingStatus = async (
+    input: SetSwapListingStatusInput,
+  ): Promise<void> => {
+    requireCloud();
+    await setSwapListingStatus(input);
+  };
+
   const sendOffer = async (input: SendSwapOfferInput): Promise<string> => {
     requireCloud();
     const response = await sendSwapOffer(input);
     return response.offerId;
+  };
+
+  const cancelOffer = async (input: CancelSwapOfferInput): Promise<void> => {
+    requireCloud();
+    await cancelSwapOffer(input);
   };
 
   const respondToOffer = async (
@@ -187,7 +207,9 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
         error,
         isCloudBacked,
         createListing,
+        changeListingStatus,
         sendOffer,
+        cancelOffer,
         respondToOffer,
       }}
     >
