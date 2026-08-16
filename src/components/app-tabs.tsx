@@ -2,10 +2,12 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { isFeatureEnabled } from '@/config/feature-flags';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const shopEnabled = isFeatureEnabled('shopPartnerFeed');
 
   return (
     <NativeTabs
@@ -28,7 +30,7 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="shop">
+      <NativeTabs.Trigger name="shop" hidden={!shopEnabled}>
         <NativeTabs.Trigger.Label>Entdecken</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/shop.png')}
