@@ -1,19 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {
-  STYLE_PROFILE_SCHEMA_VERSION,
-  STYLE_QUESTIONNAIRE_VERSION,
-} from '../types';
-import type {
-  SaveStyleProfileInput,
-  StyleProfile,
-} from '../types';
+import { STYLE_PROFILE_SCHEMA_VERSION } from '../types';
+import type { SaveStyleProfileInput, StyleProfile } from '../types';
+import { parseStyleProfileDocument } from './style-profile-service';
 
 const STORAGE_KEY = '@omni_fashion_style_profile_v1';
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 export async function loadLocalStyleProfile(
   userId: string,
@@ -23,29 +14,12 @@ export async function loadLocalStyleProfile(
     return null;
   }
 
-  const parsed: unknown = JSON.parse(stored);
-  if (!isRecord(parsed) || parsed.userId !== userId) {
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    return parseStyleProfileDocument(userId, parsed);
+  } catch {
     return null;
   }
-
-  const questionnaire = parsed.questionnaire;
-  const wardrobeSignals = parsed.wardrobeSignals;
-  const summary = parsed.summary;
-
-  if (
-    !isRecord(questionnaire) ||
-    !isRecord(wardrobeSignals) ||
-    !isRecord(summary) ||
-    questionnaire.questionnaireVersion !== STYLE_QUESTIONNAIRE_VERSION ||
-    parsed.schemaVersion !== STYLE_PROFILE_SCHEMA_VERSION
-  ) {
-    return null;
-  }
-
-  // Local storage is development-only. Runtime correctness is enforced when
-  // saving through typed app data; malformed old data is ignored rather than
-  // being treated as a valid production profile.
-  return parsed as unknown as StyleProfile;
 }
 
 export async function saveLocalStyleProfile(
