@@ -166,7 +166,6 @@ async function run() {
       updatedAt: Timestamp.now(),
     });
 
-    // Dress is a first-class wardrobe category and remains user-editable.
     await updateDoc(wardrobeRef, {
       category: 'Dress',
       subcategory: 'Midikleid',
@@ -260,29 +259,16 @@ async function run() {
       'client creates wardrobe item with forged AI state',
     );
 
-    const listingRef = doc(owner.db, 'swapListings', 'listing-1');
-    await setDoc(listingRef, {
-      ownerId,
-      wardrobeItemId: itemId,
-      title: 'Schwarze Lederjacke',
-      status: 'active',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-    assert.equal(
-      (await getDoc(doc(stranger.db, 'swapListings', 'listing-1'))).exists(),
-      true,
-    );
-    assert.equal(
-      (await getDoc(doc(anonymous.db, 'swapListings', 'listing-1'))).exists(),
-      true,
-    );
-
     await expectPermissionDenied(
-      updateDoc(doc(stranger.db, 'swapListings', 'listing-1'), {
-        title: 'Manipulated listing',
+      setDoc(doc(owner.db, 'swapListings', 'listing-1'), {
+        ownerId,
+        wardrobeItemId: itemId,
+        title: 'Schwarze Lederjacke',
+        status: 'active',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       }),
-      'stranger updates listing',
+      'client creates swap listing directly',
     );
 
     await expectPermissionDenied(
@@ -299,6 +285,20 @@ async function run() {
         status: 'accepted',
       }),
       'client creates trade transaction directly',
+    );
+    await expectPermissionDenied(
+      setDoc(doc(owner.db, 'swapLocks', itemId), {
+        ownerId,
+        offerId: 'fake-offer',
+      }),
+      'client creates swap lock directly',
+    );
+    await expectPermissionDenied(
+      setDoc(doc(owner.db, 'swapOfferKeys', `listing-1_${ownerId}`), {
+        requesterId: ownerId,
+        offerId: 'fake-offer',
+      }),
+      'client creates offer key directly',
     );
 
     await expectPermissionDenied(
