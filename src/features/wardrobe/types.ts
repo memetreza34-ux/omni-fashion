@@ -3,6 +3,7 @@ export const WARDROBE_SCHEMA_VERSION = 1;
 export const WARDROBE_CATEGORIES = [
   'Top',
   'Bottom',
+  'Dress',
   'Shoes',
   'Accessory',
   'Outerwear',
