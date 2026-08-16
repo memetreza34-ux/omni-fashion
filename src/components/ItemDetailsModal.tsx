@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Modal,
   ScrollView,
@@ -14,9 +15,11 @@ import type { WardrobeItem } from '../types/wardrobe';
 interface Props {
   visible: boolean;
   item: WardrobeItem | null;
+  canAnalyze: boolean;
   onClose: () => void;
   onSave: (item: WardrobeItem) => void;
   onDelete: (id: string) => void;
+  onAnalyze: (id: string) => Promise<void>;
 }
 
 const CATEGORIES: readonly WardrobeItem['category'][] = [
@@ -46,12 +49,34 @@ const CONDITIONS: readonly {
   { value: 'worn', label: 'Getragen' },
 ];
 
+function analysisDescription(item: WardrobeItem): string {
+  switch (item.aiStatus) {
+    case 'pending':
+      return 'Das Bild wird gerade sicher im Backend analysiert.';
+    case 'completed': {
+      const confidence =
+        item.aiConfidence === null
+          ? null
+          : Math.round(item.aiConfidence * 100);
+      return confidence === null
+        ? 'Die KI-Metadaten wurden übernommen. Bitte prüfe sie.'
+        : `Analyse abgeschlossen · ${confidence}% Gesamt-Confidence. Bitte prüfe die erkannten Daten.`;
+    }
+    case 'failed':
+      return 'Die Analyse konnte nicht abgeschlossen werden. Das Kleidungsstück bleibt trotzdem gespeichert.';
+    case 'not_requested':
+      return 'Kategorie, Farbe, Material und Stil können automatisch aus dem Foto vorgeschlagen werden.';
+  }
+}
+
 export function ItemDetailsModal({
   visible,
   item,
+  canAnalyze,
   onClose,
   onSave,
   onDelete,
+  onAnalyze,
 }: Props) {
   const [name, setName] = useState(item?.name ?? '');
   const [category, setCategory] = useState<WardrobeItem['category']>(
@@ -67,6 +92,8 @@ export function ItemDetailsModal({
   const [condition, setCondition] = useState<WardrobeItem['condition']>(
     item?.condition ?? 'good',
   );
+  const [analysisRequesting, setAnalysisRequesting] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!item) {
@@ -101,6 +128,32 @@ export function ItemDetailsModal({
     });
   };
 
+  const handleAnalyze = async () => {
+    if (!canAnalyze || item.aiStatus === 'pending' || analysisRequesting) {
+      return;
+    }
+
+    setAnalysisError(null);
+    setAnalysisRequesting(true);
+
+    try {
+      await onAnalyze(item.id);
+    } catch (error: unknown) {
+      console.error('Garment analysis request failed', error);
+      setAnalysisError(
+        'Die Analyse konnte nicht gestartet oder abgeschlossen werden. Bitte erneut versuchen.',
+      );
+    } finally {
+      setAnalysisRequesting(false);
+    }
+  };
+
+  const analysisBusy = item.aiStatus === 'pending' || analysisRequesting;
+  const showAnalyzeButton =
+    canAnalyze &&
+    !analysisBusy &&
+    (item.aiStatus === 'not_requested' || item.aiStatus === 'failed');
+
   return (
     <Modal
       animationType="slide"
@@ -126,14 +179,59 @@ export function ItemDetailsModal({
             {item.imageUrl ? (
               <Image
                 source={{ uri: item.imageUrl }}
-                className="w-full h-64 rounded-2xl mb-6 bg-zinc-100 dark:bg-zinc-800"
+                className="w-full h-64 rounded-2xl mb-4 bg-zinc-100 dark:bg-zinc-800"
                 resizeMode="contain"
               />
             ) : (
-              <View className="w-full h-64 rounded-2xl mb-6 bg-zinc-100 dark:bg-zinc-800 items-center justify-center">
+              <View className="w-full h-64 rounded-2xl mb-4 bg-zinc-100 dark:bg-zinc-800 items-center justify-center">
                 <Text className="text-zinc-400">Bild nicht verfügbar</Text>
               </View>
             )}
+
+            <View className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-6">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="font-bold text-indigo-700 dark:text-indigo-300">
+                  KI-Kleidungsanalyse
+                </Text>
+                {analysisBusy ? <ActivityIndicator size="small" /> : null}
+              </View>
+              <Text className="text-zinc-600 dark:text-zinc-300 text-xs leading-5">
+                {canAnalyze
+                  ? analysisDescription(item)
+                  : 'Echte KI-Analyse ist nur mit dem verbundenen Cloud-/Trusted-Backend aktiv.'}
+              </Text>
+
+              {item.aiStatus === 'completed' && item.styleTags.length > 0 ? (
+                <Text className="text-indigo-600 dark:text-indigo-300 text-xs mt-2">
+                  Stil: {item.styleTags.join(' · ')}
+                </Text>
+              ) : null}
+
+              {item.aiStatus === 'failed' && item.aiErrorCode ? (
+                <Text className="text-red-500 text-xs mt-2">
+                  Fehlercode: {item.aiErrorCode}
+                </Text>
+              ) : null}
+
+              {analysisError ? (
+                <Text className="text-red-500 text-xs mt-2">
+                  {analysisError}
+                </Text>
+              ) : null}
+
+              {showAnalyzeButton ? (
+                <TouchableOpacity
+                  onPress={() => void handleAnalyze()}
+                  className="bg-indigo-600 rounded-xl py-3 items-center mt-3"
+                >
+                  <Text className="text-white font-bold text-sm">
+                    {item.aiStatus === 'failed'
+                      ? 'Analyse erneut versuchen'
+                      : 'Jetzt analysieren'}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Name
