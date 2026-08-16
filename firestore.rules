@@ -114,62 +114,153 @@ service cloud.firestore {
         && request.resource.data.schemaVersion is int;
     }
 
-    function wardrobeItemHasValidShape() {
+    function styleQuestionnaireIsValid(value) {
+      return value is map
+        && value.keys().hasAll([
+          'preferredStyles',
+          'preferredColors',
+          'avoidedColors',
+          'fitPreferences',
+          'formalVsCasual',
+          'minimalVsBold',
+          'questionnaireVersion'
+        ])
+        && value.keys().hasOnly([
+          'preferredStyles',
+          'preferredColors',
+          'avoidedColors',
+          'fitPreferences',
+          'formalVsCasual',
+          'minimalVsBold',
+          'questionnaireVersion'
+        ])
+        && value.preferredStyles is list
+        && value.preferredStyles.size() >= 1
+        && value.preferredStyles.size() <= 5
+        && value.preferredStyles.hasOnly([
+          'minimal', 'classic', 'smart-casual', 'streetwear', 'sporty',
+          'vintage', 'y2k', 'dark-academia', 'romantic', 'edgy'
+        ])
+        && value.preferredColors is list
+        && value.preferredColors.size() <= 8
+        && value.preferredColors.hasOnly([
+          'Schwarz', 'Weiß', 'Grau', 'Beige', 'Braun', 'Blau', 'Grün',
+          'Rot', 'Rosa', 'Lila', 'Gelb', 'Orange'
+        ])
+        && value.avoidedColors is list
+        && value.avoidedColors.size() <= 8
+        && value.avoidedColors.hasOnly([
+          'Schwarz', 'Weiß', 'Grau', 'Beige', 'Braun', 'Blau', 'Grün',
+          'Rot', 'Rosa', 'Lila', 'Gelb', 'Orange'
+        ])
+        && value.fitPreferences is list
+        && value.fitPreferences.size() >= 1
+        && value.fitPreferences.size() <= 3
+        && value.fitPreferences.hasOnly(['slim', 'regular', 'oversized'])
+        && isConfidence(value.formalVsCasual)
+        && isConfidence(value.minimalVsBold)
+        && value.questionnaireVersion == 1;
+    }
+
+    function wardrobeStyleSignalsAreValid(value) {
+      return value is map
+        && value.keys().hasAll([
+          'dominantCategories',
+          'dominantColors',
+          'dominantStyleTags',
+          'analyzedItemCount',
+          'totalItemCount'
+        ])
+        && value.keys().hasOnly([
+          'dominantCategories',
+          'dominantColors',
+          'dominantStyleTags',
+          'analyzedItemCount',
+          'totalItemCount'
+        ])
+        && value.dominantCategories is list
+        && value.dominantCategories.size() <= 5
+        && value.dominantColors is list
+        && value.dominantColors.size() <= 5
+        && value.dominantStyleTags is list
+        && value.dominantStyleTags.size() <= 8
+        && value.analyzedItemCount is int
+        && value.analyzedItemCount >= 0
+        && value.totalItemCount is int
+        && value.totalItemCount >= 0
+        && value.analyzedItemCount <= value.totalItemCount;
+    }
+
+    function styleSummaryIsValid(value) {
+      return value is map
+        && value.keys().hasAll([
+          'title', 'archetype', 'description', 'topStyles'
+        ])
+        && value.keys().hasOnly([
+          'title', 'archetype', 'description', 'topStyles'
+        ])
+        && value.title is string
+        && value.title.size() > 0
+        && value.title.size() <= 80
+        && value.archetype is string
+        && value.archetype.size() > 0
+        && value.archetype.size() <= 80
+        && value.description is string
+        && value.description.size() > 0
+        && value.description.size() <= 400
+        && value.topStyles is list
+        && value.topStyles.size() >= 1
+        && value.topStyles.size() <= 3
+        && value.topStyles.hasOnly([
+          'minimal', 'classic', 'smart-casual', 'streetwear', 'sporty',
+          'vintage', 'y2k', 'dark-academia', 'romantic', 'edgy'
+        ]);
+    }
+
+    function styleProfileHasValidShape(userId) {
       return request.resource.data.keys().hasAll([
-          'ownerId',
-          'imagePath',
-          'name',
-          'category',
-          'subcategory',
-          'color',
-          'secondaryColors',
-          'brand',
-          'material',
-          'size',
-          'season',
-          'condition',
-          'styleTags',
-          'source',
-          'aiStatus',
-          'aiConfidence',
-          'aiFieldConfidence',
-          'aiModelVersion',
-          'aiPromptVersion',
-          'aiAnalyzedAt',
-          'aiErrorCode',
-          'isListedForSwap',
-          'swapListingId',
+          'userId',
+          'questionnaire',
+          'wardrobeSignals',
+          'summary',
           'createdAt',
           'updatedAt',
           'schemaVersion'
         ])
         && request.resource.data.keys().hasOnly([
-          'ownerId',
-          'imagePath',
-          'name',
-          'category',
-          'subcategory',
-          'color',
-          'secondaryColors',
-          'brand',
-          'material',
-          'size',
-          'season',
-          'condition',
-          'styleTags',
-          'source',
-          'aiStatus',
-          'aiConfidence',
-          'aiFieldConfidence',
-          'aiModelVersion',
-          'aiPromptVersion',
-          'aiAnalyzedAt',
-          'aiErrorCode',
-          'isListedForSwap',
-          'swapListingId',
+          'userId',
+          'questionnaire',
+          'wardrobeSignals',
+          'summary',
           'createdAt',
           'updatedAt',
           'schemaVersion'
+        ])
+        && request.resource.data.userId == userId
+        && styleQuestionnaireIsValid(request.resource.data.questionnaire)
+        && wardrobeStyleSignalsAreValid(request.resource.data.wardrobeSignals)
+        && styleSummaryIsValid(request.resource.data.summary)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.schemaVersion == 1;
+    }
+
+    function wardrobeItemHasValidShape() {
+      return request.resource.data.keys().hasAll([
+          'ownerId', 'imagePath', 'name', 'category', 'subcategory', 'color',
+          'secondaryColors', 'brand', 'material', 'size', 'season', 'condition',
+          'styleTags', 'source', 'aiStatus', 'aiConfidence',
+          'aiFieldConfidence', 'aiModelVersion', 'aiPromptVersion',
+          'aiAnalyzedAt', 'aiErrorCode', 'isListedForSwap', 'swapListingId',
+          'createdAt', 'updatedAt', 'schemaVersion'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ownerId', 'imagePath', 'name', 'category', 'subcategory', 'color',
+          'secondaryColors', 'brand', 'material', 'size', 'season', 'condition',
+          'styleTags', 'source', 'aiStatus', 'aiConfidence',
+          'aiFieldConfidence', 'aiModelVersion', 'aiPromptVersion',
+          'aiAnalyzedAt', 'aiErrorCode', 'isListedForSwap', 'swapListingId',
+          'createdAt', 'updatedAt', 'schemaVersion'
         ])
         && request.resource.data.ownerId is string
         && request.resource.data.imagePath is string
@@ -269,7 +360,13 @@ service cloud.firestore {
     }
 
     match /styleProfiles/{userId} {
-      allow read, create, update: if isCurrentUser(userId);
+      allow read: if isCurrentUser(userId);
+      allow create: if isCurrentUser(userId)
+        && styleProfileHasValidShape(userId);
+      allow update: if isCurrentUser(userId)
+        && styleProfileHasValidShape(userId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isCurrentUser(userId);
     }
 
