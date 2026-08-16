@@ -9,3 +9,5 @@ export { sendSwapOffer } from './callables/send-swap-offer.js';
 export { setSwapListingStatus } from './callables/set-swap-listing-status.js';
 export { setUserBlock } from './callables/set-user-block.js';
 export { submitReport } from './callables/submit-report.js';
+
+export { submitSwapReview } from './callables/submit-swap-review.js';
