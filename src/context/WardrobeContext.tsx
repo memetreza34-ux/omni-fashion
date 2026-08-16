@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
+import { requestGarmentAnalysis } from '@/features/ai/garment-analysis/garment-analysis-service';
 import {
   loadLocalWardrobe,
   saveLocalWardrobe,
@@ -37,6 +38,7 @@ interface WardrobeContextType {
   addItem: (input: CreateWardrobeItemInput) => Promise<WardrobeItem>;
   updateItem: (item: WardrobeItem) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  analyzeItem: (id: string) => Promise<void>;
 }
 
 const WardrobeContext = createContext<WardrobeContextType | undefined>(
@@ -321,6 +323,27 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
     await saveLocalWardrobe(nextItems);
   };
 
+  const analyzeItem = async (id: string): Promise<void> => {
+    if (!user) {
+      throw new Error('WARDROBE_AUTH_REQUIRED: No authenticated user.');
+    }
+
+    if (!isCloudBacked) {
+      throw new Error(
+        'WARDROBE_AI_REQUIRES_CLOUD: Garment analysis requires a real Firebase user and trusted backend.',
+      );
+    }
+
+    const item = itemsRef.current.find((candidate) => candidate.id === id);
+    if (item && item.ownerId !== user.id) {
+      throw new Error(
+        'WARDROBE_OWNER_MISMATCH: Cannot analyze another wardrobe.',
+      );
+    }
+
+    await requestGarmentAnalysis(id);
+  };
+
   return (
     <WardrobeContext.Provider
       value={{
@@ -331,6 +354,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         addItem,
         updateItem,
         deleteItem,
+        analyzeItem,
       }}
     >
       {children}
