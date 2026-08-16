@@ -73,7 +73,7 @@ export const getAccountDeletionReadiness = onCall(
     ];
     if (
       offerDocuments.some((document) =>
-        activeStatus(document.data().status, ['sent', 'accepted']),
+        activeStatus(document.data().status, ['sent']),
       )
     ) {
       blockers.push('ACTIVE_SWAP_OFFER');
