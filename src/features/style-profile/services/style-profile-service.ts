@@ -91,6 +91,12 @@ function timestampToIso(value: unknown): string | null {
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
 
+function readNullableIso(value: unknown): string | null {
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value))
+    ? value
+    : null;
+}
+
 function parseQuestionnaire(value: unknown): StyleQuestionnaire | null {
   if (!isRecord(value)) {
     return null;
@@ -206,7 +212,7 @@ function parseSummary(value: unknown): StyleProfileSummary | null {
   return { title, archetype, description, topStyles };
 }
 
-function parseStyleProfile(
+export function parseStyleProfileDocument(
   userId: string,
   value: unknown,
 ): StyleProfile | null {
@@ -232,8 +238,10 @@ function parseStyleProfile(
     questionnaire,
     wardrobeSignals,
     summary,
-    createdAt: timestampToIso(value.createdAt),
-    updatedAt: timestampToIso(value.updatedAt),
+    createdAt:
+      timestampToIso(value.createdAt) ?? readNullableIso(value.createdAt),
+    updatedAt:
+      timestampToIso(value.updatedAt) ?? readNullableIso(value.updatedAt),
     schemaVersion: STYLE_PROFILE_SCHEMA_VERSION,
   };
 }
@@ -248,7 +256,7 @@ export async function getStyleProfile(
     return null;
   }
 
-  return parseStyleProfile(userId, snapshot.data());
+  return parseStyleProfileDocument(userId, snapshot.data());
 }
 
 export async function saveStyleProfile(
