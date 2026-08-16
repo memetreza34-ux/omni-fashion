@@ -60,6 +60,14 @@ function readNullableString(
   return value === null || typeof value === 'string' ? value : null;
 }
 
+function readBoolean(
+  record: Record<string, unknown>,
+  key: string,
+): boolean | null {
+  const value = record[key];
+  return typeof value === 'boolean' ? value : null;
+}
+
 function readStringArray(
   record: Record<string, unknown>,
   key: string,
@@ -191,6 +199,8 @@ function mapTransaction(
   const listingOwnerId = readString(raw, 'listingOwnerId');
   const requestedWardrobeItemId = readString(raw, 'requestedWardrobeItemId');
   const offeredWardrobeItemId = readString(raw, 'offeredWardrobeItemId');
+  const shippingEnabled = readBoolean(raw, 'shippingEnabled');
+  const meetupEnabled = readBoolean(raw, 'meetupEnabled');
   const status = readEnum<SwapTransactionStatus>(
     raw,
     'status',
@@ -222,6 +232,9 @@ function mapTransaction(
     !participantIds.includes(listingOwnerId) ||
     !requestedWardrobeItemId ||
     !offeredWardrobeItemId ||
+    shippingEnabled === null ||
+    meetupEnabled === null ||
+    (!shippingEnabled && !meetupEnabled) ||
     !status ||
     !(
       fulfilmentMode === null ||
@@ -249,6 +262,8 @@ function mapTransaction(
     listingOwnerId,
     requestedWardrobeItemId,
     offeredWardrobeItemId,
+    shippingEnabled,
+    meetupEnabled,
     status,
     fulfilmentMode,
     modeConfirmedByIds,
