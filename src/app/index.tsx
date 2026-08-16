@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
@@ -15,6 +15,21 @@ import { StyleDeciderModal } from '../components/StyleDeciderModal';
 import { useWardrobe } from '../context/WardrobeContext';
 import type { WardrobeItem, WardrobeSource } from '../types/wardrobe';
 
+function aiBadge(item: WardrobeItem): string | null {
+  switch (item.aiStatus) {
+    case 'pending':
+      return 'KI…';
+    case 'completed':
+      return item.aiConfidence === null
+        ? 'KI ✓'
+        : `KI ${Math.round(item.aiConfidence * 100)}%`;
+    case 'failed':
+      return 'KI !';
+    case 'not_requested':
+      return null;
+  }
+}
+
 export default function WardrobeScreen() {
   const {
     items,
@@ -24,10 +39,22 @@ export default function WardrobeScreen() {
     addItem,
     updateItem,
     deleteItem,
+    analyzeItem,
   } = useWardrobe();
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
   const [showStyleDecider, setShowStyleDecider] = useState(false);
+
+  useEffect(() => {
+    if (!selectedItem) {
+      return;
+    }
+
+    const refreshedItem = items.find((item) => item.id === selectedItem.id);
+    if (refreshedItem) {
+      setSelectedItem(refreshedItem);
+    }
+  }, [items, selectedItem?.id]);
 
   const handleAddPress = () => {
     Alert.alert('Neues Item hinzufügen', 'Wähle eine Option:', [
@@ -90,9 +117,15 @@ export default function WardrobeScreen() {
         source,
       });
 
-      // Metadata starts deliberately neutral. A real AI analysis pipeline will
-      // enrich the item later instead of pretending a timeout is AI work.
       setSelectedItem(newItem);
+
+      if (isCloudBacked) {
+        void analyzeItem(newItem.id).catch((analysisError: unknown) => {
+          console.error('Automatic garment analysis failed', analysisError);
+          // The trusted backend persists a stable failed state when analysis
+          // itself started. The item remains safely stored either way.
+        });
+      }
     } catch (saveError: unknown) {
       console.error('Failed to add wardrobe item', saveError);
       Alert.alert(
@@ -141,7 +174,7 @@ export default function WardrobeScreen() {
           </Text>
           <Text className="text-zinc-500 text-xs mt-0.5">
             {items.length} digitalisierte Teile
-            {isCloudBacked ? ' · Cloud' : ' · Entwicklung lokal'}
+            {isCloudBacked ? ' · Cloud + KI' : ' · Entwicklung lokal'}
           </Text>
         </View>
 
@@ -195,33 +228,48 @@ export default function WardrobeScreen() {
           ) : null}
 
           {!isLoading &&
-            items.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                onPress={() => setSelectedItem(item)}
-                className="w-[48%] aspect-square bg-white dark:bg-zinc-900 rounded-2xl mb-4 items-center justify-center overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm"
-              >
-                {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    className="w-[85%] h-[85%]"
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <View className="w-[85%] h-[85%] items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-xl">
-                    <Text className="text-zinc-400 text-xs">Bild nicht verfügbar</Text>
+            items.map((item) => {
+              const badge = aiBadge(item);
+
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => setSelectedItem(item)}
+                  className="w-[48%] aspect-square bg-white dark:bg-zinc-900 rounded-2xl mb-4 items-center justify-center overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm"
+                >
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      className="w-[85%] h-[85%]"
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View className="w-[85%] h-[85%] items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-xl">
+                      <Text className="text-zinc-400 text-xs">
+                        Bild nicht verfügbar
+                      </Text>
+                    </View>
+                  )}
+
+                  {badge ? (
+                    <View className="absolute top-2 right-2 bg-indigo-600/90 rounded-full px-2 py-1">
+                      <Text className="text-white text-[9px] font-bold">
+                        {badge}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md rounded-lg py-1 px-2">
+                    <Text
+                      className="text-white text-[10px] font-bold text-center"
+                      numberOfLines={1}
+                    >
+                      {item.name}
+                    </Text>
                   </View>
-                )}
-                <View className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md rounded-lg py-1 px-2">
-                  <Text
-                    className="text-white text-[10px] font-bold text-center"
-                    numberOfLines={1}
-                  >
-                    {item.name}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              );
+            })}
 
           {!isLoading &&
             items.length === 0 &&
@@ -254,9 +302,11 @@ export default function WardrobeScreen() {
       <ItemDetailsModal
         visible={Boolean(selectedItem)}
         item={selectedItem}
+        canAnalyze={isCloudBacked}
         onClose={() => setSelectedItem(null)}
         onSave={(item) => void handleSaveItem(item)}
         onDelete={(id) => void handleDeleteItem(id)}
+        onAnalyze={analyzeItem}
       />
 
       <StyleDeciderModal
