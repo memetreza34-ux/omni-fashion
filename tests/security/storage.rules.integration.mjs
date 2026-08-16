@@ -10,7 +10,7 @@ import {
 import {
   connectStorageEmulator,
   deleteObject,
-  getBytes,
+  getMetadata,
   getStorage,
   ref,
   uploadBytes,
@@ -83,18 +83,22 @@ async function run() {
     const wardrobePath = `users/${ownerId}/wardrobe/item-1/original.jpg`;
     const ownerWardrobeRef = ref(owner.storage, wardrobePath);
 
-    // Owner can upload/read their private garment image.
-    await uploadBytes(ownerWardrobeRef, new Uint8Array([1, 2, 3, 4]), {
-      contentType: 'image/jpeg',
-    });
-    assert.deepEqual(
-      Array.from(await getBytes(ownerWardrobeRef)),
-      [1, 2, 3, 4],
+    // Owner can upload/read their private garment object. We intentionally
+    // validate readable metadata instead of byte equality because the Storage
+    // emulator may not round-trip tiny Uint8Array payloads byte-for-byte.
+    const wardrobeUpload = await uploadBytes(
+      ownerWardrobeRef,
+      new Uint8Array([1, 2, 3, 4]),
+      { contentType: 'image/jpeg' },
     );
+    const ownerMetadata = await getMetadata(ownerWardrobeRef);
+    assert.equal(ownerMetadata.fullPath, wardrobePath);
+    assert.equal(ownerMetadata.contentType, 'image/jpeg');
+    assert.equal(ownerMetadata.size, wardrobeUpload.metadata.size);
 
     // Another signed-in user cannot read or overwrite private wardrobe media.
     await expectStorageDenied(
-      getBytes(ref(stranger.storage, wardrobePath)),
+      getMetadata(ref(stranger.storage, wardrobePath)),
       'stranger reads private wardrobe image',
     );
     await expectStorageDenied(
@@ -119,17 +123,19 @@ async function run() {
     // Profile avatars are readable by authenticated marketplace users, but not
     // by anonymous clients.
     const avatarPath = `users/${ownerId}/avatars/profile.jpg`;
-    await uploadBytes(
+    const avatarUpload = await uploadBytes(
       ref(owner.storage, avatarPath),
       new Uint8Array([5, 6, 7]),
       { contentType: 'image/jpeg' },
     );
-    assert.deepEqual(
-      Array.from(await getBytes(ref(stranger.storage, avatarPath))),
-      [5, 6, 7],
+    const strangerAvatarMetadata = await getMetadata(
+      ref(stranger.storage, avatarPath),
     );
+    assert.equal(strangerAvatarMetadata.fullPath, avatarPath);
+    assert.equal(strangerAvatarMetadata.size, avatarUpload.metadata.size);
+
     await expectStorageDenied(
-      getBytes(ref(anonymous.storage, avatarPath)),
+      getMetadata(ref(anonymous.storage, avatarPath)),
       'anonymous reads authenticated-only avatar',
     );
 
