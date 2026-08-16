@@ -1,6 +1,8 @@
 import {
   collection,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   Timestamp,
   where,
@@ -15,6 +17,8 @@ import {
   NOTIFICATION_TYPES,
 } from './types';
 import type { AppNotification, NotificationType } from './types';
+
+const NOTIFICATION_FEED_LIMIT = 100;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -84,7 +88,12 @@ export function subscribeToNotifications(
 ): () => void {
   const { db } = getFirebaseServices();
   return onSnapshot(
-    query(collection(db, 'notifications'), where('userId', '==', userId)),
+    query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+      limit(NOTIFICATION_FEED_LIMIT),
+    ),
     (snapshot) => {
       onChange(
         snapshot.docs
@@ -92,8 +101,7 @@ export function subscribeToNotifications(
           .filter(
             (notification): notification is AppNotification =>
               notification !== null,
-          )
-          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          ),
       );
     },
     onError,
