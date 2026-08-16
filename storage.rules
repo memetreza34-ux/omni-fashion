@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isCurrentUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isValidImageUpload() {
+      return request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Private wardrobe media. Only the owner can read or change these files.
+    match /users/{userId}/wardrobe/{itemId}/{fileName} {
+      allow read: if isCurrentUser(userId);
+      allow create, update: if isCurrentUser(userId) && isValidImageUpload();
+      allow delete: if isCurrentUser(userId);
+    }
+
+    // Profile avatars can be shown to other authenticated marketplace users.
+    match /users/{userId}/avatars/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if isCurrentUser(userId) && isValidImageUpload();
+      allow delete: if isCurrentUser(userId);
+    }
+
+    // Public-safe listing media should be generated/copied by trusted backend
+    // logic. Clients may read it, but cannot write directly into this area.
+    match /public/listings/{listingId}/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny for every path not intentionally defined above.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
