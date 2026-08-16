@@ -101,11 +101,14 @@ Erledigt:
 - [x] `npm ci` läuft reproduzierbar in CI
 - [x] `check-no-any` läuft automatisch
 - [x] TypeScript Typecheck läuft automatisch
+- [x] Firebase Security Emulator Job in CI angelegt
+- [x] Java 21 für aktuelle/kommende Firestore-Emulator-Anforderungen vorgesehen
 - [x] vorhandene `as any`-Altlasten im Wardrobe-Modal entfernt
 - [x] dabei gefundene instabile Hook-Reihenfolge im Modal behoben
 
 Noch offen:
 
+- [ ] aktuellsten erweiterten CI-Lauf vollständig grün bestätigen
 - [ ] ESLint-Konfiguration prüfen/finalisieren
 - [ ] Formatter festlegen
 - [ ] Build-Smoke-Test in CI ergänzen
@@ -172,7 +175,7 @@ Die Firebase-Dokumentation beschreibt `getReactNativePersistence`, aber die im P
 
 # Phase 6 – Firebase Backend & Security
 
-**Status: 🟡 Bootstrap + Sicherheitsbasis vorhanden**
+**Status: 🟡 Sicherheitsbasis + automatisierte Tests vorhanden**
 
 Erledigt:
 
@@ -180,17 +183,24 @@ Erledigt:
 - [x] Firestore Bootstrap
 - [x] Storage Bootstrap
 - [x] `firebase.json`
+- [x] Emulator-Konfiguration für Auth/Firestore/Storage
 - [x] `firestore.indexes.json`
 - [x] Firestore Rules Baseline
 - [x] Storage Rules Baseline
 - [x] Default-Deny-Prinzip
 - [x] private Wardrobe-Zugriffe auf Owner begrenzt
+- [x] Wardrobe-Dokumentform und Werte validiert
+- [x] AI-Systemfelder clientseitig geschützt
+- [x] Swap-Link-Systemfelder clientseitig geschützt
 - [x] Marketplace Public Snapshot architektonisch getrennt
 - [x] Swap Offers für Client-Schreibzugriff gesperrt
 - [x] Trade Transactions für Client-Schreibzugriff gesperrt
 - [x] Reviews/Reputation clientseitig nicht frei manipulierbar
 - [x] Reports als moderationspflichtige Daten vorgesehen
 - [x] UserProfile-Felder in Rules validiert
+- [x] Firestore Rules Integration Tests geschrieben
+- [x] Storage Rules Integration Tests geschrieben
+- [x] Security Tests in GitHub Actions verdrahtet
 
 Externer Blocker:
 
@@ -200,7 +210,6 @@ Danach zwingend:
 
 - [ ] Firebase Auth Email/Password in Console aktivieren
 - [ ] Firestore/Storage im Dev-Projekt aktivieren
-- [ ] Rules im Emulator testen
 - [ ] Rules ins Dev-Projekt deployen
 - [ ] App Check
 - [ ] benötigte Firestore-Indizes anhand echter Queries
@@ -215,45 +224,96 @@ Dokument:
 
 # Phase 7 – Cloud Wardrobe
 
-**Status: 🔴 nächster großer Produktblock nach Auth/Firebase**
+**Status: 🟡 Kernmigration im Code umgesetzt, reale Cloud-/Device-Validierung offen**
 
-Geplante Reihenfolge:
+Erledigt:
 
-1. bestehendes `WardrobeItem` in neues Domain-Modell überführen
-2. Firestore Wardrobe Service
-3. Owner-basierte Queries
-4. Storage Upload Service
-5. bestehende lokale Items migrieren/Development-Fallback behandeln
-6. `WardrobeContext` auf Server State umstellen
-7. Loading / Error / Empty / Offline
-8. Rules Tests
-9. echte Geräteprüfung
+- [x] zentrales produktionsorientiertes `WardrobeItem` Domain-Modell
+- [x] bestehende UI-Felder kompatibel gehalten
+- [x] `ownerId` / Schema-Version / AI-/Swap-Systemfelder ergänzt
+- [x] Firestore Wardrobe Service
+- [x] Owner-basierte Live-Subscription
+- [x] Storage Upload Service
+- [x] Storage Download-URL nur zur Laufzeit auflösen
+- [x] private Storage-Pfade pro User/Item
+- [x] alter AsyncStorage-Schrank wird in Dev-Pfad auf V2 normalisiert
+- [x] echter Firebase User nutzt Cloud-Pfad
+- [x] Development Demo User nutzt lokalen Fallback
+- [x] `WardrobeContext` auf Cloud-aware Architektur umgestellt
+- [x] Fake-`setTimeout` für Upload/KI entfernt
+- [x] echte Fehlerzustände beim Speichern/Ändern/Löschen
+- [x] Item Editor um Marke/Material/Größe/Zustand erweitert
+- [x] Firestore Rules an neues Wardrobe-Schema angepasst
+- [x] Security Tests für private Wardrobe-Zugriffe
+
+Noch offen:
+
+- [ ] neuen Cloud-Wardrobe-Code im aktuellen CI-Lauf grün bestätigen
+- [ ] echte Firebase-Dev-Verbindung
+- [ ] Android Kamera/Galerie Upload real testen
+- [ ] iOS Kamera/Galerie Upload real testen
+- [ ] HEIC/HEIF Verhalten testen
+- [ ] Bildkompression/Resize vor Upload
+- [ ] Upload-Fortschritt
+- [ ] Retry/Cancel
+- [ ] Offline/Reconnect validieren
+- [ ] Firestore-Service-Integrationtests
+- [ ] Cloud Delete + Storage Cleanup real validieren
+
+Dokument:
+
+- `docs/06-wardrobe/CLOUD_WARDROBE.md`
 
 ---
 
-# Phase 8+ – Kernprodukt danach
+# Phase 8 – AI-Kleidungsanalyse
 
-1. AI-Kleidungsanalyse
-2. StyleProfile
-3. echter Outfit Engine
-4. echtes Weather
-5. OmniSwap auf echte Wardrobe Items umstellen
-6. Trusted Trade Backend
-7. Reviews / Trust & Safety
-8. Notifications
-9. Smart Shopping / Shop als MVP+
+**Status: 🔴 nächster Entwicklungsblock**
+
+Ziel:
+
+```text
+Wardrobe Image
+→ Trusted Backend
+→ Vision Provider
+→ strukturiertes Schema
+→ Confidence
+→ Systemfelder sicher aktualisieren
+→ Nutzer bestätigt/korrigiert
+```
+
+Wichtig:
+
+- keine AI-Secrets im Expo Client
+- keine direkte Client-Manipulation von `aiStatus`
+- Provider abstrahieren
+- Prompt/Schema versionieren
+- Kosten und Latenz messen
+- Fehlversuche und Retry modellieren
+
+---
+
+# Phase 9+ – Kernprodukt danach
+
+1. StyleProfile / Style-DNA
+2. echter Outfit Engine
+3. echtes Weather
+4. OmniSwap auf echte Wardrobe Items umstellen
+5. Trusted Trade Backend
+6. Reviews / Trust & Safety
+7. Notifications
+8. Smart Shopping / Shop als MVP+
 
 ---
 
 # Aktueller nächster technischer Schritt
 
 ```text
-1. aktuellen CI-Typecheck grün bekommen
-2. Auth-Flows mit echtem Firebase-Dev-Projekt validierbar machen
-3. Security Rules Tests vorbereiten
-4. Wardrobe Domain Modell konsolidieren
-5. Cloud Wardrobe Service bauen
-6. WardrobeContext kontrolliert von AsyncStorage migrieren
+1. aktuellen TypeScript-/Security-CI-Lauf grün bekommen
+2. AI-Kleidungsanalyse als Trusted-Backend-Contract definieren
+3. AI-Result-Schema + Versionierung bauen
+4. AI-Status-Flow sicher mit Wardrobe verbinden
+5. danach StyleProfile + Outfit Engine
 ```
 
 Die Roadmap darf jederzeit angepasst werden, aber jede Änderung muss den realen Omni-Fashion-Code widerspiegeln und darf keine Demo-Funktion als produktionsfertig markieren.
