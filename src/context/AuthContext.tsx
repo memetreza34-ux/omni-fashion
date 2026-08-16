@@ -1,44 +1,121 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  loginWithEmail,
+  logoutFirebaseUser,
+  subscribeToAuthUser,
+} from '@/features/auth/services/auth-service';
+import { AuthUser, LoginCredentials } from '@/features/auth/types';
+import { isFirebaseConfigured } from '@/services/firebase/app';
+
+const DEVELOPMENT_DEMO_USER_KEY = '@omni_fashion_dev_user';
 
 interface AuthContextType {
-  user: any | null; // For now, just a dummy object
+  user: AuthUser | null;
   isLoading: boolean;
-  login: () => Promise<void>;
+  isBackendConfigured: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isStoredAuthUser(value: unknown): value is AuthUser {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<AuthUser>;
+
+  return (
+    typeof candidate.id === 'string' &&
+    (typeof candidate.email === 'string' || candidate.email === null) &&
+    (typeof candidate.displayName === 'string' ||
+      candidate.displayName === null) &&
+    typeof candidate.emailVerified === 'boolean' &&
+    typeof candidate.isDevelopmentDemo === 'boolean'
+  );
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for dummy session
-    const loadSession = async () => {
+    if (isFirebaseConfigured) {
+      const unsubscribe = subscribeToAuthUser((nextUser) => {
+        setUser(nextUser);
+        setIsLoading(false);
+      });
+
+      return unsubscribe;
+    }
+
+    const loadDevelopmentSession = async () => {
       try {
-        const storedUser = await AsyncStorage.getItem('@dummy_user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        if (!__DEV__) {
+          return;
         }
-      } catch (e) {
-        console.error('Failed to load session', e);
+
+        const storedUser = await AsyncStorage.getItem(
+          DEVELOPMENT_DEMO_USER_KEY,
+        );
+
+        if (!storedUser) {
+          return;
+        }
+
+        const parsed: unknown = JSON.parse(storedUser);
+        if (isStoredAuthUser(parsed) && parsed.isDevelopmentDemo) {
+          setUser(parsed);
+        }
+      } catch (error: unknown) {
+        console.error('Failed to load development auth session', error);
       } finally {
         setIsLoading(false);
       }
     };
-    loadSession();
+
+    void loadDevelopmentSession();
+
+    return undefined;
   }, []);
 
-  const login = async () => {
+  const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
+
     try {
-      const dummyUser = { id: '1', name: 'Demo User' };
-      await AsyncStorage.setItem('@dummy_user', JSON.stringify(dummyUser));
-      setUser(dummyUser);
-    } catch (e) {
-      console.error('Failed to login', e);
+      if (isFirebaseConfigured) {
+        const authenticatedUser = await loginWithEmail(credentials);
+        setUser(authenticatedUser);
+        return;
+      }
+
+      if (!__DEV__) {
+        throw new Error(
+          'AUTH_BACKEND_NOT_CONFIGURED: Firebase must be configured for release builds.',
+        );
+      }
+
+      const developmentUser: AuthUser = {
+        id: 'development-demo-user',
+        email: credentials.email,
+        displayName: 'Development Demo',
+        emailVerified: true,
+        isDevelopmentDemo: true,
+      };
+
+      await AsyncStorage.setItem(
+        DEVELOPMENT_DEMO_USER_KEY,
+        JSON.stringify(developmentUser),
+      );
+      setUser(developmentUser);
     } finally {
       setIsLoading(false);
     }
@@ -46,27 +123,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setIsLoading(true);
+
     try {
-      await AsyncStorage.removeItem('@dummy_user');
+      if (user?.isDevelopmentDemo || !isFirebaseConfigured) {
+        await AsyncStorage.removeItem(DEVELOPMENT_DEMO_USER_KEY);
+        setUser(null);
+        return;
+      }
+
+      await logoutFirebaseUser();
       setUser(null);
-    } catch (e) {
-      console.error('Failed to logout', e);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isBackendConfigured: isFirebaseConfigured,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 }
