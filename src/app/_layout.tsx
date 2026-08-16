@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { SavedOutfitsProvider } from '@/context/SavedOutfitsContext';
 import { StyleProfileProvider } from '@/context/StyleProfileContext';
+import { SwapProvider } from '@/context/SwapContext';
 import { WardrobeProvider } from '@/context/WardrobeContext';
 import { VerifyEmailScreen } from '@/features/auth/components/VerifyEmailScreen';
 
@@ -38,8 +39,10 @@ function RootContent() {
     <WardrobeProvider>
       <StyleProfileProvider>
         <SavedOutfitsProvider>
-          <AnimatedSplashOverlay />
-          <AppTabs />
+          <SwapProvider>
+            <AnimatedSplashOverlay />
+            <AppTabs />
+          </SwapProvider>
         </SavedOutfitsProvider>
       </StyleProfileProvider>
     </WardrobeProvider>
