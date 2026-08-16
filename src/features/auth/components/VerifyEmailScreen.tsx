@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { useAuth } from '@/context/AuthContext';
@@ -6,12 +6,27 @@ import { AppButton } from '@/design-system/AppButton';
 import { StatusBanner } from '@/design-system/StatusBanner';
 import { normalizeAuthError } from '@/features/auth/services/auth-errors';
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export function VerifyEmailScreen() {
   const { user, refreshUser, resendVerification, logout } = useAuth();
   const [isChecking, setIsChecking] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      setCooldownSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [cooldownSeconds]);
 
   const handleRefresh = async () => {
     setIsChecking(true);
@@ -28,6 +43,10 @@ export function VerifyEmailScreen() {
   };
 
   const handleResend = async () => {
+    if (cooldownSeconds > 0) {
+      return;
+    }
+
     setIsResending(true);
     setMessage(null);
     setErrorMessage(null);
@@ -35,6 +54,7 @@ export function VerifyEmailScreen() {
     try {
       await resendVerification();
       setMessage('Die Bestätigungs-E-Mail wurde erneut gesendet.');
+      setCooldownSeconds(RESEND_COOLDOWN_SECONDS);
     } catch (error: unknown) {
       setErrorMessage(normalizeAuthError(error).message);
     } finally {
@@ -43,6 +63,11 @@ export function VerifyEmailScreen() {
   };
 
   const blocked = isChecking || isResending;
+  const resendBlocked = blocked || cooldownSeconds > 0;
+  const resendLabel =
+    cooldownSeconds > 0
+      ? `Erneut senden in ${cooldownSeconds} s`
+      : 'E-Mail erneut senden';
 
   return (
     <View className="flex-1 bg-white dark:bg-zinc-950 justify-center px-8">
@@ -91,10 +116,15 @@ export function VerifyEmailScreen() {
 
       <View className="mt-3">
         <AppButton
-          label="E-Mail erneut senden"
+          label={resendLabel}
+          accessibilityLabel={
+            cooldownSeconds > 0
+              ? `Bestätigungs-E-Mail kann in ${cooldownSeconds} Sekunden erneut gesendet werden`
+              : 'Bestätigungs-E-Mail erneut senden'
+          }
           variant="secondary"
           loading={isResending}
-          disabled={isChecking}
+          disabled={resendBlocked}
           onPress={() => void handleResend()}
         />
       </View>
