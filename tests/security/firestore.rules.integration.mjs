@@ -112,6 +112,7 @@ function validWardrobeItem(ownerId, itemId) {
     source: 'camera',
     aiStatus: 'not_requested',
     aiConfidence: null,
+    aiFieldConfidence: null,
     aiModelVersion: null,
     aiPromptVersion: null,
     aiAnalyzedAt: null,
@@ -191,11 +192,19 @@ async function run() {
       'owner changes wardrobe image ownership path',
     );
 
-    // AI state is written by the trusted backend, never by a normal client.
     await expectPermissionDenied(
       updateDoc(wardrobeRef, {
         aiStatus: 'completed',
         aiConfidence: 0.99,
+        aiFieldConfidence: {
+          category: 0.99,
+          subcategory: 0.9,
+          color: 0.99,
+          brand: 0.2,
+          material: 0.8,
+          season: 0.8,
+          styleTags: 0.85,
+        },
         aiModelVersion: 'fake-client-model',
         aiPromptVersion: 'fake-client-prompt',
         aiAnalyzedAt: Timestamp.now(),
@@ -223,6 +232,15 @@ async function run() {
         ...validWardrobeItem(ownerId, 'forged-item'),
         aiStatus: 'completed',
         aiConfidence: 1,
+        aiFieldConfidence: {
+          category: 1,
+          subcategory: 1,
+          color: 1,
+          brand: 1,
+          material: 1,
+          season: 1,
+          styleTags: 1,
+        },
         aiModelVersion: 'client-forged',
         aiPromptVersion: 'client-forged',
         aiAnalyzedAt: Timestamp.now(),
