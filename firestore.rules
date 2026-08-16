@@ -39,6 +39,10 @@ service cloud.firestore {
       return value == null || value is string;
     }
 
+    function isNullableTimestamp(value) {
+      return value == null || value is timestamp;
+    }
+
     function userProfileHasValidShape() {
       return request.resource.data.keys().hasAll([
           'displayName',
@@ -93,6 +97,9 @@ service cloud.firestore {
           'aiStatus',
           'aiConfidence',
           'aiModelVersion',
+          'aiPromptVersion',
+          'aiAnalyzedAt',
+          'aiErrorCode',
           'isListedForSwap',
           'swapListingId',
           'createdAt',
@@ -117,6 +124,9 @@ service cloud.firestore {
           'aiStatus',
           'aiConfidence',
           'aiModelVersion',
+          'aiPromptVersion',
+          'aiAnalyzedAt',
+          'aiErrorCode',
           'isListedForSwap',
           'swapListingId',
           'createdAt',
@@ -165,6 +175,21 @@ service cloud.firestore {
           )
         )
         && isNullableString(request.resource.data.aiModelVersion)
+        && (
+          request.resource.data.aiModelVersion == null
+          || request.resource.data.aiModelVersion.size() <= 120
+        )
+        && isNullableString(request.resource.data.aiPromptVersion)
+        && (
+          request.resource.data.aiPromptVersion == null
+          || request.resource.data.aiPromptVersion.size() <= 80
+        )
+        && isNullableTimestamp(request.resource.data.aiAnalyzedAt)
+        && isNullableString(request.resource.data.aiErrorCode)
+        && (
+          request.resource.data.aiErrorCode == null
+          || request.resource.data.aiErrorCode.size() <= 120
+        )
         && request.resource.data.isListedForSwap is bool
         && isNullableString(request.resource.data.swapListingId)
         && request.resource.data.createdAt is timestamp
@@ -176,6 +201,9 @@ service cloud.firestore {
       return request.resource.data.aiStatus == 'not_requested'
         && request.resource.data.aiConfidence == null
         && request.resource.data.aiModelVersion == null
+        && request.resource.data.aiPromptVersion == null
+        && request.resource.data.aiAnalyzedAt == null
+        && request.resource.data.aiErrorCode == null
         && request.resource.data.isListedForSwap == false
         && request.resource.data.swapListingId == null;
     }
@@ -186,6 +214,9 @@ service cloud.firestore {
         && request.resource.data.aiStatus == resource.data.aiStatus
         && request.resource.data.aiConfidence == resource.data.aiConfidence
         && request.resource.data.aiModelVersion == resource.data.aiModelVersion
+        && request.resource.data.aiPromptVersion == resource.data.aiPromptVersion
+        && request.resource.data.aiAnalyzedAt == resource.data.aiAnalyzedAt
+        && request.resource.data.aiErrorCode == resource.data.aiErrorCode
         && request.resource.data.isListedForSwap == resource.data.isListedForSwap
         && request.resource.data.swapListingId == resource.data.swapListingId;
     }
