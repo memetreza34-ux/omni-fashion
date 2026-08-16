@@ -13,7 +13,11 @@ import { useSwap } from '@/context/SwapContext';
 import { useWardrobe } from '@/context/WardrobeContext';
 import { CreateSwapListingModal } from '@/features/swap/components/CreateSwapListingModal';
 import { SendSwapOfferModal } from '@/features/swap/components/SendSwapOfferModal';
-import type { SwapListing, SwapOffer } from '@/features/swap/types';
+import type {
+  SetSwapListingStatusInput,
+  SwapListing,
+  SwapOffer,
+} from '@/features/swap/types';
 
 function money(valueCents: number | null): string | null {
   if (valueCents === null) {
@@ -51,10 +55,18 @@ function ListingCard({
   listing,
   actionLabel,
   onAction,
+  ownerActions,
+  busy,
 }: {
   listing: SwapListing;
   actionLabel?: string;
   onAction?: () => void;
+  ownerActions?: {
+    primaryLabel: string;
+    onPrimary: () => void;
+    onRemove: () => void;
+  } | null;
+  busy?: boolean;
 }) {
   const value = money(listing.estimatedValueCents);
 
@@ -132,6 +144,31 @@ function ListingCard({
             <Text className="text-white font-extrabold">{actionLabel}</Text>
           </TouchableOpacity>
         ) : null}
+
+        {ownerActions ? (
+          <View className="flex-row mt-3">
+            <TouchableOpacity
+              onPress={ownerActions.onPrimary}
+              disabled={busy}
+              className="flex-1 bg-zinc-900 dark:bg-white rounded-xl py-3 items-center mr-2"
+            >
+              {busy ? (
+                <ActivityIndicator size="small" color="#71717a" />
+              ) : (
+                <Text className="text-white dark:text-black font-bold text-xs">
+                  {ownerActions.primaryLabel}
+                </Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={ownerActions.onRemove}
+              disabled={busy}
+              className="flex-1 bg-red-500/10 border border-red-500/30 rounded-xl py-3 items-center"
+            >
+              <Text className="text-red-500 font-bold text-xs">Entfernen</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -142,11 +179,15 @@ function OfferCard({
   incoming,
   onAccept,
   onDecline,
+  onCancel,
+  busy,
 }: {
   offer: SwapOffer;
   incoming: boolean;
   onAccept?: () => void;
   onDecline?: () => void;
+  onCancel?: () => void;
+  busy?: boolean;
 }) {
   return (
     <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-3">
@@ -181,17 +222,39 @@ function OfferCard({
         <View className="flex-row mt-4">
           <TouchableOpacity
             onPress={onAccept}
+            disabled={busy}
             className="flex-1 bg-emerald-600 rounded-xl py-3 items-center mr-2"
           >
-            <Text className="text-white font-bold text-xs">Annehmen</Text>
+            {busy ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-bold text-xs">Annehmen</Text>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onDecline}
+            disabled={busy}
             className="flex-1 bg-red-500/10 border border-red-500/30 rounded-xl py-3 items-center"
           >
             <Text className="text-red-500 font-bold text-xs">Ablehnen</Text>
           </TouchableOpacity>
         </View>
+      ) : null}
+
+      {!incoming && offer.status === 'sent' && onCancel ? (
+        <TouchableOpacity
+          onPress={onCancel}
+          disabled={busy}
+          className="bg-zinc-100 dark:bg-zinc-800 rounded-xl py-3 items-center mt-4"
+        >
+          {busy ? (
+            <ActivityIndicator size="small" color="#71717a" />
+          ) : (
+            <Text className="text-zinc-700 dark:text-zinc-200 font-bold text-xs">
+              Angebot zurückziehen
+            </Text>
+          )}
+        </TouchableOpacity>
       ) : null}
     </View>
   );
@@ -209,13 +272,17 @@ export default function SwapScreen() {
     error,
     isCloudBacked,
     createListing,
+    changeListingStatus,
     sendOffer,
+    cancelOffer,
     respondToOffer,
   } = useSwap();
   const [tab, setTab] = useState<'market' | 'mine' | 'trades'>('market');
   const [listingModalVisible, setListingModalVisible] = useState(false);
   const [offerTarget, setOfferTarget] = useState<SwapListing | null>(null);
   const [respondingOfferId, setRespondingOfferId] = useState<string | null>(null);
+  const [changingListingId, setChangingListingId] = useState<string | null>(null);
+  const [cancellingOfferId, setCancellingOfferId] = useState<string | null>(null);
 
   const lockedOfferedIds = useMemo(
     () =>
@@ -228,11 +295,17 @@ export default function SwapScreen() {
   );
 
   const eligibleListingItems = items.filter(
-    (item) => item.imagePath && !item.isListedForSwap && !lockedOfferedIds.has(item.id),
+    (item) =>
+      item.imagePath &&
+      !item.isListedForSwap &&
+      !lockedOfferedIds.has(item.id),
   );
   const eligibleOfferItems = eligibleListingItems;
 
-  const handleRespond = async (offer: SwapOffer, decision: 'accept' | 'decline') => {
+  const handleRespond = async (
+    offer: SwapOffer,
+    decision: 'accept' | 'decline',
+  ) => {
     if (respondingOfferId) {
       return;
     }
@@ -256,6 +329,62 @@ export default function SwapScreen() {
       );
     } finally {
       setRespondingOfferId(null);
+    }
+  };
+
+  const runListingAction = async (
+    listing: SwapListing,
+    action: SetSwapListingStatusInput['action'],
+  ) => {
+    if (changingListingId) {
+      return;
+    }
+
+    setChangingListingId(listing.id);
+    try {
+      await changeListingStatus({ listingId: listing.id, action });
+    } catch (actionError: unknown) {
+      console.error('Failed to change OmniSwap listing status', actionError);
+      Alert.alert(
+        'Listing nicht geändert',
+        'Der bisherige Status bleibt bestehen. Bitte erneut versuchen.',
+      );
+    } finally {
+      setChangingListingId(null);
+    }
+  };
+
+  const confirmListingRemoval = (listing: SwapListing) => {
+    Alert.alert(
+      'Listing entfernen?',
+      'Das öffentliche Listing-Bild wird entfernt und das Kleidungsstück wieder für deinen privaten Schrank freigegeben. Offene Angebote laufen ab.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Entfernen',
+          style: 'destructive',
+          onPress: () => void runListingAction(listing, 'remove'),
+        },
+      ],
+    );
+  };
+
+  const handleCancelOffer = async (offer: SwapOffer) => {
+    if (cancellingOfferId) {
+      return;
+    }
+
+    setCancellingOfferId(offer.id);
+    try {
+      await cancelOffer({ offerId: offer.id });
+    } catch (cancelError: unknown) {
+      console.error('Failed to cancel OmniSwap offer', cancelError);
+      Alert.alert(
+        'Angebot nicht zurückgezogen',
+        'Das Angebot bleibt offen. Bitte erneut versuchen.',
+      );
+    } finally {
+      setCancellingOfferId(null);
     }
   };
 
@@ -372,9 +501,33 @@ export default function SwapScreen() {
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    ownListings.map((listing) => (
-                      <ListingCard key={listing.id} listing={listing} />
-                    ))
+                    ownListings.map((listing) => {
+                      const ownerActions =
+                        listing.status === 'active'
+                          ? {
+                              primaryLabel: 'Pausieren',
+                              onPrimary: () =>
+                                void runListingAction(listing, 'pause'),
+                              onRemove: () => confirmListingRemoval(listing),
+                            }
+                          : listing.status === 'paused'
+                            ? {
+                                primaryLabel: 'Reaktivieren',
+                                onPrimary: () =>
+                                  void runListingAction(listing, 'resume'),
+                                onRemove: () => confirmListingRemoval(listing),
+                              }
+                            : null;
+
+                      return (
+                        <ListingCard
+                          key={listing.id}
+                          listing={listing}
+                          ownerActions={ownerActions}
+                          busy={changingListingId === listing.id}
+                        />
+                      );
+                    })
                   )}
                 </>
               ) : null}
@@ -394,6 +547,7 @@ export default function SwapScreen() {
                         key={offer.id}
                         offer={offer}
                         incoming
+                        busy={respondingOfferId === offer.id}
                         onAccept={() => void handleRespond(offer, 'accept')}
                         onDecline={() => void handleRespond(offer, 'decline')}
                       />
@@ -409,7 +563,13 @@ export default function SwapScreen() {
                     </Text>
                   ) : (
                     outgoingOffers.map((offer) => (
-                      <OfferCard key={offer.id} offer={offer} incoming={false} />
+                      <OfferCard
+                        key={offer.id}
+                        offer={offer}
+                        incoming={false}
+                        busy={cancellingOfferId === offer.id}
+                        onCancel={() => void handleCancelOffer(offer)}
+                      />
                     ))
                   )}
 
@@ -435,7 +595,7 @@ export default function SwapScreen() {
                           </Text>
                         </View>
                         <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-2 leading-5">
-                          Die eigentliche Versand-/Übergabe- und Abschlussstrecke wird auf dieser echten Transaktion aufgebaut. Eigentum wird noch nicht vorzeitig übertragen.
+                          Eigentum wird erst nach einer beidseitig bestätigten Übergabe und sicherer Migration der privaten Bilder übertragen.
                         </Text>
                       </View>
                     ))
