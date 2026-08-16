@@ -71,7 +71,6 @@ export interface SwapOfferItemSnapshot {
   brand: string | null;
   size: string | null;
   condition: WardrobeCondition;
-  imagePath: string;
 }
 
 export interface SwapOffer {
