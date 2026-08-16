@@ -5,7 +5,7 @@ import {
   Timestamp,
   where,
 } from 'firebase/firestore';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref } from 'firebase/storage';
 
@@ -87,9 +87,7 @@ function timestampToIso(value: unknown): string | null {
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
 
-function mapListing(
-  snapshot: QueryDocumentSnapshot<DocumentData>,
-): SwapListing | null {
+function mapListing(snapshot: QueryDocumentSnapshot<unknown>): SwapListing | null {
   const raw = snapshot.data();
   if (!isRecord(raw)) {
     return null;
