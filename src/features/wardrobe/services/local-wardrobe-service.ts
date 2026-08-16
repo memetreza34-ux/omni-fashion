@@ -6,6 +6,7 @@ import {
   WARDROBE_SEASONS,
 } from '../types';
 import type {
+  WardrobeAiFieldConfidence,
   WardrobeCategory,
   WardrobeItem,
   WardrobeSeason,
@@ -40,6 +41,43 @@ function readStringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === 'string')
     : [];
+}
+
+function readAiFieldConfidence(value: unknown): WardrobeAiFieldConfidence | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const keys: readonly (keyof WardrobeAiFieldConfidence)[] = [
+    'category',
+    'subcategory',
+    'color',
+    'brand',
+    'material',
+    'season',
+    'styleTags',
+  ];
+
+  for (const key of keys) {
+    const confidence = value[key];
+    if (
+      typeof confidence !== 'number' ||
+      confidence < 0 ||
+      confidence > 1
+    ) {
+      return null;
+    }
+  }
+
+  return {
+    category: value.category as number,
+    subcategory: value.subcategory as number,
+    color: value.color as number,
+    brand: value.brand as number,
+    material: value.material as number,
+    season: value.season as number,
+    styleTags: value.styleTags as number,
+  };
 }
 
 function normalizeLocalItem(raw: unknown, ownerId: string): WardrobeItem | null {
@@ -101,6 +139,7 @@ function normalizeLocalItem(raw: unknown, ownerId: string): WardrobeItem | null 
         : 'not_requested',
     aiConfidence:
       typeof raw.aiConfidence === 'number' ? raw.aiConfidence : null,
+    aiFieldConfidence: readAiFieldConfidence(raw.aiFieldConfidence),
     aiModelVersion: readNullableString(raw.aiModelVersion),
     aiPromptVersion: readNullableString(raw.aiPromptVersion),
     aiAnalyzedAt: readNullableString(raw.aiAnalyzedAt),
@@ -136,7 +175,6 @@ export async function loadLocalWardrobe(ownerId: string): Promise<WardrobeItem[]
       .filter((item): item is WardrobeItem => item !== null);
   }
 
-  // One-time compatibility path for the original prototype storage key.
   const legacyItems = await readStoredArray(LEGACY_STORAGE_KEY);
   const migratedItems = legacyItems
     .map((item) => normalizeLocalItem(item, ownerId))
