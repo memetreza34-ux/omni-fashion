@@ -6,9 +6,11 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { SavedOutfitsProvider } from '@/context/SavedOutfitsContext';
 import { StyleProfileProvider } from '@/context/StyleProfileContext';
 import { SwapProvider } from '@/context/SwapContext';
+import { TrustSafetyProvider } from '@/context/TrustSafetyContext';
 import { WardrobeProvider } from '@/context/WardrobeContext';
 import { VerifyEmailScreen } from '@/features/auth/components/VerifyEmailScreen';
 
@@ -39,10 +41,14 @@ function RootContent() {
     <WardrobeProvider>
       <StyleProfileProvider>
         <SavedOutfitsProvider>
-          <SwapProvider>
-            <AnimatedSplashOverlay />
-            <AppTabs />
-          </SwapProvider>
+          <TrustSafetyProvider>
+            <NotificationProvider>
+              <SwapProvider>
+                <AnimatedSplashOverlay />
+                <AppTabs />
+              </SwapProvider>
+            </NotificationProvider>
+          </TrustSafetyProvider>
         </SavedOutfitsProvider>
       </StyleProfileProvider>
     </WardrobeProvider>
