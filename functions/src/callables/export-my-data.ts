@@ -1,5 +1,9 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import {
+  getFirestore,
+  Timestamp,
+  type QueryDocumentSnapshot,
+} from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 const FUNCTIONS_REGION = 'europe-west1';
@@ -39,12 +43,13 @@ function jsonSafe(value: unknown): unknown {
 }
 
 function documentData(id: string, raw: Record<string, unknown>) {
-  return { id, ...jsonSafe(raw) as Record<string, unknown> };
+  return {
+    id,
+    ...(jsonSafe(raw) as Record<string, unknown>),
+  };
 }
 
-function uniqueDocuments(
-  documents: { id: string; data: () => FirebaseFirestore.DocumentData }[],
-) {
+function uniqueDocuments(documents: QueryDocumentSnapshot[]) {
   const values = new Map<string, Record<string, unknown>>();
   for (const document of documents) {
     const raw: unknown = document.data();
