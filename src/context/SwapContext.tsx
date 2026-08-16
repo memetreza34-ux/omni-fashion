@@ -17,6 +17,7 @@ import {
   setSwapListingStatus,
 } from '@/features/swap/swap-lifecycle-service';
 import {
+  advanceSwapTransaction,
   respondSwapOffer,
   sendSwapOffer,
   subscribeToIncomingSwapOffers,
@@ -24,6 +25,7 @@ import {
   subscribeToSwapTransactions,
 } from '@/features/swap/swap-trade-service';
 import type {
+  AdvanceSwapTransactionInput,
   CancelSwapOfferInput,
   CreateSwapListingInput,
   RespondSwapOfferInput,
@@ -49,6 +51,7 @@ interface SwapContextType {
   sendOffer: (input: SendSwapOfferInput) => Promise<string>;
   cancelOffer: (input: CancelSwapOfferInput) => Promise<void>;
   respondToOffer: (input: RespondSwapOfferInput) => Promise<string | null>;
+  advanceTransaction: (input: AdvanceSwapTransactionInput) => Promise<void>;
 }
 
 const SwapContext = createContext<SwapContextType | undefined>(undefined);
@@ -194,6 +197,13 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
     return response.transactionId;
   };
 
+  const advanceTransaction = async (
+    input: AdvanceSwapTransactionInput,
+  ): Promise<void> => {
+    requireCloud();
+    await advanceSwapTransaction(input);
+  };
+
   return (
     <SwapContext.Provider
       value={{
@@ -211,6 +221,7 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
         sendOffer,
         cancelOffer,
         respondToOffer,
+        advanceTransaction,
       }}
     >
       {children}
