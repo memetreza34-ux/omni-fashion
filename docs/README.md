@@ -20,7 +20,7 @@ Die Master-Roadmap beschreibt **was** gebaut wird. Die Dateien hier beschreiben 
 | Auth | [`04-auth/AUTH_IMPLEMENTATION.md`](./04-auth/AUTH_IMPLEMENTATION.md) | 🟡 Code + UI weit vorbereitet, echte Firebase-Validierung offen |
 | Backend | [`05-backend/FIREBASE_SETUP.md`](./05-backend/FIREBASE_SETUP.md) | 🟡 Bootstrap + Security Rules + Emulator-Tests |
 | Wardrobe | [`06-wardrobe/CLOUD_WARDROBE.md`](./06-wardrobe/CLOUD_WARDROBE.md) | 🟡 Cloud-Migration im Code, reale Device-/Firebase-Validierung offen |
-| AI | `07-ai/` | 🔴 nächster Kernblock |
+| AI | [`07-ai/GARMENT_ANALYSIS.md`](./07-ai/GARMENT_ANALYSIS.md) | 🟡 Contract + Client Validation, Trusted Backend offen |
 | Stylist | `08-stylist/` | 🔴 produktive Migration offen |
 | OmniSwap | `09-omniswap/` | 🔴 produktive Migration offen |
 | Shop | `10-shop/` | ⚪ MVP+ |
@@ -44,8 +44,8 @@ So soll verhindert werden, dass Dokumentation und tatsächlicher Repo-Stand wied
 
 ```text
 aktuellen CI-Lauf grün bestätigen
-→ AI Kleidungsanalyse Contract + Schema
-→ Trusted Backend für AI
+→ Trusted Backend für AI reproduzierbar aufsetzen
+→ Garment Vision Provider Adapter
 → StyleProfile
 → Outfit Engine
 → OmniSwap an echte Wardrobe anbinden
