@@ -43,6 +43,42 @@ service cloud.firestore {
       return value == null || value is timestamp;
     }
 
+    function isConfidence(value) {
+      return value is number && value >= 0 && value <= 1;
+    }
+
+    function aiFieldConfidenceIsValid(value) {
+      return value == null
+        || (
+          value is map
+          && value.keys().hasAll([
+            'category',
+            'subcategory',
+            'color',
+            'brand',
+            'material',
+            'season',
+            'styleTags'
+          ])
+          && value.keys().hasOnly([
+            'category',
+            'subcategory',
+            'color',
+            'brand',
+            'material',
+            'season',
+            'styleTags'
+          ])
+          && isConfidence(value.category)
+          && isConfidence(value.subcategory)
+          && isConfidence(value.color)
+          && isConfidence(value.brand)
+          && isConfidence(value.material)
+          && isConfidence(value.season)
+          && isConfidence(value.styleTags)
+        );
+    }
+
     function userProfileHasValidShape() {
       return request.resource.data.keys().hasAll([
           'displayName',
@@ -96,6 +132,7 @@ service cloud.firestore {
           'source',
           'aiStatus',
           'aiConfidence',
+          'aiFieldConfidence',
           'aiModelVersion',
           'aiPromptVersion',
           'aiAnalyzedAt',
@@ -123,6 +160,7 @@ service cloud.firestore {
           'source',
           'aiStatus',
           'aiConfidence',
+          'aiFieldConfidence',
           'aiModelVersion',
           'aiPromptVersion',
           'aiAnalyzedAt',
@@ -168,12 +206,9 @@ service cloud.firestore {
         ]
         && (
           request.resource.data.aiConfidence == null
-          || (
-            request.resource.data.aiConfidence is number
-            && request.resource.data.aiConfidence >= 0
-            && request.resource.data.aiConfidence <= 1
-          )
+          || isConfidence(request.resource.data.aiConfidence)
         )
+        && aiFieldConfidenceIsValid(request.resource.data.aiFieldConfidence)
         && isNullableString(request.resource.data.aiModelVersion)
         && (
           request.resource.data.aiModelVersion == null
@@ -200,6 +235,7 @@ service cloud.firestore {
     function wardrobeCreateHasSafeSystemDefaults() {
       return request.resource.data.aiStatus == 'not_requested'
         && request.resource.data.aiConfidence == null
+        && request.resource.data.aiFieldConfidence == null
         && request.resource.data.aiModelVersion == null
         && request.resource.data.aiPromptVersion == null
         && request.resource.data.aiAnalyzedAt == null
@@ -213,6 +249,7 @@ service cloud.firestore {
         && request.resource.data.imagePath == resource.data.imagePath
         && request.resource.data.aiStatus == resource.data.aiStatus
         && request.resource.data.aiConfidence == resource.data.aiConfidence
+        && request.resource.data.aiFieldConfidence == resource.data.aiFieldConfidence
         && request.resource.data.aiModelVersion == resource.data.aiModelVersion
         && request.resource.data.aiPromptVersion == resource.data.aiPromptVersion
         && request.resource.data.aiAnalyzedAt == resource.data.aiAnalyzedAt
@@ -221,9 +258,6 @@ service cloud.firestore {
         && request.resource.data.swapListingId == resource.data.swapListingId;
     }
 
-    // Private account profile. Public marketplace profile data should later be
-    // exposed through a deliberately public projection, not by opening this
-    // whole document to everyone.
     match /users/{userId} {
       allow read: if isCurrentUser(userId);
       allow create: if isCurrentUser(userId)
@@ -231,9 +265,6 @@ service cloud.firestore {
       allow update: if isCurrentUser(userId)
         && userProfileHasValidShape()
         && request.resource.data.createdAt == resource.data.createdAt;
-
-      // Account deletion is intentionally reserved for trusted backend logic so
-      // related Storage objects and dependent records can be cleaned up safely.
       allow delete: if false;
     }
 
@@ -242,7 +273,6 @@ service cloud.firestore {
       allow delete: if isCurrentUser(userId);
     }
 
-    // Wardrobe is the private source of truth for a user's real garments.
     match /wardrobeItems/{itemId} {
       allow read: if ownsExistingDocument();
       allow create: if ownsIncomingDocument()
@@ -262,47 +292,33 @@ service cloud.firestore {
       allow delete: if ownsExistingDocument();
     }
 
-    // Marketplace listings intentionally contain a public-safe snapshot of a
-    // wardrobe item instead of exposing the private wardrobe document itself.
     match /swapListings/{listingId} {
       allow read: if resource.data.status == 'active'
         || (signedIn() && resource.data.ownerId == request.auth.uid);
-
       allow create: if ownsIncomingDocument()
         && request.resource.data.status in ['draft', 'active'];
-
-      // Owners may manage normal listing lifecycle states. Reservation/trade
-      // transitions are intentionally not client-writable.
       allow update: if ownsExistingDocument()
         && ownerIdIsUnchanged()
         && request.resource.data.status in ['draft', 'active', 'paused', 'removed'];
-
       allow delete: if ownsExistingDocument()
         && resource.data.status in ['draft', 'paused', 'removed'];
     }
 
-    // Offers are created and mutated through trusted backend commands so the
-    // server can validate ownership, conflicts and listing availability.
     match /swapOffers/{offerId} {
       allow read: if isSwapParticipant();
       allow create, update, delete: if false;
     }
 
-    // Trade state transitions are trusted-backend-only.
     match /swapTransactions/{transactionId} {
       allow read: if isTransactionParticipant();
       allow create, update, delete: if false;
     }
 
-    // Reviews are written by trusted completion logic to prevent arbitrary
-    // reputation manipulation. Reading currently requires authentication.
     match /reviews/{reviewId} {
       allow read: if signedIn();
       allow create, update, delete: if false;
     }
 
-    // Users can submit a report, but only moderation tooling should read or
-    // modify moderation records.
     match /reports/{reportId} {
       allow create: if signedIn()
         && request.resource.data.reporterId == request.auth.uid;
@@ -323,14 +339,12 @@ service cloud.firestore {
       allow read, create, update, delete: if isCurrentUser(userId);
     }
 
-    // Notification documents themselves are server-created.
     match /notifications/{notificationId} {
       allow read: if signedIn()
         && resource.data.userId == request.auth.uid;
       allow create, update, delete: if false;
     }
 
-    // Deny everything not explicitly modeled above.
     match /{document=**} {
       allow read, write: if false;
     }
