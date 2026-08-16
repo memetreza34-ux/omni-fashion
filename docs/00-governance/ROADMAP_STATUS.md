@@ -62,7 +62,7 @@ Dokumente:
 
 # Phase 2 – Tech Stack / Zielarchitektur
 
-**Status: 🟡 in Arbeit**
+**Status: 🟡 weitgehend festgelegt**
 
 Festgelegt:
 
@@ -72,12 +72,12 @@ Festgelegt:
 - [x] Firebase bleibt vorerst Ziel-Backend
 - [x] Backendzugriffe werden gekapselt
 - [x] Trusted Backend für kritische Commands vorgesehen
+- [x] Trusted Backend: Firebase Cloud Functions 2nd Gen + TypeScript + Node.js 22
 - [x] KI-Provider wird abstrahiert
 - [x] kein Big-Bang-Rewrite
 
 Offen:
 
-- [ ] genaue Trusted-Backend-Technologie festziehen
 - [ ] Analytics-Anbieter festlegen
 - [ ] Crash-Reporting-Anbieter festlegen
 - [ ] Feature-Flag-Technik festlegen
@@ -101,14 +101,16 @@ Erledigt:
 - [x] `npm ci` läuft reproduzierbar in CI
 - [x] `check-no-any` läuft automatisch
 - [x] TypeScript Typecheck läuft automatisch
-- [x] Firebase Security Emulator Job in CI angelegt
-- [x] Java 21 für aktuelle/kommende Firestore-Emulator-Anforderungen vorgesehen
+- [x] Firebase Security Emulator Job in CI
+- [x] Firestore + Storage Security Tests laufen im Emulator
+- [x] Java 21 für Emulator-Job
+- [x] GitHub Actions auf aktuelle Node-24-basierte Majors gehoben
+- [x] letzter vollständiger Quality-Lauf: TypeScript/Zero-any + Firebase Security grün
 - [x] vorhandene `as any`-Altlasten im Wardrobe-Modal entfernt
 - [x] dabei gefundene instabile Hook-Reihenfolge im Modal behoben
 
 Noch offen:
 
-- [ ] aktuellsten erweiterten CI-Lauf vollständig grün bestätigen
 - [ ] ESLint-Konfiguration prüfen/finalisieren
 - [ ] Formatter festlegen
 - [ ] Build-Smoke-Test in CI ergänzen
@@ -117,7 +119,7 @@ Noch offen:
 
 ### Gefundene Dependency-Schuld
 
-Der erste `npm ci`/Audit-Lauf meldet derzeit 23 bekannte Dependency-Hinweise (8 moderate, 15 high). Diese werden **nicht** blind mit `npm audit fix --force` behoben, sondern paketweise auf Expo-Kompatibilität geprüft.
+Der `npm ci`/Audit-Lauf meldet derzeit 23 bekannte Dependency-Hinweise (8 moderate, 15 high). Diese werden **nicht** blind mit `npm audit fix --force` behoben, sondern paketweise auf Expo-Kompatibilität geprüft.
 
 ---
 
@@ -175,13 +177,14 @@ Die Firebase-Dokumentation beschreibt `getReactNativePersistence`, aber die im P
 
 # Phase 6 – Firebase Backend & Security
 
-**Status: 🟡 Sicherheitsbasis + automatisierte Tests vorhanden**
+**Status: 🟡 Sicherheitsbasis + automatisierte Tests grün**
 
 Erledigt:
 
 - [x] Firebase Initialisierung in Service-Schicht
 - [x] Firestore Bootstrap
 - [x] Storage Bootstrap
+- [x] Functions Client Bootstrap + konfigurierbare Region
 - [x] `firebase.json`
 - [x] Emulator-Konfiguration für Auth/Firestore/Storage
 - [x] `firestore.indexes.json`
@@ -190,7 +193,7 @@ Erledigt:
 - [x] Default-Deny-Prinzip
 - [x] private Wardrobe-Zugriffe auf Owner begrenzt
 - [x] Wardrobe-Dokumentform und Werte validiert
-- [x] AI-Systemfelder clientseitig geschützt
+- [x] komplette AI-Systemmetadaten clientseitig geschützt
 - [x] Swap-Link-Systemfelder clientseitig geschützt
 - [x] Marketplace Public Snapshot architektonisch getrennt
 - [x] Swap Offers für Client-Schreibzugriff gesperrt
@@ -198,9 +201,10 @@ Erledigt:
 - [x] Reviews/Reputation clientseitig nicht frei manipulierbar
 - [x] Reports als moderationspflichtige Daten vorgesehen
 - [x] UserProfile-Felder in Rules validiert
-- [x] Firestore Rules Integration Tests geschrieben
-- [x] Storage Rules Integration Tests geschrieben
-- [x] Security Tests in GitHub Actions verdrahtet
+- [x] Firestore Rules Integration Tests
+- [x] Storage Rules Integration Tests
+- [x] Security Tests in GitHub Actions
+- [x] Emulator-Security-Tests erfolgreich durchgelaufen
 
 Externer Blocker:
 
@@ -214,7 +218,7 @@ Danach zwingend:
 - [ ] App Check
 - [ ] benötigte Firestore-Indizes anhand echter Queries
 - [ ] Budget Alerts
-- [ ] Trusted Backend aufsetzen
+- [ ] echtes Functions Deployment
 
 Dokument:
 
@@ -224,19 +228,20 @@ Dokument:
 
 # Phase 7 – Cloud Wardrobe
 
-**Status: 🟡 Kernmigration im Code umgesetzt, reale Cloud-/Device-Validierung offen**
+**Status: 🟡 Kernmigration im Code + CI/Security validiert, reale Cloud-/Device-Validierung offen**
 
 Erledigt:
 
 - [x] zentrales produktionsorientiertes `WardrobeItem` Domain-Modell
 - [x] bestehende UI-Felder kompatibel gehalten
 - [x] `ownerId` / Schema-Version / AI-/Swap-Systemfelder ergänzt
+- [x] AI-Modell-/Prompt-/Analyse-/Fehlermetadaten ergänzt
 - [x] Firestore Wardrobe Service
 - [x] Owner-basierte Live-Subscription
 - [x] Storage Upload Service
 - [x] Storage Download-URL nur zur Laufzeit auflösen
 - [x] private Storage-Pfade pro User/Item
-- [x] alter AsyncStorage-Schrank wird in Dev-Pfad auf V2 normalisiert
+- [x] alter AsyncStorage-Schrank wird im Dev-Pfad auf V2 normalisiert
 - [x] echter Firebase User nutzt Cloud-Pfad
 - [x] Development Demo User nutzt lokalen Fallback
 - [x] `WardrobeContext` auf Cloud-aware Architektur umgestellt
@@ -245,10 +250,11 @@ Erledigt:
 - [x] Item Editor um Marke/Material/Größe/Zustand erweitert
 - [x] Firestore Rules an neues Wardrobe-Schema angepasst
 - [x] Security Tests für private Wardrobe-Zugriffe
+- [x] TypeScript/Zero-any auf aktuellem Wardrobe-Code grün
+- [x] Firestore-/Storage-Security-Tests grün
 
 Noch offen:
 
-- [ ] neuen Cloud-Wardrobe-Code im aktuellen CI-Lauf grün bestätigen
 - [ ] echte Firebase-Dev-Verbindung
 - [ ] Android Kamera/Galerie Upload real testen
 - [ ] iOS Kamera/Galerie Upload real testen
@@ -257,7 +263,7 @@ Noch offen:
 - [ ] Upload-Fortschritt
 - [ ] Retry/Cancel
 - [ ] Offline/Reconnect validieren
-- [ ] Firestore-Service-Integrationtests
+- [ ] Firestore-Service-Integrationtests gegen echte/emulierte Services
 - [ ] Cloud Delete + Storage Cleanup real validieren
 
 Dokument:
@@ -268,28 +274,49 @@ Dokument:
 
 # Phase 8 – AI-Kleidungsanalyse
 
-**Status: 🔴 nächster Entwicklungsblock**
+**Status: 🟡 Contract, Security und erster Provider entschieden; Trusted Backend offen**
 
-Ziel:
+Erledigt:
 
-```text
-Wardrobe Image
-→ Trusted Backend
-→ Vision Provider
-→ strukturiertes Schema
-→ Confidence
-→ Systemfelder sicher aktualisieren
-→ Nutzer bestätigt/korrigiert
-```
+- [x] Fake-AI-Verarbeitung entfernt
+- [x] Request-/Response-Contract
+- [x] Runtime Response Validation
+- [x] Schema-Versionierung
+- [x] Confidence + Field Confidence modelliert
+- [x] Modell-Versionierung
+- [x] Prompt-Versionierung
+- [x] Analysezeitpunkt + stabiler Fehlercode im Wardrobe-Modell
+- [x] AI-Systemfelder durch Firestore Rules geschützt
+- [x] Callable Functions Client Service
+- [x] Functions Region konfigurierbar
+- [x] Trusted-Backend-Ziel: Firebase Functions 2nd Gen / TypeScript / Node 22
+- [x] erster Development-Provider: Google Gemini API
+- [x] erstes Modell: stabiler `gemini-3.6-flash`
+- [x] Provider-Abstraktion bleibt Pflicht
+- [x] Security Tests verhindern gefälschten AI-State vom Client
+- [x] vollständiger Server-Lifecycle dokumentiert
+- [x] Idempotenz-/Retry-/Kosten-/Evaluation-Prinzipien dokumentiert
 
-Wichtig:
+Offen:
 
-- keine AI-Secrets im Expo Client
-- keine direkte Client-Manipulation von `aiStatus`
-- Provider abstrahieren
-- Prompt/Schema versionieren
-- Kosten und Latenz messen
-- Fehlversuche und Retry modellieren
+- [ ] echtes `functions/` Paket mit Lockfile
+- [ ] `analyzeWardrobeItem` Function implementieren
+- [ ] `GarmentVisionProvider` Interface
+- [ ] `GeminiGarmentVisionProvider`
+- [ ] Gemini Secret Management
+- [ ] serverseitiges Structured-Output-Schema + Runtime Validation
+- [ ] pending/completed/failed Admin-Updates
+- [ ] Timeout / Idempotenz / Rate Limit
+- [ ] Backend Unit-/Emulator-Tests
+- [ ] Analyse-UI + Retry
+- [ ] Nutzerkorrektur für unsichere Felder
+- [ ] Evaluation Dataset
+- [ ] Datenschutz-/Datenresidenzprüfung vor kommerziellem Launch
+
+Dokumente:
+
+- `docs/07-ai/GARMENT_ANALYSIS.md`
+- `docs/07-ai/PROVIDER_DECISION.md`
 
 ---
 
@@ -309,11 +336,12 @@ Wichtig:
 # Aktueller nächster technischer Schritt
 
 ```text
-1. aktuellen TypeScript-/Security-CI-Lauf grün bekommen
-2. AI-Kleidungsanalyse als Trusted-Backend-Contract definieren
-3. AI-Result-Schema + Versionierung bauen
-4. AI-Status-Flow sicher mit Wardrobe verbinden
-5. danach StyleProfile + Outfit Engine
+1. Functions-Paket reproduzierbar aufsetzen
+2. analyzeWardrobeItem Trusted Backend implementieren
+3. Gemini Provider Adapter + Structured Output
+4. Backend Emulator Tests
+5. AI Analyse-UI anbinden
+6. danach StyleProfile + Outfit Engine
 ```
 
 Die Roadmap darf jederzeit angepasst werden, aber jede Änderung muss den realen Omni-Fashion-Code widerspiegeln und darf keine Demo-Funktion als produktionsfertig markieren.
