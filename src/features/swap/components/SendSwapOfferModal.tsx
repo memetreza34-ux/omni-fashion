@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { MarketplaceSafetyActions } from '@/features/trust-safety/components/MarketplaceSafetyActions';
 import type { WardrobeItem } from '@/features/wardrobe/types';
 
 import type { SwapListing } from '../types';
@@ -108,6 +109,12 @@ export function SendSwapOfferModal({
               </Text>
             </View>
           </View>
+
+          <MarketplaceSafetyActions
+            listingId={listing.id}
+            ownerId={listing.ownerId}
+            onBlocked={onClose}
+          />
 
           <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
             Dein Angebot
