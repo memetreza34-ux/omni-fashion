@@ -9,7 +9,25 @@ function readErrorCode(error: unknown): string | null {
   return typeof code === 'string' ? code : null;
 }
 
-function mapFirebaseCode(code: string | null): AuthErrorCode {
+function readErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return null;
+}
+
+function mapFirebaseCode(
+  code: string | null,
+  message: string | null,
+): AuthErrorCode {
+  if (
+    message?.startsWith('FIREBASE_NOT_CONFIGURED') ||
+    message?.startsWith('AUTH_BACKEND_NOT_CONFIGURED')
+  ) {
+    return 'BACKEND_NOT_CONFIGURED';
+  }
+
   switch (code) {
     case 'auth/invalid-credential':
     case 'auth/user-not-found':
@@ -28,9 +46,6 @@ function mapFirebaseCode(code: string | null): AuthErrorCode {
     case 'auth/user-disabled':
       return 'USER_DISABLED';
     default:
-      if (code === 'FIREBASE_NOT_CONFIGURED') {
-        return 'BACKEND_NOT_CONFIGURED';
-      }
       return 'UNKNOWN';
   }
 }
@@ -59,8 +74,7 @@ function messageForCode(code: AuthErrorCode): string {
 }
 
 export function normalizeAuthError(error: unknown): AuthActionError {
-  const rawCode = readErrorCode(error);
-  const code = mapFirebaseCode(rawCode);
+  const code = mapFirebaseCode(readErrorCode(error), readErrorMessage(error));
 
   return {
     code,
