@@ -1,347 +1,515 @@
 # Omni Fashion – Roadmap Status
 
-**Stand:** 16. August 2026
+**Stand:** 16. August 2026  
+**Arbeitsbranch:** `docs/app-development-a-z`  
+**Prinzip:** Diese Datei beschreibt den tatsächlichen Code-Stand. Kein Mock oder Konzept wird als produktionsfertig markiert.
 
-Diese Datei ist der tatsächliche Arbeitsstand. Dokumentation und Code werden gemeinsam aktualisiert.
+## Legende
 
-## Status-Legende
-
-- ✅ abgeschlossen / ausreichend definiert
-- 🟡 in Arbeit / teilweise
-- 🔴 offen
-- ⚪ später / nicht MVP-kritisch
-
----
-
-# Phase 0 – Produktdefinition
-
-**Status: ✅ Arbeitsbasis abgeschlossen**
-
-- [x] Hauptproblem definiert
-- [x] Produktversprechen definiert
-- [x] Haupt-USP `OWN → STYLE → SWAP → BUY BETTER`
-- [x] Produktprinzipien definiert
-- [x] Nutzersegmente nach Bedarf definiert
-- [x] MVP Scope eingefroren
-- [x] Nicht-Ziele definiert
-- [x] Kernmetriken vorgeschlagen
-
-Dokumente:
-
-- `docs/01-product/PRODUCT_FOUNDATION.md`
-- `docs/01-product/MVP_SCOPE.md`
-
-Bewusst später zu entscheiden:
-
-- [ ] endgültiger kommerzieller Launch-Markt
-- [ ] finale Monetarisierung anhand echter Nutzung
+- ✅ Kern im Repo implementiert und durch aktuelle Quality-Gates abgesichert
+- 🟡 technische Basis vorhanden, reale Production-/Device-Validierung oder Restarbeit offen
+- 🔴 noch nicht ausreichend implementiert
+- ⚪ bewusst später / MVP+
 
 ---
 
-# Phase 1 – Produktarchitektur und User Journeys
+## Phase 0 – Produktdefinition
 
-**Status: ✅ Produkt-/Systementwurf vorhanden**
+**Status: ✅**
 
-- [x] Kernjourneys detailliert
-- [x] Wardrobe als Source of Truth festgelegt
-- [x] Wardrobe → Stylist / Swap / Shopping Verbindung definiert
-- [x] Client-/Server-Vertrauensgrenze definiert
-- [x] Marketplace-Statuslogik konzeptionell definiert
-- [x] KI-Provider-Abstraktion vorgesehen
-- [x] Privacy/Security by Design definiert
-- [x] Feature Flags / Migration / Rollback ergänzt
-- [x] Admin-/Moderationsbedarf ergänzt
+- [x] Produktkern `OWN → STYLE → SWAP → BUY BETTER`
+- [x] Wardrobe als Source of Truth
+- [x] MVP Scope
+- [x] Nicht-Ziele
+- [x] User Journeys
+- [x] Engineering Rules
+- [x] Security/Privacy-by-Design-Prinzip
+- [x] Trusted-Backend-Grenze
 
-Dokumente:
-
-- `docs/01-product/USER_JOURNEYS.md`
-- `docs/02-architecture/TARGET_ARCHITECTURE.md`
-- `docs/00-governance/ENGINEERING_RULES.md`
+Offen bleibt die kommerzielle Entscheidung zu Launch-Markt und finaler Monetarisierung.
 
 ---
 
-# Phase 2 – Tech Stack / Zielarchitektur
+## Phase 1 – Zielarchitektur
 
-**Status: 🟡 weitgehend festgelegt**
+**Status: ✅ Kernarchitektur**
 
-Festgelegt:
-
-- [x] Expo + React Native bleibt bestehen
-- [x] Expo Router bleibt bestehen
-- [x] TypeScript strict bleibt bestehen
-- [x] Firebase bleibt vorerst Ziel-Backend
-- [x] Backendzugriffe werden gekapselt
-- [x] Trusted Backend für kritische Commands vorgesehen
-- [x] Trusted Backend: Firebase Cloud Functions 2nd Gen + TypeScript + Node.js 22
-- [x] KI-Provider wird abstrahiert
+- [x] Expo / React Native / Expo Router
+- [x] TypeScript strict
+- [x] Firebase Auth / Firestore / Storage / Functions
+- [x] Firebase Functions 2nd Gen / Node 22
+- [x] Feature-Domains statt beliebiger Firebase-Zugriffe in Screens
+- [x] Trusted Backend für AI, Marketplace, Trade, Moderation und Push
 - [x] kein Big-Bang-Rewrite
 
-Offen:
+Noch festzulegen:
 
-- [ ] Analytics-Anbieter festlegen
-- [ ] Crash-Reporting-Anbieter festlegen
-- [ ] Feature-Flag-Technik festlegen
-- [ ] E2E-/Integration-Testtools final festlegen
+- [ ] Analytics-Anbieter
+- [ ] Crash-Reporting-Anbieter
+- [ ] finale Feature-Flag-Technik
+- [ ] finales E2E-Tooling
 
 ---
 
-# Phase 3 – Repo-Hygiene / Environments / CI
+## Phase 2 – Repo, Environments und CI
 
 **Status: 🟡 weit fortgeschritten**
 
 Erledigt:
 
-- [x] Standard-Expo-README durch Omni-Fashion-README ersetzt
-- [x] `.env.example` angelegt
-- [x] `.gitignore` für Environment-Dateien gehärtet
-- [x] typisierte Environment-Konfiguration angelegt
-- [x] Dokumentationsstruktur aufgebaut
-- [x] Dummy-Firebase-Werte aus `firebaseConfig.ts` entfernt
-- [x] GitHub Actions Quality Workflow angelegt
-- [x] `npm ci` läuft reproduzierbar in CI
-- [x] `check-no-any` läuft automatisch
-- [x] TypeScript Typecheck läuft automatisch
-- [x] Firebase Security Emulator Job in CI
-- [x] Firestore + Storage Security Tests laufen im Emulator
-- [x] Java 21 für Emulator-Job
-- [x] GitHub Actions auf aktuelle Node-24-basierte Majors gehoben
-- [x] letzter vollständiger Quality-Lauf: TypeScript/Zero-any + Firebase Security grün
-- [x] vorhandene `as any`-Altlasten im Wardrobe-Modal entfernt
-- [x] dabei gefundene instabile Hook-Reihenfolge im Modal behoben
+- [x] Omni-Fashion-README
+- [x] `.env.example`
+- [x] Environment-Dateien aus Git ausgeschlossen
+- [x] typisierte Expo-Public-Environment-Schicht
+- [x] Dummy-Firebase-Werte entfernt
+- [x] GitHub Actions Quality Workflow
+- [x] Node 22.13.x
+- [x] `npm ci`
+- [x] TypeScript
+- [x] Zero-any-Gate
+- [x] Functions Typecheck + Build + Unit Tests
+- [x] Firebase Auth/Firestore/Storage Emulator Security Tests
+- [x] Trust-&-Safety-Regressions
+- [x] Push-Infrastruktur-Regressions
 
-Noch offen:
+Offen:
 
-- [ ] ESLint-Konfiguration prüfen/finalisieren
+- [ ] ESLint finalisieren
 - [ ] Formatter festlegen
-- [ ] Build-Smoke-Test in CI ergänzen
-- [ ] Development/Staging/Production EAS Environments real einrichten
-- [ ] Dependency-/Security-Audit kontrolliert aufarbeiten
+- [ ] Build-Smoke-Test ergänzen
+- [ ] echte EAS Development/Staging/Production Environments
+- [ ] Dependency-Audit paketweise aufarbeiten
 
-### Gefundene Dependency-Schuld
-
-Der `npm ci`/Audit-Lauf meldet derzeit 23 bekannte Dependency-Hinweise (8 moderate, 15 high). Diese werden **nicht** blind mit `npm audit fix --force` behoben, sondern paketweise auf Expo-Kompatibilität geprüft.
+Bekannte Dependency-Schuld bleibt bewusst ohne `npm audit fix --force`.
 
 ---
 
-# Phase 4 – Designsystem
+## Phase 3 – Designsystem
 
-**Status: 🔴 offen**
+**Status: 🔴**
 
-Die vorhandene Premium-UI bleibt bestehen. Tokens, gemeinsame Komponenten, Sprache und Zustände werden nach dem technischen Fundament konsolidiert.
+Die bestehende Premium-UI bleibt erhalten, aber ein verbindliches Designsystem ist noch nicht fertig:
+
+- [ ] Tokens
+- [ ] gemeinsame Buttons/Inputs/Cards
+- [ ] Zustandskomponenten
+- [ ] einheitliche Abstände/Typografie
+- [ ] Accessibility-Kontraste und Fokuszustände
+- [ ] UI-Sprache konsolidieren
 
 ---
 
-# Phase 5 – Auth & UserProfile
+## Phase 4 – Auth und UserProfile
 
-**Status: 🟡 aktiv in Umsetzung**
+**Status: 🟡 Codebasis weitgehend vorhanden**
 
 Erledigt:
 
-- [x] `any` aus AuthContext entfernt
-- [x] `AuthUser` Domain-Typ eingeführt
-- [x] zentraler Firebase Auth Service
-- [x] Auth State Subscription
-- [x] echtes E-Mail/Passwort-Login vorbereitet
-- [x] Registrierung mit E-Mail/Passwort implementiert
-- [x] Auth-DisplayName wird gesetzt
-- [x] Verifizierungs-Mail wird nach Registrierung gesendet
-- [x] Verifizierungs-Mail kann erneut gesendet werden
-- [x] Auth-User kann neu geladen werden
-- [x] Passwort-Reset Service implementiert
-- [x] zentrale Auth-Fehlercodes / nutzerfreundliche Meldungen
-- [x] Login/Register/Reset UI vorhanden
-- [x] nicht verifizierte echte Nutzer werden vor der App abgefangen
-- [x] Verification Screen vorhanden
-- [x] `UserProfile` Domain-Modell vorhanden
-- [x] Firestore Profile Service vorhanden
-- [x] fehlendes/halb erzeugtes UserProfile kann repariert werden
-- [x] Development-Demo explizit Dev-only
-- [x] Release darf ohne Firebase nicht still auf Fake-Login wechseln
+- [x] echtes E-Mail/Passwort Login
+- [x] Registrierung
+- [x] DisplayName
+- [x] E-Mail-Verifikation
+- [x] Verification Gate
+- [x] Verification erneut senden
+- [x] Passwort-Reset
+- [x] zentrale Fehlercodes
+- [x] UserProfile Domain + Firestore Service
+- [x] Profile Repair
+- [x] Development-Demo ausschließlich Dev-only
+- [x] Production fail-closed ohne Firebase
 
 Offen:
 
-- [ ] echtes Firebase-Projekt verbinden und Flows real testen
-- [ ] native Auth-Persistenz über App-Neustart finalisieren und auf Android/iOS validieren
-- [ ] Resend-Cooldown für Verification
-- [ ] vollständiger Onboarding-State nach Verification
+- [ ] reale Firebase-Dev-Validierung
+- [ ] native Auth-Persistenz über App-Neustart validieren
+- [ ] Verification Resend Cooldown
+- [ ] vollständiger Onboarding-State
 - [ ] Re-Authentication für sensible Aktionen
-- [ ] Accountlöschung über Trusted Backend
-- [ ] Auth Unit-/Integration-/E2E-Tests
-- [ ] Router-Gruppen `(auth)` / `(app)` erst nach stabiler Auth-Basis migrieren
-
-### Bekannter Firebase-Integrationspunkt
-
-Die Firebase-Dokumentation beschreibt `getReactNativePersistence`, aber die im Projekt aufgelösten Firebase-12-TypeScript-Exports liefern diese Funktion im aktuellen CI nicht konsistent. Deshalb wurde bewusst **kein `@ts-ignore`-Workaround** eingebaut. Der Bootstrap verwendet vorerst `getAuth()`; native Session-Persistenz wird mit echtem Firebase-Projekt und Device-Build gezielt finalisiert.
+- [ ] Trusted Account Deletion
+- [ ] Auth E2E auf Android/iOS
 
 ---
 
-# Phase 6 – Firebase Backend & Security
+## Phase 5 – Firebase Backend und Security
 
-**Status: 🟡 Sicherheitsbasis + automatisierte Tests grün**
+**Status: 🟡 lokale/CI-Sicherheitsbasis sehr weit**
 
 Erledigt:
 
-- [x] Firebase Initialisierung in Service-Schicht
-- [x] Firestore Bootstrap
-- [x] Storage Bootstrap
-- [x] Functions Client Bootstrap + konfigurierbare Region
-- [x] `firebase.json`
-- [x] Emulator-Konfiguration für Auth/Firestore/Storage
-- [x] `firestore.indexes.json`
-- [x] Firestore Rules Baseline
-- [x] Storage Rules Baseline
-- [x] Default-Deny-Prinzip
-- [x] private Wardrobe-Zugriffe auf Owner begrenzt
-- [x] Wardrobe-Dokumentform und Werte validiert
-- [x] komplette AI-Systemmetadaten clientseitig geschützt
-- [x] Swap-Link-Systemfelder clientseitig geschützt
-- [x] Marketplace Public Snapshot architektonisch getrennt
-- [x] Swap Offers für Client-Schreibzugriff gesperrt
-- [x] Trade Transactions für Client-Schreibzugriff gesperrt
-- [x] Reviews/Reputation clientseitig nicht frei manipulierbar
-- [x] Reports als moderationspflichtige Daten vorgesehen
-- [x] UserProfile-Felder in Rules validiert
-- [x] Firestore Rules Integration Tests
-- [x] Storage Rules Integration Tests
-- [x] Security Tests in GitHub Actions
-- [x] Emulator-Security-Tests erfolgreich durchgelaufen
+- [x] Firebase Service Bootstrap
+- [x] Firestore / Storage / Functions
+- [x] Default-Deny Rules
+- [x] UserProfile Validation
+- [x] private Wardrobe
+- [x] geschützte AI-Systemfelder
+- [x] geschützte Swap-Systemfelder
+- [x] server-only Offers / Transactions
+- [x] server-only Reports / Push-Infrastruktur / Moderation Audit
+- [x] Storage Owner-Grenzen
+- [x] Emulator-Security-Tests in CI
 
-Externer Blocker:
+Production-Blocker:
 
-- [ ] echte Firebase Development-/Production-Projekte und Werte
-
-Danach zwingend:
-
-- [ ] Firebase Auth Email/Password in Console aktivieren
-- [ ] Firestore/Storage im Dev-Projekt aktivieren
-- [ ] Rules ins Dev-Projekt deployen
+- [ ] echte Firebase Dev-/Prod-Projekte
+- [ ] Auth Provider in Console aktivieren
+- [ ] Rules deployen
+- [ ] Functions deployen
 - [ ] App Check
-- [ ] benötigte Firestore-Indizes anhand echter Queries
 - [ ] Budget Alerts
-- [ ] echtes Functions Deployment
-
-Dokument:
-
-- `docs/05-backend/FIREBASE_SETUP.md`
+- [ ] reale Query-Indizes anhand Deployment validieren
 
 ---
 
-# Phase 7 – Cloud Wardrobe
+## Phase 6 – Cloud Wardrobe
 
-**Status: 🟡 Kernmigration im Code + CI/Security validiert, reale Cloud-/Device-Validierung offen**
-
-Erledigt:
-
-- [x] zentrales produktionsorientiertes `WardrobeItem` Domain-Modell
-- [x] bestehende UI-Felder kompatibel gehalten
-- [x] `ownerId` / Schema-Version / AI-/Swap-Systemfelder ergänzt
-- [x] AI-Modell-/Prompt-/Analyse-/Fehlermetadaten ergänzt
-- [x] Firestore Wardrobe Service
-- [x] Owner-basierte Live-Subscription
-- [x] Storage Upload Service
-- [x] Storage Download-URL nur zur Laufzeit auflösen
-- [x] private Storage-Pfade pro User/Item
-- [x] alter AsyncStorage-Schrank wird im Dev-Pfad auf V2 normalisiert
-- [x] echter Firebase User nutzt Cloud-Pfad
-- [x] Development Demo User nutzt lokalen Fallback
-- [x] `WardrobeContext` auf Cloud-aware Architektur umgestellt
-- [x] Fake-`setTimeout` für Upload/KI entfernt
-- [x] echte Fehlerzustände beim Speichern/Ändern/Löschen
-- [x] Item Editor um Marke/Material/Größe/Zustand erweitert
-- [x] Firestore Rules an neues Wardrobe-Schema angepasst
-- [x] Security Tests für private Wardrobe-Zugriffe
-- [x] TypeScript/Zero-any auf aktuellem Wardrobe-Code grün
-- [x] Firestore-/Storage-Security-Tests grün
-
-Noch offen:
-
-- [ ] echte Firebase-Dev-Verbindung
-- [ ] Android Kamera/Galerie Upload real testen
-- [ ] iOS Kamera/Galerie Upload real testen
-- [ ] HEIC/HEIF Verhalten testen
-- [ ] Bildkompression/Resize vor Upload
-- [ ] Upload-Fortschritt
-- [ ] Retry/Cancel
-- [ ] Offline/Reconnect validieren
-- [ ] Firestore-Service-Integrationtests gegen echte/emulierte Services
-- [ ] Cloud Delete + Storage Cleanup real validieren
-
-Dokument:
-
-- `docs/06-wardrobe/CLOUD_WARDROBE.md`
-
----
-
-# Phase 8 – AI-Kleidungsanalyse
-
-**Status: 🟡 Contract, Security und erster Provider entschieden; Trusted Backend offen**
+**Status: 🟡 produktionsorientierter Kern implementiert**
 
 Erledigt:
 
-- [x] Fake-AI-Verarbeitung entfernt
-- [x] Request-/Response-Contract
-- [x] Runtime Response Validation
-- [x] Schema-Versionierung
-- [x] Confidence + Field Confidence modelliert
-- [x] Modell-Versionierung
-- [x] Prompt-Versionierung
-- [x] Analysezeitpunkt + stabiler Fehlercode im Wardrobe-Modell
-- [x] AI-Systemfelder durch Firestore Rules geschützt
-- [x] Callable Functions Client Service
-- [x] Functions Region konfigurierbar
-- [x] Trusted-Backend-Ziel: Firebase Functions 2nd Gen / TypeScript / Node 22
-- [x] erster Development-Provider: Google Gemini API
-- [x] erstes Modell: stabiler `gemini-3.6-flash`
-- [x] Provider-Abstraktion bleibt Pflicht
-- [x] Security Tests verhindern gefälschten AI-State vom Client
-- [x] vollständiger Server-Lifecycle dokumentiert
-- [x] Idempotenz-/Retry-/Kosten-/Evaluation-Prinzipien dokumentiert
+- [x] kanonisches `WardrobeItem`
+- [x] Firestore Live-Sync
+- [x] private Storage Uploads
+- [x] runtime Download URLs
+- [x] Development-Fallback ohne Fake-Production-State
+- [x] Cloud-aware Wardrobe Context
+- [x] echte Create/Update/Delete-Fehlerzustände
+- [x] Brand / Material / Größe / Zustand
+- [x] `Dress` als echte Kategorie
+- [x] AI-/Swap-Felder clientseitig geschützt
 
 Offen:
 
-- [ ] echtes `functions/` Paket mit Lockfile
-- [ ] `analyzeWardrobeItem` Function implementieren
-- [ ] `GarmentVisionProvider` Interface
-- [ ] `GeminiGarmentVisionProvider`
-- [ ] Gemini Secret Management
-- [ ] serverseitiges Structured-Output-Schema + Runtime Validation
-- [ ] pending/completed/failed Admin-Updates
-- [ ] Timeout / Idempotenz / Rate Limit
-- [ ] Backend Unit-/Emulator-Tests
-- [ ] Analyse-UI + Retry
-- [ ] Nutzerkorrektur für unsichere Felder
+- [ ] reale Android/iOS Kamera-/Galerie-Tests
+- [ ] HEIC/HEIF-Validierung
+- [ ] Bildkompression/Resize
+- [ ] Upload-Fortschritt/Cancel
+- [ ] Offline/Reconnect
+- [ ] reales Storage-Cleanup validieren
+
+---
+
+## Phase 7 – Kleidungsanalyse
+
+**Status: 🟡 echter Backendpfad implementiert**
+
+Erledigt:
+
+- [x] Fake-AI entfernt
+- [x] `analyzeWardrobeItem` Trusted Callable
+- [x] Functions-Paket mit Lockfile
+- [x] Provider-Abstraktion
+- [x] Gemini Development Provider
+- [x] Structured Output
+- [x] Runtime Validation
+- [x] Confidence pro Feld
+- [x] Modell-/Prompt-Versionierung
+- [x] Brand-Halluzinationsschutz
+- [x] Owner/Storage/Datei-Prüfungen
+- [x] pending/completed/failed Lifecycle
+- [x] Idempotenz/Parallelaufrufschutz
+- [x] UI Retry/Confidence/Fehlerstatus
+- [x] Functions Tests
+
+Offen:
+
+- [ ] reales Gemini Secret im Dev-Projekt
+- [ ] echtes Functions Deployment
 - [ ] Evaluation Dataset
-- [ ] Datenschutz-/Datenresidenzprüfung vor kommerziellem Launch
-
-Dokumente:
-
-- `docs/07-ai/GARMENT_ANALYSIS.md`
-- `docs/07-ai/PROVIDER_DECISION.md`
+- [ ] Kosten-/Qualitätsmessung mit echten Wardrobe-Bildern
+- [ ] Datenschutz-/Datenresidenzentscheidung für Production
 
 ---
 
-# Phase 9+ – Kernprodukt danach
+## Phase 8 – StyleProfile und echter Stylist
 
-1. StyleProfile / Style-DNA
-2. echter Outfit Engine
-3. echtes Weather
-4. OmniSwap auf echte Wardrobe Items umstellen
-5. Trusted Trade Backend
-6. Reviews / Trust & Safety
-7. Notifications
-8. Smart Shopping / Shop als MVP+
+**Status: ✅ technischer Kern**
+
+- [x] Fake Style Scan entfernt
+- [x] echte Nutzerpräferenzen
+- [x] Wardrobe-Signale
+- [x] deterministische StyleProfile Engine
+- [x] Cloud + Development-Persistenz
+- [x] echter Outfit Engine aus Wardrobe IDs
+- [x] `Top + Bottom + Shoes`
+- [x] `Dress + Shoes`
+- [x] optionale Outerwear/Accessories
+- [x] Style-/Farb-/Anlass-/Saison-/Datenqualitäts-Scoring
+- [x] fehlende Kategorien statt erfundener Produkte
+- [x] Saved Outfits
+- [x] Like / Dislike / Worn Feedback
+
+Offen bleibt reale Produkt-/Qualitäts-Evaluation mit Nutzern.
 
 ---
 
-# Aktueller nächster technischer Schritt
+## Phase 9 – Wetter
+
+**Status: 🟡 Backend und Stylist-Integration vorhanden**
+
+- [x] provider-neutraler Weather Context
+- [x] Trusted Backend
+- [x] Stadt -> Geocoding -> Wetter
+- [x] kein Fake-Wetter
+- [x] manueller Saison-Fallback
+- [x] Wetter-Signale im Outfit-Ranking
+- [x] Normalisierungs-Tests
+
+Offen:
+
+- [ ] reales Provider-/Quota-Monitoring
+- [ ] Production-Fehler-/Cachingstrategie verifizieren
+
+---
+
+## Phase 10 – OmniSwap Marketplace
+
+**Status: 🟡 echter End-to-End-Kern implementiert**
+
+- [x] alter Mock-Hub entfernt
+- [x] private Wardrobe bleibt privat
+- [x] reduzierte öffentliche Listing-Projektion
+- [x] serverseitige öffentliche Medienkopie
+- [x] Listing erstellen / pausieren / reaktivieren / entfernen
+- [x] echter Marketplace Feed
+- [x] echte Offers
+- [x] Locks + Offer Keys
+- [x] Doppelangebote verhindert
+- [x] Offer annehmen / ablehnen / zurückziehen
+- [x] konkurrierende Offers laufen ab
+- [x] echte Transactions
+
+Offen:
+
+- [ ] reale Zwei-Nutzer-E2E-Tests
+- [ ] Versand-/Tracking-Provider nur falls Produktentscheidung dafür fällt
+
+---
+
+## Phase 11 – Zwei-Parteien-Trade und Eigentumsübertragung
+
+**Status: ✅ technischer Kern**
+
+- [x] Transaction Schema v2
+- [x] beide Teilnehmer bestätigen Tauschweg
+- [x] Versandstatus pro Teilnehmer
+- [x] Empfang pro Teilnehmer
+- [x] unit-testbare State Machine
+- [x] Finalization Claim
+- [x] sichere Zwei-Wege-Storage-Kopie
+- [x] Verifikation vor Ownership Update
+- [x] atomarer `ownerId + imagePath` Tausch
+- [x] Listing -> traded
+- [x] Transaction -> completed erst nach erfolgreicher Migration
+- [x] retry-fähiger Finalization-Fehler
+
+Production offen:
+
+- [ ] reale Zwei-Geräte-Tests
+- [ ] Recovery für seltene Storage-/Cleanup-Orphans
+
+---
+
+## Phase 12 – Trust & Safety und Reviews
+
+**Status: ✅ technische Nutzerbasis**
+
+Trust & Safety:
+
+- [x] Listing melden
+- [x] Nutzer blockieren/entblocken
+- [x] Blockierte Konten aus Marketplace filtern
+- [x] Offers zwischen blockierten Konten serverseitig verhindern
+- [x] echte Disputes
+- [x] Dispute stoppt normalen Trade-Fortschritt
+- [x] Reports moderation-only
+- [x] Trust-&-Safety Security Tests
+
+Reviews:
+
+- [x] nur nach vollständig `completed` Trade
+- [x] Reviewee serverseitig aus Gegenpartei abgeleitet
+- [x] genau eine Review pro Nutzer/Trade
+- [x] 1–5 Rating + optionaler Kommentar
+- [x] persistierter Already-Reviewed-State
+- [x] Client kann Review-Dokument nicht direkt schreiben
+- [x] gemeinsamer Quality-Checkpoint grün
+
+Später:
+
+- [ ] aggregierte Reputation
+- [ ] Review-Moderation / Appeals
+- [ ] Trust Score erst nach echtem Datenvolumen
+
+---
+
+## Phase 13 – Notifications und Push
+
+### In-App
+
+**Status: ✅**
+
+- [x] persistente Notification Domain
+- [x] idempotente Dedup-Keys
+- [x] Swap Offer/Trade/Dispute Firestore Trigger
+- [x] Live-Inbox
+- [x] Ungelesen-State
+- [x] serverseitiges `markNotificationRead`
+- [x] Activity Tab
+- [x] kein Fake-Demo-Fallback
+
+### Remote Push Backend
+
+**Status: 🟡 serverseitig implementiert, Native Client extern blockiert**
+
+- [x] `registerPushDevice`
+- [x] `unregisterPushDevice`
+- [x] Token Hash als Device-ID
+- [x] server-only Push-Infrastruktur
+- [x] `pushEnabled` Opt-in-Grenze
+- [x] Delivery Claim gegen Trigger-Duplikate
+- [x] Expo Push Ticket Speicherung
+- [x] 15-Minuten Receipt Worker
+- [x] `DeviceNotRegistered` deaktiviert Token
+- [x] Push-Security-Regression im Emulator
+- [x] Push-Backend Quality-Checkpoint grün
+
+Native offen:
+
+- [ ] echtes EAS Projekt
+- [ ] Android Package / iOS Bundle ID final
+- [ ] SDK-57-kompatibles `expo-notifications` per `expo install`
+- [ ] Config Plugin
+- [ ] Android Notification Channel
+- [ ] reale Permission Flow
+- [ ] reale `projectId`
+- [ ] echte Expo Push Token Registrierung
+- [ ] physische Android/iOS Tests
+
+---
+
+## Phase 14 – Admin Moderation
+
+**Status: 🟡 Trusted Backend Foundation aktiv in Arbeit**
+
+Erledigt:
+
+- [x] Custom-Claim Guard `admin|moderator`
+- [x] Unit-Test: normale Nutzer erhalten keinen Moderationszugriff
+- [x] offene Reports/Disputes serverseitig listen
+- [x] Reports auditiert auflösen
+- [x] Dispute speichert Vorzustand
+- [x] Dispute sicher fortsetzen oder für Manual Recovery einfrieren
+- [x] `moderationAudit`
+- [x] kein versteckter Admin-Schalter in der Nutzer-App
+
+Offen:
+
+- [ ] aktueller gemeinsamer CI-Checkpoint des Moderationsblocks
+- [ ] interne Moderator-Oberfläche
+- [ ] Account Suspension/Ban Lifecycle
+- [ ] Listing Takedown Moderationsaktion
+- [ ] Appeals
+- [ ] Evidence/Attachments
+- [ ] Moderation Monitoring/SLA
+
+---
+
+## Phase 15 – Support und Recovery
+
+**Status: 🔴 nächster Block**
+
+- [ ] Manual-Recovery-Queue
+- [ ] Storage-Cleanup-Orphans
+- [ ] Push Delivery Stale-State Recovery
+- [ ] Support-Fallmodell
+- [ ] Trade-Recovery-Prozeduren
+- [ ] Account-/Privacy-Support
+
+---
+
+## Phase 16 – Privacy / GDPR / Account Lifecycle
+
+**Status: 🔴**
+
+- [ ] Re-Authentication für sensible Aktionen
+- [ ] Trusted Account Deletion
+- [ ] Datenexport
+- [ ] Retention Policy
+- [ ] Löschung von Storage/Firestore/Push-Geräten
+- [ ] Privacy Policy final
+- [ ] Store Privacy Angaben
+
+---
+
+## Phase 17 – Shop / Monetarisierung
+
+**Status: ⚪ MVP+ / noch nicht produktionsreif**
+
+Die vorhandene Shop-UI ist nicht die Priorität, bevor OWN/STYLE/SWAP real deployed und validiert sind.
+
+- [ ] echte Produktquelle
+- [ ] Gap-to-Shop Verbindung
+- [ ] Affiliate/Partner Regeln
+- [ ] Tracking Consent
+- [ ] Monetarisierungs-Evaluation
+
+---
+
+## Phase 18 – Qualität, Performance, Accessibility, Observability
+
+**Status: 🔴 / teilweise**
+
+- [x] TypeScript/Zero-any Gate
+- [x] Functions Tests
+- [x] Security Emulator Tests
+
+Offen:
+
+- [ ] E2E Tests
+- [ ] Performance Profiling
+- [ ] Bild-/Listen-Performance
+- [ ] Accessibility Audit
+- [ ] Crash Reporting
+- [ ] Analytics
+- [ ] Cost Monitoring
+- [ ] Abuse/Rate Monitoring
+- [ ] Feature Flags
+- [ ] Rollback-Runbook
+
+---
+
+## Phase 19 – EAS / Store / Release
+
+**Status: 🔴**
+
+- [ ] reale Firebase Dev/Prod Environments
+- [ ] EAS Projekt
+- [ ] Android Package
+- [ ] iOS Bundle ID
+- [ ] Development Builds
+- [ ] Internal Testing
+- [ ] App Check
+- [ ] Signing / Credentials
+- [ ] Store Assets
+- [ ] Privacy Labels / Data Safety
+- [ ] Release Candidate
+- [ ] Rollout / Monitoring / Rollback
+
+---
+
+# Aktuelle Reihenfolge
 
 ```text
-1. Functions-Paket reproduzierbar aufsetzen
-2. analyzeWardrobeItem Trusted Backend implementieren
-3. Gemini Provider Adapter + Structured Output
-4. Backend Emulator Tests
-5. AI Analyse-UI anbinden
-6. danach StyleProfile + Outfit Engine
+1. Moderations-CI final grün bekommen
+2. Support / Recovery
+3. Privacy + Account Deletion / Datenexport
+4. Designsystem + Accessibility / Performance
+5. Analytics + Crash Reporting + Feature Flags
+6. echte Firebase Dev-/Prod-Projekte
+7. EAS + native Push-Registrierung
+8. reale Android/iOS Zwei-Nutzer-E2E-Tests
+9. Store-/Privacy-Vorbereitung
+10. Release Candidate
 ```
 
-Die Roadmap darf jederzeit angepasst werden, aber jede Änderung muss den realen Omni-Fashion-Code widerspiegeln und darf keine Demo-Funktion als produktionsfertig markieren.
+Die Roadmap darf weiter angepasst werden, aber nur anhand des realen Omni-Fashion-Codes und realer externer Voraussetzungen.
