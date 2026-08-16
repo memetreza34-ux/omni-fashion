@@ -5,7 +5,7 @@ import {
   Timestamp,
   where,
 } from 'firebase/firestore';
-import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
 import { getFirebaseServices } from '@/services/firebase/app';
@@ -109,9 +109,7 @@ function parseItemSnapshot(value: unknown): SwapOfferItemSnapshot | null {
   };
 }
 
-function mapOffer(
-  snapshot: QueryDocumentSnapshot<DocumentData>,
-): SwapOffer | null {
+function mapOffer(snapshot: QueryDocumentSnapshot<unknown>): SwapOffer | null {
   const raw = snapshot.data();
   if (!isRecord(raw)) {
     return null;
@@ -164,7 +162,7 @@ function mapOffer(
 }
 
 function mapTransaction(
-  snapshot: QueryDocumentSnapshot<DocumentData>,
+  snapshot: QueryDocumentSnapshot<unknown>,
 ): SwapTransaction | null {
   const raw = snapshot.data();
   if (!isRecord(raw)) {
@@ -233,7 +231,7 @@ function mapTransaction(
 
 function subscribeMapped<T>(
   queryValue: ReturnType<typeof query>,
-  mapper: (snapshot: QueryDocumentSnapshot<DocumentData>) => T | null,
+  mapper: (snapshot: QueryDocumentSnapshot<unknown>) => T | null,
   onChange: (values: T[]) => void,
   onError: (error: Error) => void,
 ): () => void {
