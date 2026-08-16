@@ -4,10 +4,13 @@ import { getAuth } from 'firebase/auth';
 import type { Auth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+import type { Functions } from 'firebase/functions';
 import { getStorage } from 'firebase/storage';
 import type { FirebaseStorage } from 'firebase/storage';
 
 import {
+  firebaseFunctionsRegion,
   isFirebaseConfigured,
   requireFirebaseClientEnvironment,
 } from '@/config/env';
@@ -16,6 +19,7 @@ export interface FirebaseServices {
   app: FirebaseApp;
   auth: Auth;
   db: Firestore;
+  functions: Functions;
   storage: FirebaseStorage;
 }
 
@@ -46,6 +50,7 @@ export function getFirebaseServices(): FirebaseServices {
     app,
     auth: getAuth(app),
     db: getFirestore(app),
+    functions: getFunctions(app, firebaseFunctionsRegion),
     storage: getStorage(app),
   };
 
