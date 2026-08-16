@@ -35,11 +35,50 @@ service cloud.firestore {
         && request.auth.uid in resource.data.participantIds;
     }
 
+    function userProfileHasValidShape() {
+      return request.resource.data.keys().hasAll([
+          'displayName',
+          'avatarUrl',
+          'locale',
+          'country',
+          'city',
+          'onboardingCompleted',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'displayName',
+          'avatarUrl',
+          'locale',
+          'country',
+          'city',
+          'onboardingCompleted',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.displayName is string
+        && (request.resource.data.avatarUrl == null || request.resource.data.avatarUrl is string)
+        && request.resource.data.locale is string
+        && (request.resource.data.country == null || request.resource.data.country is string)
+        && (request.resource.data.city == null || request.resource.data.city is string)
+        && request.resource.data.onboardingCompleted is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.schemaVersion is int;
+    }
+
     // Private account profile. Public marketplace profile data should later be
     // exposed through a deliberately public projection, not by opening this
     // whole document to everyone.
     match /users/{userId} {
-      allow read, create, update: if isCurrentUser(userId);
+      allow read: if isCurrentUser(userId);
+      allow create: if isCurrentUser(userId)
+        && userProfileHasValidShape();
+      allow update: if isCurrentUser(userId)
+        && userProfileHasValidShape()
+        && request.resource.data.createdAt == resource.data.createdAt;
 
       // Account deletion is intentionally reserved for trusted backend logic so
       // related Storage objects and dependent records can be cleaned up safely.
