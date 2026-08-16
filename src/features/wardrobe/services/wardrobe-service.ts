@@ -89,6 +89,18 @@ function readTimestampIso(
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
 
+function readNullableTimestampIso(
+  record: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = record[key];
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return value instanceof Timestamp ? value.toDate().toISOString() : null;
+}
+
 function readNullableNumber(
   record: Record<string, unknown>,
   key: string,
@@ -158,6 +170,9 @@ function mapWardrobeDocument(
     aiStatus: aiStatus as WardrobeAiStatus,
     aiConfidence: readNullableNumber(raw, 'aiConfidence'),
     aiModelVersion: readNullableString(raw, 'aiModelVersion'),
+    aiPromptVersion: readNullableString(raw, 'aiPromptVersion'),
+    aiAnalyzedAt: readNullableTimestampIso(raw, 'aiAnalyzedAt'),
+    aiErrorCode: readNullableString(raw, 'aiErrorCode'),
     isListedForSwap,
     swapListingId: readNullableString(raw, 'swapListingId'),
     createdAt,
@@ -220,6 +235,9 @@ export async function createCloudWardrobeItem(
     aiStatus: 'not_requested' satisfies WardrobeAiStatus,
     aiConfidence: null,
     aiModelVersion: null,
+    aiPromptVersion: null,
+    aiAnalyzedAt: null,
+    aiErrorCode: null,
     isListedForSwap: false,
     swapListingId: null,
     createdAt: serverTimestamp(),
