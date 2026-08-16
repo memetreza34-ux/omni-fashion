@@ -24,6 +24,8 @@ import type {
   StyleQuestionnaire,
 } from '@/features/style-profile/types';
 
+import { PrivacyScreenContent } from './privacy';
+
 const FIT_LABELS: Record<FitPreference, string> = {
   slim: 'Schmal',
   regular: 'Regular',
@@ -154,6 +156,7 @@ export default function ProfileScreen() {
     refreshFromWardrobe,
   } = useStyleProfile();
   const [editing, setEditing] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(
     defaultQuestionnaire(),
   );
@@ -219,6 +222,10 @@ export default function ProfileScreen() {
     }
   };
 
+  if (showPrivacy) {
+    return <PrivacyScreenContent onBack={() => setShowPrivacy(false)} />;
+  }
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-white dark:bg-zinc-900 items-center justify-center">
@@ -264,6 +271,21 @@ export default function ProfileScreen() {
               nicht als fertige KI-Funktion vorgetäuscht.
             </Text>
           </View>
+
+          <TouchableOpacity
+            onPress={() => setShowPrivacy(true)}
+            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 mt-3 flex-row justify-between items-center"
+          >
+            <View className="flex-1 pr-4">
+              <Text className="text-black dark:text-white font-extrabold">
+                Datenschutz & Konto
+              </Text>
+              <Text className="text-zinc-500 text-xs mt-1 leading-5">
+                Datenexport, Re-Authentifizierung und sichere Kontolöschung.
+              </Text>
+            </View>
+            <Text className="text-zinc-400 text-xl">›</Text>
+          </TouchableOpacity>
         </View>
 
         {error ? (
@@ -495,7 +517,11 @@ export default function ProfileScreen() {
             <AxisSelector
               title="Alltag: Casual bis Formal"
               value={questionnaire.formalVsCasual}
-              labels={[AXIS_OPTIONS[0].left, AXIS_OPTIONS[1].left, AXIS_OPTIONS[2].left]}
+              labels={[
+                AXIS_OPTIONS[0].left,
+                AXIS_OPTIONS[1].left,
+                AXIS_OPTIONS[2].left,
+              ]}
               onChange={(value) =>
                 setQuestionnaire((current) => ({
                   ...current,
@@ -507,7 +533,11 @@ export default function ProfileScreen() {
             <AxisSelector
               title="Look: Minimal bis Bold"
               value={questionnaire.minimalVsBold}
-              labels={[AXIS_OPTIONS[0].right, AXIS_OPTIONS[1].right, AXIS_OPTIONS[2].right]}
+              labels={[
+                AXIS_OPTIONS[0].right,
+                AXIS_OPTIONS[1].right,
+                AXIS_OPTIONS[2].right,
+              ]}
               onChange={(value) =>
                 setQuestionnaire((current) => ({
                   ...current,
