@@ -1,12 +1,12 @@
 # Omni Fashion – Firebase Setup
 
-Diese Anleitung ist auf den aktuellen Repo-Stand zugeschnitten. Sie beschreibt die noch notwendige Einrichtung, damit die vorbereitete Firebase-Schicht tatsächlich gegen echte Development-/Production-Projekte läuft.
+Diese Anleitung ist auf den aktuellen Omni-Fashion-Repo-Stand zugeschnitten. Sie beschreibt, wie die bereits vorbereitete Firebase-Schicht gegen echte Development-/Production-Projekte aktiviert und anschließend validiert wird.
 
 ---
 
-# 1. Zielarchitektur
+# 1. Umgebungen
 
-Mindestens zwei getrennte Firebase-Projekte:
+Mindestens:
 
 ```text
 omni-fashion-dev
@@ -19,43 +19,41 @@ Optional später:
 omni-fashion-staging
 ```
 
-Keine lokalen Tests gegen Production-Daten.
+Keine lokale Entwicklung direkt gegen Production-Daten.
 
 ---
 
-# 2. Benötigte Firebase-Produkte
+# 2. Firebase-Produkte für MVP
 
-Für MVP:
-
-- Firebase Authentication
+- Authentication
 - Cloud Firestore
 - Firebase Storage
 - App Check
-- später Functions / Cloud Run für Trusted Backend
-- optional Analytics / Crashlytics nach separater Entscheidung
+- später Trusted Backend über Functions / Cloud Run
+- Analytics / Crash Reporting nach separater Architekturentscheidung
 
 ---
 
-# 3. Firebase-Projekt anlegen
+# 3. Projekte anlegen
 
-In der Firebase Console:
+In Firebase Console:
 
 1. Development-Projekt erstellen.
 2. Production-Projekt separat erstellen.
-3. Keine Production-Secrets in GitHub committen.
-4. Billing/Budget Alerts vor teuren Backend-/AI-Funktionen einrichten.
+3. Billing/Budget Alerts vor teuren Backend-/AI-Funktionen einrichten.
+4. Keine Admin-/Service-Account-Secrets in den Client oder GitHub committen.
 
 ---
 
 # 4. Client Apps registrieren
 
-Für das Development-Projekt mindestens registrieren:
+Für Development mindestens:
 
 - Web App für Firebase JS SDK-Konfiguration
 - Android App, sobald `android.package` final ist
 - iOS App, sobald `ios.bundleIdentifier` final ist
 
-Die Client-Konfiguration enthält Werte wie:
+Benötigte Clientwerte:
 
 ```text
 apiKey
@@ -66,25 +64,17 @@ messagingSenderId
 appId
 ```
 
-Diese Firebase-Clientwerte sind keine geheimen Server-Credentials. In Expo werden sie über `EXPO_PUBLIC_*` eingebunden. **Private Admin-/AI-/Service-Account-Secrets dürfen trotzdem niemals dort landen.**
+Sie werden über die in `.env.example` dokumentierten `EXPO_PUBLIC_*`-Variablen eingebunden. Diese Werte sind Client-Konfiguration; echte Admin-, AI- oder Server-Secrets dürfen **nicht** als `EXPO_PUBLIC_*` eingebaut werden.
 
 ---
 
 # 5. Lokale Environment-Datei
 
-Repo:
-
-```text
-.env.example
-```
-
-Für lokale Entwicklung:
-
 ```bash
 cp .env.example .env
 ```
 
-Dann ausfüllen:
+Danach:
 
 ```dotenv
 EXPO_PUBLIC_APP_ENV=development
@@ -96,80 +86,114 @@ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 EXPO_PUBLIC_FIREBASE_APP_ID=...
 ```
 
-`.env` ist im Repo ignoriert.
+`.env` bleibt durch `.gitignore` außerhalb des Repos.
 
 ---
 
-# 6. Codepfad
-
-Aktuelle Dateien:
+# 6. Aktueller Codepfad
 
 ```text
 src/config/env.ts
 src/services/firebase/app.ts
-src/firebaseConfig.ts         # Compatibility Export / deprecated
+src/firebaseConfig.ts       # deprecated compatibility export
 ```
 
 `src/config/env.ts`:
 
-- liest Environment
+- liest Client Environment
 - normalisiert Werte
-- erkennt, ob Firebase vollständig konfiguriert ist
+- erkennt unvollständige Firebase-Konfiguration
 
 `src/services/firebase/app.ts`:
 
-- initialisiert Firebase App
-- initialisiert Firebase Auth
-- verwendet auf React Native persistente Auth-Session
-- stellt Firestore und Storage bereit
+- initialisiert/reused Firebase App
+- stellt Auth bereit
+- stellt Firestore bereit
+- stellt Storage bereit
+- wirft bei fehlender Konfiguration bewusst einen Fehler statt Dummy-Credentials zu benutzen
 
-Neue Features sollen **nicht** direkt neue Firebase-Initialisierung bauen.
+Neue Features dürfen nicht jeweils eigene Firebase-Initialisierungen anlegen.
 
 ---
 
-# 7. Authentication aktivieren
+# 7. Wichtiger Auth-Persistenzpunkt
 
-In Firebase Console:
+Firebase dokumentiert für React Native eine explizite AsyncStorage-Persistenz über `getReactNativePersistence`. Der aktuelle Firebase-12-Typecheck dieses Repos liefert diesen Export über `firebase/auth` jedoch nicht konsistent, obwohl die Firebase-Referenz ihn dokumentiert.
+
+Deshalb gilt aktuell:
 
 ```text
-Authentication
+Bootstrap → getAuth(app)
+```
+
+und **native Session-Persistenz ist noch nicht als abgeschlossen markiert**.
+
+Sobald das echte Dev-Projekt existiert:
+
+1. Android Development Build testen.
+2. Einloggen.
+3. App vollständig beenden.
+4. App neu öffnen.
+5. Session Restore prüfen.
+6. Dasselbe auf iOS.
+7. Falls Persistenz nicht funktioniert, versionskompatible React-Native-Initialisierung implementieren.
+8. Danach automatisierte und Device-Tests dokumentieren.
+
+Kein `@ts-ignore` nur zum Verbergen des Problems.
+
+---
+
+# 8. Authentication aktivieren
+
+```text
+Firebase Console
+→ Authentication
 → Sign-in method
 → Email/Password aktivieren
 ```
 
-Für MVP zuerst nur E-Mail/Passwort.
+MVP zuerst nur E-Mail/Passwort.
 
-Danach können geprüft werden:
+Der Code enthält bereits:
 
-- Sign in with Apple
-- Google Sign-In
+- Login
+- Registrierung
+- Verification Mail
+- Verification Reload/Resend
+- Passwort-Reset
+- Logout
 
-Nicht gleichzeitig fünf Auth-Provider bauen.
+Google/Apple Sign-In erst nach stabiler Basis.
 
 ---
 
-# 8. Firestore aktivieren
+# 9. Firestore aktivieren
 
-Firestore Datenbank anlegen.
+Firestore anlegen und **nicht dauerhaft in offenem Testmodus** betreiben.
 
-Wichtig:
-
-> Nicht dauerhaft im offenen Testmodus betreiben.
-
-Das Repo enthält bereits:
+Repo enthält:
 
 ```text
 firestore.rules
 firestore.indexes.json
 ```
 
-Die Rules starten bewusst restriktiv.
+Aktuelle Rules-Strategie:
+
+- Default deny
+- `users/{uid}` privat
+- StyleProfile privat
+- Wardrobe privat
+- Outfits privat
+- aktive Marketplace Listings bewusst lesbar
+- Swap Offers nur für Teilnehmer lesbar
+- Offers/Transactions nicht direkt client-writable
+- Reviews nicht frei client-writable
+- Reports für Moderation vorgesehen
 
 ---
 
-# 9. Storage aktivieren
-
-Storage Bucket aktivieren.
+# 10. Storage aktivieren
 
 Repo enthält:
 
@@ -177,7 +201,7 @@ Repo enthält:
 storage.rules
 ```
 
-Geplante Pfade:
+Zielpfade:
 
 ```text
 users/{uid}/wardrobe/{itemId}/{fileName}
@@ -185,27 +209,26 @@ users/{uid}/avatars/{fileName}
 public/listings/{listingId}/{fileName}
 ```
 
-Private Wardrobe-Bilder sind nur für Besitzer lesbar.
+Regeln aktuell:
 
-Public Listing Media darf später nur durch Trusted Backend erzeugt werden.
+- private Wardrobe-Medien nur Owner
+- Bildtyp und Uploadgröße begrenzt
+- Avatar vom Owner schreibbar
+- öffentliche Listing-Medien clientseitig nur lesbar
+- nicht definierte Pfade: deny
 
 ---
 
-# 10. Firebase CLI
-
-Für Deployment/Emulator wird Firebase CLI benötigt.
-
-Typischer Ablauf:
+# 11. Firebase CLI
 
 ```bash
 npm install --global firebase-tools
 firebase login
-firebase init
 ```
 
-Bei `firebase init` nicht automatisch bestehende Repo-Dateien überschreiben.
+Beim späteren `firebase init` vorhandene Dateien nicht blind überschreiben.
 
-Dieses Repo besitzt bereits:
+Bereits im Repo:
 
 ```text
 firebase.json
@@ -216,24 +239,44 @@ firestore.indexes.json
 
 ---
 
-# 11. Projektzuordnung
+# 12. Projekt-Aliase
 
-Keine feste Production-Projekt-ID blind in Source Code schreiben.
-
-Lokal kann Firebase CLI über Projektalias arbeiten, z. B.:
+Erst mit echten Projekt-IDs eine `.firebaserc` anlegen, z. B.:
 
 ```text
-default → development
-prod    → production
+default → omni-fashion-dev
+prod    → omni-fashion-prod
 ```
 
-Die konkrete `.firebaserc` erst anlegen, wenn die echten Projekt-IDs bekannt sind.
+Keine Production-ID hart in Fachcode einbauen.
 
 ---
 
-# 12. Rules deployen
+# 13. Emulator Suite
 
-Nach Konfiguration:
+Vor echten Marketplace-Commands mindestens testen:
+
+- Auth Emulator
+- Firestore Emulator
+- Storage Emulator
+- Functions Emulator, sobald Trusted Backend existiert
+
+Pflichttests:
+
+```text
+User A liest eigenen Wardrobe      → allow
+User B liest Wardrobe von A        → deny
+User B ändert Wardrobe von A       → deny
+Owner verwaltet eigenes Listing    → allow gemäß Status
+Fremder ändert Listing             → deny
+Client akzeptiert Trade direkt     → deny
+```
+
+---
+
+# 14. Rules deployen
+
+Erst Dev:
 
 ```bash
 firebase deploy --only firestore:rules
@@ -241,46 +284,21 @@ firebase deploy --only firestore:indexes
 firebase deploy --only storage
 ```
 
-Vor Production erst im Dev-Projekt testen.
+Production erst nach Rules Tests und Review.
 
 ---
 
-# 13. Emulator Suite
+# 15. App Check
 
-Vor echtem Marketplace-Backend soll eine lokale Rules-Testumgebung eingerichtet werden.
+Vor Production einrichten.
 
-Mindestens:
-
-- Auth Emulator
-- Firestore Emulator
-- Storage Emulator
-- Functions Emulator, sobald Backend Commands existieren
-
-Ziel:
-
-```text
-User A darf eigenen Schrank lesen
-User B darf ihn nicht lesen
-Owner darf eigenes Listing verwalten
-fremder Nutzer darf es nicht ändern
-Client darf Trade nicht direkt akzeptieren
-```
+App Check ist zusätzliche Missbrauchshürde und **ersetzt niemals Security Rules**.
 
 ---
 
-# 14. App Check
+# 16. Trusted Backend
 
-App Check wird vor Production eingerichtet, damit nicht jeder beliebige Script-Client ungebremst auf Firebase APIs zugreifen kann.
-
-App Check ersetzt **keine Security Rules**.
-
-Beides wird benötigt.
-
----
-
-# 15. Trusted Backend
-
-Folgende Funktionen dürfen später nicht nur Client → Firestore sein:
+Geplante Commands:
 
 ```text
 analyzeWardrobeImage
@@ -293,31 +311,31 @@ deleteAccountData
 moderateListing
 ```
 
-Der Admin SDK Zugriff auf Firestore umgeht Client Security Rules; deshalb muss Trusted Backend selbst Input, Auth und Rollen streng validieren.
+Admin SDK umgeht Client Security Rules. Jeder Command muss deshalb selbst Auth, Rolle, Eingaben und Zustandsübergang validieren.
 
 ---
 
-# 16. Production Environment
+# 17. Production-Trennung
 
 Production erhält eigene:
 
 - Firebase Project ID
-- Storage Bucket
 - Auth User Base
-- Firestore Daten
+- Firestore-Daten
+- Storage Bucket
 - Rules Deployment
 - Backend Secrets
 - AI Secrets
 - Budgets
 - Monitoring
 
-Keine Development-Nutzer in Production kopieren.
+Keine Dev/Test-Accounts automatisch nach Production kopieren.
 
 ---
 
-# 17. EAS Environment
+# 18. EAS Environments
 
-Später werden die Client-Werte pro EAS Environment gepflegt:
+Später:
 
 ```text
 development
@@ -325,26 +343,25 @@ preview
 production
 ```
 
-Expo SDK 57 verwendet `EXPO_PUBLIC_*` für Werte, die in Client-Code verfügbar sein müssen.
-
-Server-Secrets bleiben außerhalb des Client-Bundles.
+Client-Konfiguration pro Environment; Server-Secrets bleiben außerhalb des Client-Bundles.
 
 ---
 
-# 18. Definition of Done
-
-Firebase-Grundlage ist erst abgeschlossen, wenn:
+# 19. Definition of Done
 
 - [ ] Dev Firebase Projekt existiert
 - [ ] Prod Firebase Projekt existiert
 - [ ] Email/Password Auth aktiv
-- [ ] lokale `.env` funktioniert
-- [ ] App verbindet sich mit Dev Firebase
-- [ ] Auth Session über Neustart bleibt
+- [ ] `.env` verbindet App mit Dev Firebase
+- [ ] Registrierung real getestet
+- [ ] Verification real getestet
+- [ ] Passwort-Reset real getestet
+- [ ] Session Restore Android real getestet
+- [ ] Session Restore iOS real getestet
 - [ ] Firestore aktiv
 - [ ] Storage aktiv
-- [ ] Rules deployed
 - [ ] Rules Emulator Tests vorhanden
+- [ ] Rules ins Dev-Projekt deployed
 - [ ] App Check vor Production aktiv
 - [ ] Budget Alerts eingerichtet
 - [ ] Production-Konfiguration getrennt
@@ -356,13 +373,15 @@ Firebase-Grundlage ist erst abgeschlossen, wenn:
 Bereits umgesetzt:
 
 - [x] `.env.example`
-- [x] typisierte Environment Config
+- [x] typed Environment Config
 - [x] Firebase Bootstrap Service
-- [x] React-Native Auth Persistence vorbereitet
+- [x] Dummy-Konfiguration entfernt
+- [x] Auth-/Profile-Code vorbereitet
 - [x] Firestore Rules Baseline
 - [x] Storage Rules Baseline
 - [x] Index Manifest
+- [x] GitHub Actions Type/Zero-any Gate
 
-Externer Blocker:
+Noch extern notwendig:
 
-- [ ] echte Firebase-Projektwerte
+- [ ] echte Firebase Development-/Production-Projektwerte
