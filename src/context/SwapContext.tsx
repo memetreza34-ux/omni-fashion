@@ -12,19 +12,35 @@ import {
   subscribeToActiveSwapListings,
   subscribeToOwnSwapListings,
 } from '@/features/swap/swap-listing-service';
+import {
+  respondSwapOffer,
+  sendSwapOffer,
+  subscribeToIncomingSwapOffers,
+  subscribeToOutgoingSwapOffers,
+  subscribeToSwapTransactions,
+} from '@/features/swap/swap-trade-service';
 import type {
   CreateSwapListingInput,
+  RespondSwapOfferInput,
+  SendSwapOfferInput,
   SwapListing,
+  SwapOffer,
+  SwapTransaction,
 } from '@/features/swap/types';
 
 interface SwapContextType {
   activeListings: SwapListing[];
   ownListings: SwapListing[];
   marketplaceListings: SwapListing[];
+  incomingOffers: SwapOffer[];
+  outgoingOffers: SwapOffer[];
+  transactions: SwapTransaction[];
   isLoading: boolean;
   error: string | null;
   isCloudBacked: boolean;
   createListing: (input: CreateSwapListingInput) => Promise<string>;
+  sendOffer: (input: SendSwapOfferInput) => Promise<string>;
+  respondToOffer: (input: RespondSwapOfferInput) => Promise<string | null>;
 }
 
 const SwapContext = createContext<SwapContextType | undefined>(undefined);
@@ -33,8 +49,10 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
   const { user, isBackendConfigured } = useAuth();
   const [activeListings, setActiveListings] = useState<SwapListing[]>([]);
   const [ownListings, setOwnListings] = useState<SwapListing[]>([]);
-  const [activeLoaded, setActiveLoaded] = useState(false);
-  const [ownLoaded, setOwnLoaded] = useState(false);
+  const [incomingOffers, setIncomingOffers] = useState<SwapOffer[]>([]);
+  const [outgoingOffers, setOutgoingOffers] = useState<SwapOffer[]>([]);
+  const [transactions, setTransactions] = useState<SwapTransaction[]>([]);
+  const [loadedKeys, setLoadedKeys] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   const isCloudBacked = Boolean(
@@ -45,41 +63,78 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setActiveListings([]);
     setOwnListings([]);
-    setActiveLoaded(false);
-    setOwnLoaded(false);
+    setIncomingOffers([]);
+    setOutgoingOffers([]);
+    setTransactions([]);
+    setLoadedKeys(new Set());
+
+    const markLoaded = (key: string) => {
+      setLoadedKeys((current) => {
+        const next = new Set(current);
+        next.add(key);
+        return next;
+      });
+    };
 
     if (!user || !isCloudBacked) {
-      setActiveLoaded(true);
-      setOwnLoaded(true);
+      setLoadedKeys(
+        new Set(['active', 'own', 'incoming', 'outgoing', 'transactions']),
+      );
       return undefined;
     }
 
-    const onSubscriptionError = (subscriptionError: Error) => {
-      console.error('OmniSwap listing subscription failed', subscriptionError);
-      setError('OmniSwap-Listings konnten nicht geladen werden.');
-      setActiveLoaded(true);
-      setOwnLoaded(true);
+    const onSubscriptionError = (scope: string) => (subscriptionError: Error) => {
+      console.error(`OmniSwap ${scope} subscription failed`, subscriptionError);
+      setError('OmniSwap-Daten konnten nicht vollständig geladen werden.');
+      markLoaded(scope);
     };
 
-    const unsubscribeActive = subscribeToActiveSwapListings(
-      (listings) => {
-        setActiveListings(listings);
-        setActiveLoaded(true);
-      },
-      onSubscriptionError,
-    );
-    const unsubscribeOwn = subscribeToOwnSwapListings(
-      user.id,
-      (listings) => {
-        setOwnListings(listings);
-        setOwnLoaded(true);
-      },
-      onSubscriptionError,
-    );
+    const unsubscribers = [
+      subscribeToActiveSwapListings(
+        (listings) => {
+          setActiveListings(listings);
+          markLoaded('active');
+        },
+        onSubscriptionError('active'),
+      ),
+      subscribeToOwnSwapListings(
+        user.id,
+        (listings) => {
+          setOwnListings(listings);
+          markLoaded('own');
+        },
+        onSubscriptionError('own'),
+      ),
+      subscribeToIncomingSwapOffers(
+        user.id,
+        (offers) => {
+          setIncomingOffers(offers);
+          markLoaded('incoming');
+        },
+        onSubscriptionError('incoming'),
+      ),
+      subscribeToOutgoingSwapOffers(
+        user.id,
+        (offers) => {
+          setOutgoingOffers(offers);
+          markLoaded('outgoing');
+        },
+        onSubscriptionError('outgoing'),
+      ),
+      subscribeToSwapTransactions(
+        user.id,
+        (nextTransactions) => {
+          setTransactions(nextTransactions);
+          markLoaded('transactions');
+        },
+        onSubscriptionError('transactions'),
+      ),
+    ];
 
     return () => {
-      unsubscribeActive();
-      unsubscribeOwn();
+      for (const unsubscribe of unsubscribers) {
+        unsubscribe();
+      }
     };
   }, [isCloudBacked, user]);
 
@@ -91,15 +146,32 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
     [activeListings, user],
   );
 
-  const createListing = async (
-    input: CreateSwapListingInput,
-  ): Promise<string> => {
+  const requireCloud = () => {
     if (!user || !isCloudBacked) {
       throw new Error('SWAP_CLOUD_BACKEND_REQUIRED');
     }
+  };
 
+  const createListing = async (
+    input: CreateSwapListingInput,
+  ): Promise<string> => {
+    requireCloud();
     const response = await createSwapListing(input);
     return response.listingId;
+  };
+
+  const sendOffer = async (input: SendSwapOfferInput): Promise<string> => {
+    requireCloud();
+    const response = await sendSwapOffer(input);
+    return response.offerId;
+  };
+
+  const respondToOffer = async (
+    input: RespondSwapOfferInput,
+  ): Promise<string | null> => {
+    requireCloud();
+    const response = await respondSwapOffer(input);
+    return response.transactionId;
   };
 
   return (
@@ -108,10 +180,15 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
         activeListings,
         ownListings,
         marketplaceListings,
-        isLoading: !activeLoaded || !ownLoaded,
+        incomingOffers,
+        outgoingOffers,
+        transactions,
+        isLoading: loadedKeys.size < 5,
         error,
         isCloudBacked,
         createListing,
+        sendOffer,
+        respondToOffer,
       }}
     >
       {children}
