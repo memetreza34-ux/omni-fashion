@@ -1,0 +1,88 @@
+name: Connect Trusted Weather Once
+
+on:
+  push:
+    branches:
+      - docs/app-development-a-z
+    paths:
+      - .github/workflows/connect-weather-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v6
+        with:
+          ref: docs/app-development-a-z
+
+      - name: Connect weather backend and stylist UI
+        shell: python
+        run: |
+          from pathlib import Path
+
+          index = Path('functions/src/index.ts')
+          text = index.read_text()
+          export_line = "export { getOutfitWeather } from './callables/get-outfit-weather.js';"
+          if export_line not in text:
+              text = text.rstrip() + "\n" + export_line + "\n"
+          index.write_text(text)
+
+          stylist = Path('src/app/stylist.tsx')
+          text = stylist.read_text()
+
+          old = "import { generateOutfitRecommendations } from '@/features/stylist/outfit-engine';"
+          new = "import { generateOutfitRecommendations } from '@/features/stylist/outfit-engine';\nimport {\n  generateWeatherAwareOutfits,\n  seasonFromWeather,\n} from '@/features/stylist/weather-outfit-engine';\nimport { StylistWeatherPanel } from '@/features/weather/components/StylistWeatherPanel';\nimport { getOutfitWeather } from '@/features/weather/weather-service';\nimport type { OutfitWeatherContext } from '@/features/weather/types';"
+          if old not in text:
+              raise SystemExit('stylist engine import anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "    deleteOutfit,\n    hasRecommendation,\n  } = useSavedOutfits();\n  const [occasion, setOccasion] = useState<OutfitOccasion>('everyday');\n  const [saveBusy, setSaveBusy] = useState(false);"
+          new = "    deleteOutfit,\n    hasRecommendation,\n    isCloudBacked: canUseTrustedBackend,\n  } = useSavedOutfits();\n  const [occasion, setOccasion] = useState<OutfitOccasion>('everyday');\n  const [saveBusy, setSaveBusy] = useState(false);\n  const [weatherCity, setWeatherCity] = useState('Berlin');\n  const [weather, setWeather] = useState<OutfitWeatherContext | null>(null);\n  const [weatherLoading, setWeatherLoading] = useState(false);\n  const [weatherError, setWeatherError] = useState<string | null>(null);"
+          if old not in text:
+              raise SystemExit('stylist saved context anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "  const result = useMemo(\n    () =>\n      generateOutfitRecommendations(items, profile, {\n        occasion,\n        season,\n        maxResults: 12,\n      }),\n    [items, occasion, profile, season],\n  );"
+          new = "  const effectiveSeason = weather ? seasonFromWeather(weather) : season;\n\n  const result = useMemo(\n    () =>\n      weather\n        ? generateWeatherAwareOutfits(items, profile, occasion, weather, 12)\n        : generateOutfitRecommendations(items, profile, {\n            occasion,\n            season,\n            maxResults: 12,\n          }),\n    [items, occasion, profile, season, weather],\n  );"
+          if old not in text:
+              raise SystemExit('stylist result memo anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "  const saveCurrentOutfit = async () => {\n    if (!current || currentIsSaved || saveBusy) {"
+          new = "  const loadWeather = async () => {\n    if (!canUseTrustedBackend || weatherLoading) {\n      return;\n    }\n\n    setWeatherLoading(true);\n    setWeatherError(null);\n    try {\n      const nextWeather = await getOutfitWeather(weatherCity);\n      setWeather(nextWeather);\n      setResultIndex(0);\n    } catch (error: unknown) {\n      console.error('Failed to load outfit weather', error);\n      setWeatherError(\n        'Wetter konnte nicht geladen werden. Du kannst die Saison weiterhin manuell wählen.',\n      );\n    } finally {\n      setWeatherLoading(false);\n    }\n  };\n\n  const saveCurrentOutfit = async () => {\n    if (!current || currentIsSaved || saveBusy) {"
+          if old not in text:
+              raise SystemExit('stylist save handler anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "      await saveOutfit({ recommendation: current, season });"
+          new = "      await saveOutfit({ recommendation: current, season: effectiveSeason });"
+          if old not in text:
+              raise SystemExit('stylist save season anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "        <View className=\"px-4 mb-6\">\n          <Text className=\"text-zinc-500 uppercase text-xs font-bold mb-3\">\n            Saison\n          </Text>"
+          new = "        <View className=\"px-4 mb-5\">\n          {canUseTrustedBackend ? (\n            <StylistWeatherPanel\n              city={weatherCity}\n              weather={weather}\n              loading={weatherLoading}\n              error={weatherError}\n              onCityChange={setWeatherCity}\n              onLoad={() => void loadWeather()}\n              onClear={() => {\n                setWeather(null);\n                setWeatherError(null);\n                setResultIndex(0);\n              }}\n            />\n          ) : (\n            <View className=\"bg-zinc-100 dark:bg-zinc-900 rounded-2xl p-4\">\n              <Text className=\"text-zinc-600 dark:text-zinc-300 text-xs leading-5\">\n                Im lokalen Entwicklungsprofil wird kein echtes Wetter vorgetäuscht. Wähle die Saison unten manuell.\n              </Text>\n            </View>\n          )}\n        </View>\n\n        {!weather ? (\n          <View className=\"px-4 mb-6\">\n          <Text className=\"text-zinc-500 uppercase text-xs font-bold mb-3\">\n            Saison\n          </Text>"
+          if old not in text:
+              raise SystemExit('stylist season block start anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "          <Text className=\"text-zinc-400 text-[11px] mt-2\">\n            Live-Wetter ist bewusst noch nicht simuliert. Bis zur echten\n            Wetterintegration kannst du die Saison selbst setzen.\n          </Text>\n        </View>"
+          new = "          <Text className=\"text-zinc-400 text-[11px] mt-2\">\n            Ohne geladenes Wetter steuerst du den Saison-Kontext selbst.\n          </Text>\n        </View>\n        ) : (\n          <View className=\"px-4 mb-6\">\n            <Text className=\"text-zinc-500 text-xs\">\n              Wetter-Ranking nutzt automatisch {effectiveSeason} als Temperatur-Kontext.\n            </Text>\n          </View>\n        )}"
+          if old not in text:
+              raise SystemExit('stylist season block end anchor not found')
+          stylist.write_text(text.replace(old, new, 1))
+
+          workflow = Path('.github/workflows/connect-weather-once.yml')
+          workflow.unlink()
+
+      - name: Commit patch and self-cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: connect trusted weather to outfit ranking"
+          git push origin HEAD:docs/app-development-a-z
