@@ -44,6 +44,16 @@ export type WardrobeCondition = (typeof WARDROBE_CONDITIONS)[number];
 export type WardrobeSource = (typeof WARDROBE_SOURCES)[number];
 export type WardrobeAiStatus = (typeof WARDROBE_AI_STATUSES)[number];
 
+export interface WardrobeAiFieldConfidence {
+  category: number;
+  subcategory: number;
+  color: number;
+  brand: number;
+  material: number;
+  season: number;
+  styleTags: number;
+}
+
 /**
  * Canonical garment object for Omni Fashion.
  *
@@ -69,6 +79,7 @@ export interface WardrobeItem {
   source: WardrobeSource;
   aiStatus: WardrobeAiStatus;
   aiConfidence: number | null;
+  aiFieldConfidence: WardrobeAiFieldConfidence | null;
   aiModelVersion: string | null;
   aiPromptVersion: string | null;
   aiAnalyzedAt: string | null;
@@ -120,6 +131,7 @@ export interface PersistedWardrobeItem {
   source: WardrobeSource;
   aiStatus: WardrobeAiStatus;
   aiConfidence: number | null;
+  aiFieldConfidence: WardrobeAiFieldConfidence | null;
   aiModelVersion: string | null;
   aiPromptVersion: string | null;
   aiAnalyzedAt: string | null;
