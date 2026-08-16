@@ -35,6 +35,10 @@ service cloud.firestore {
         && request.auth.uid in resource.data.participantIds;
     }
 
+    function isNullableString(value) {
+      return value == null || value is string;
+    }
+
     function userProfileHasValidShape() {
       return request.resource.data.keys().hasAll([
           'displayName',
@@ -59,14 +63,131 @@ service cloud.firestore {
           'schemaVersion'
         ])
         && request.resource.data.displayName is string
-        && (request.resource.data.avatarUrl == null || request.resource.data.avatarUrl is string)
+        && request.resource.data.displayName.size() <= 80
+        && isNullableString(request.resource.data.avatarUrl)
         && request.resource.data.locale is string
-        && (request.resource.data.country == null || request.resource.data.country is string)
-        && (request.resource.data.city == null || request.resource.data.city is string)
+        && isNullableString(request.resource.data.country)
+        && isNullableString(request.resource.data.city)
         && request.resource.data.onboardingCompleted is bool
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp
         && request.resource.data.schemaVersion is int;
+    }
+
+    function wardrobeItemHasValidShape() {
+      return request.resource.data.keys().hasAll([
+          'ownerId',
+          'imagePath',
+          'name',
+          'category',
+          'subcategory',
+          'color',
+          'secondaryColors',
+          'brand',
+          'material',
+          'size',
+          'season',
+          'condition',
+          'styleTags',
+          'source',
+          'aiStatus',
+          'aiConfidence',
+          'aiModelVersion',
+          'isListedForSwap',
+          'swapListingId',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ownerId',
+          'imagePath',
+          'name',
+          'category',
+          'subcategory',
+          'color',
+          'secondaryColors',
+          'brand',
+          'material',
+          'size',
+          'season',
+          'condition',
+          'styleTags',
+          'source',
+          'aiStatus',
+          'aiConfidence',
+          'aiModelVersion',
+          'isListedForSwap',
+          'swapListingId',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.ownerId is string
+        && request.resource.data.imagePath is string
+        && request.resource.data.imagePath.matches(
+          'users/' + request.auth.uid + '/wardrobe/.*'
+        )
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.category in [
+          'Top', 'Bottom', 'Shoes', 'Accessory', 'Outerwear', 'Other'
+        ]
+        && isNullableString(request.resource.data.subcategory)
+        && request.resource.data.color is string
+        && request.resource.data.color.size() <= 60
+        && request.resource.data.secondaryColors is list
+        && request.resource.data.secondaryColors.size() <= 5
+        && isNullableString(request.resource.data.brand)
+        && isNullableString(request.resource.data.material)
+        && isNullableString(request.resource.data.size)
+        && request.resource.data.season in [
+          'Spring', 'Summer', 'Autumn', 'Winter', 'All'
+        ]
+        && request.resource.data.condition in [
+          'new_with_tags', 'like_new', 'good', 'worn'
+        ]
+        && request.resource.data.styleTags is list
+        && request.resource.data.styleTags.size() <= 20
+        && request.resource.data.source in [
+          'camera', 'library', 'migration', 'manual'
+        ]
+        && request.resource.data.aiStatus in [
+          'not_requested', 'pending', 'completed', 'failed'
+        ]
+        && (
+          request.resource.data.aiConfidence == null
+          || (
+            request.resource.data.aiConfidence is number
+            && request.resource.data.aiConfidence >= 0
+            && request.resource.data.aiConfidence <= 1
+          )
+        )
+        && isNullableString(request.resource.data.aiModelVersion)
+        && request.resource.data.isListedForSwap is bool
+        && isNullableString(request.resource.data.swapListingId)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.schemaVersion == 1;
+    }
+
+    function wardrobeCreateHasSafeSystemDefaults() {
+      return request.resource.data.aiStatus == 'not_requested'
+        && request.resource.data.aiConfidence == null
+        && request.resource.data.aiModelVersion == null
+        && request.resource.data.isListedForSwap == false
+        && request.resource.data.swapListingId == null;
+    }
+
+    function wardrobeProtectedFieldsAreUnchanged() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.imagePath == resource.data.imagePath
+        && request.resource.data.aiStatus == resource.data.aiStatus
+        && request.resource.data.aiConfidence == resource.data.aiConfidence
+        && request.resource.data.aiModelVersion == resource.data.aiModelVersion
+        && request.resource.data.isListedForSwap == resource.data.isListedForSwap
+        && request.resource.data.swapListingId == resource.data.swapListingId;
     }
 
     // Private account profile. Public marketplace profile data should later be
@@ -90,11 +211,16 @@ service cloud.firestore {
       allow delete: if isCurrentUser(userId);
     }
 
-    // A user's wardrobe is private by default.
+    // Wardrobe is the private source of truth for a user's real garments.
     match /wardrobeItems/{itemId} {
       allow read: if ownsExistingDocument();
-      allow create: if ownsIncomingDocument();
-      allow update: if ownsExistingDocument() && ownerIdIsUnchanged();
+      allow create: if ownsIncomingDocument()
+        && wardrobeItemHasValidShape()
+        && wardrobeCreateHasSafeSystemDefaults();
+      allow update: if ownsExistingDocument()
+        && ownerIdIsUnchanged()
+        && wardrobeItemHasValidShape()
+        && wardrobeProtectedFieldsAreUnchanged();
       allow delete: if ownsExistingDocument();
     }
 
