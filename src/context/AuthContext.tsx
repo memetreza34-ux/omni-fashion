@@ -11,7 +11,7 @@ import {
   logoutFirebaseUser,
   subscribeToAuthUser,
 } from '@/features/auth/services/auth-service';
-import { AuthUser, LoginCredentials } from '@/features/auth/types';
+import type { AuthUser, LoginCredentials } from '@/features/auth/types';
 import { isFirebaseConfigured } from '@/services/firebase/app';
 
 const DEVELOPMENT_DEMO_USER_KEY = '@omni_fashion_dev_user';
