@@ -1,0 +1,142 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isCurrentUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function ownsExistingDocument() {
+      return signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    function ownsIncomingDocument() {
+      return signedIn() && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    function ownerIdIsUnchanged() {
+      return request.resource.data.ownerId == resource.data.ownerId;
+    }
+
+    function isSwapParticipant() {
+      return signedIn()
+        && (
+          resource.data.requesterId == request.auth.uid
+          || resource.data.listingOwnerId == request.auth.uid
+        );
+    }
+
+    function isTransactionParticipant() {
+      return signedIn()
+        && request.auth.uid in resource.data.participantIds;
+    }
+
+    // Private account profile. Public marketplace profile data should later be
+    // exposed through a deliberately public projection, not by opening this
+    // whole document to everyone.
+    match /users/{userId} {
+      allow read, create, update: if isCurrentUser(userId);
+
+      // Account deletion is intentionally reserved for trusted backend logic so
+      // related Storage objects and dependent records can be cleaned up safely.
+      allow delete: if false;
+    }
+
+    match /styleProfiles/{userId} {
+      allow read, create, update: if isCurrentUser(userId);
+      allow delete: if isCurrentUser(userId);
+    }
+
+    // A user's wardrobe is private by default.
+    match /wardrobeItems/{itemId} {
+      allow read: if ownsExistingDocument();
+      allow create: if ownsIncomingDocument();
+      allow update: if ownsExistingDocument() && ownerIdIsUnchanged();
+      allow delete: if ownsExistingDocument();
+    }
+
+    match /outfits/{outfitId} {
+      allow read: if ownsExistingDocument();
+      allow create: if ownsIncomingDocument();
+      allow update: if ownsExistingDocument() && ownerIdIsUnchanged();
+      allow delete: if ownsExistingDocument();
+    }
+
+    // Marketplace listings intentionally contain a public-safe snapshot of a
+    // wardrobe item instead of exposing the private wardrobe document itself.
+    match /swapListings/{listingId} {
+      allow read: if resource.data.status == 'active'
+        || (signedIn() && resource.data.ownerId == request.auth.uid);
+
+      allow create: if ownsIncomingDocument()
+        && request.resource.data.status in ['draft', 'active'];
+
+      // Owners may manage normal listing lifecycle states. Reservation/trade
+      // transitions are intentionally not client-writable.
+      allow update: if ownsExistingDocument()
+        && ownerIdIsUnchanged()
+        && request.resource.data.status in ['draft', 'active', 'paused', 'removed'];
+
+      allow delete: if ownsExistingDocument()
+        && resource.data.status in ['draft', 'paused', 'removed'];
+    }
+
+    // Offers are created and mutated through trusted backend commands so the
+    // server can validate ownership, conflicts and listing availability.
+    match /swapOffers/{offerId} {
+      allow read: if isSwapParticipant();
+      allow create, update, delete: if false;
+    }
+
+    // Trade state transitions are trusted-backend-only.
+    match /swapTransactions/{transactionId} {
+      allow read: if isTransactionParticipant();
+      allow create, update, delete: if false;
+    }
+
+    // Reviews are written by trusted completion logic to prevent arbitrary
+    // reputation manipulation. Reading currently requires authentication.
+    match /reviews/{reviewId} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
+    }
+
+    // Users can submit a report, but only moderation tooling should read or
+    // modify moderation records.
+    match /reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    match /blocks/{blockId} {
+      allow read: if signedIn()
+        && resource.data.blockerId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.blockerId == request.auth.uid;
+      allow delete: if signedIn()
+        && resource.data.blockerId == request.auth.uid;
+      allow update: if false;
+    }
+
+    match /notificationPreferences/{userId} {
+      allow read, create, update, delete: if isCurrentUser(userId);
+    }
+
+    // Notification documents themselves are server-created.
+    match /notifications/{notificationId} {
+      allow read: if signedIn()
+        && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Deny everything not explicitly modeled above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
