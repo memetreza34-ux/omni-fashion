@@ -197,6 +197,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         source: input.source,
         aiStatus: 'not_requested',
         aiConfidence: null,
+        aiFieldConfidence: null,
         aiModelVersion: null,
         aiPromptVersion: null,
         aiAnalyzedAt: null,
@@ -228,6 +229,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       source: input.source,
       aiStatus: 'not_requested',
       aiConfidence: null,
+      aiFieldConfidence: null,
       aiModelVersion: null,
       aiPromptVersion: null,
       aiAnalyzedAt: null,
@@ -304,8 +306,6 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       try {
         await deleteWardrobeImage(item.imagePath);
       } catch (cleanupError: unknown) {
-        // The document deletion is the user-visible source of truth. An orphaned
-        // Storage object can be cleaned by a future backend maintenance job.
         console.error(
           'Failed to delete wardrobe image after item deletion',
           cleanupError,
