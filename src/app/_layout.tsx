@@ -1,19 +1,21 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, useColorScheme, View } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { WardrobeProvider } from '@/context/WardrobeContext';
+import { VerifyEmailScreen } from '@/features/auth/components/VerifyEmailScreen';
+
 import LoginScreen from './login';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootContent() {
   const { user, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-white dark:bg-zinc-900 justify-center items-center">
@@ -26,6 +28,10 @@ function RootContent() {
     return <LoginScreen />;
   }
 
+  if (!user.isDevelopmentDemo && !user.emailVerified) {
+    return <VerifyEmailScreen />;
+  }
+
   return (
     <WardrobeProvider>
       <AnimatedSplashOverlay />
@@ -36,6 +42,7 @@ function RootContent() {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <ErrorBoundary>
