@@ -59,6 +59,21 @@ function readParticipants(value: unknown): string[] {
     : [];
 }
 
+function readOpenTransactionStatus(value: unknown): string {
+  if (
+    value === 'accepted' ||
+    value === 'address_or_meetup' ||
+    value === 'shipped' ||
+    value === 'received'
+  ) {
+    return value;
+  }
+  throw new HttpsError(
+    'failed-precondition',
+    'Der aktuelle Trade-Status kann nicht sicher als Streitfall gespeichert werden.',
+  );
+}
+
 export const openSwapDispute = onCall(
   { region: FUNCTIONS_REGION, timeoutSeconds: 30, memory: '256MiB' },
   async (request) => {
@@ -112,6 +127,7 @@ export const openSwapDispute = onCall(
         );
       }
 
+      const previousTransactionStatus = readOpenTransactionStatus(swap.status);
       const now = FieldValue.serverTimestamp();
       transaction.set(disputeRef, {
         transactionId: input.transactionId,
@@ -120,6 +136,11 @@ export const openSwapDispute = onCall(
         reason: input.reason,
         details: input.details,
         status: 'open',
+        previousTransactionStatus,
+        resolution: null,
+        resolutionNote: null,
+        resolvedById: null,
+        resolvedAt: null,
         createdAt: now,
         updatedAt: now,
         schemaVersion: TRUST_SAFETY_SCHEMA_VERSION,
