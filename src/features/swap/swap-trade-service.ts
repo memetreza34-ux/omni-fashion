@@ -19,16 +19,20 @@ import type {
 } from '@/features/wardrobe/types';
 
 import {
+  SWAP_FINALIZATION_STATES,
   SWAP_OFFER_SCHEMA_VERSION,
   SWAP_OFFER_STATUSES,
   SWAP_TRANSACTION_SCHEMA_VERSION,
   SWAP_TRANSACTION_STATUSES,
 } from './types';
 import type {
+  AdvanceSwapTransactionInput,
+  AdvanceSwapTransactionResponse,
   RespondSwapOfferInput,
   RespondSwapOfferResponse,
   SendSwapOfferInput,
   SendSwapOfferResponse,
+  SwapFinalizationState,
   SwapOffer,
   SwapOfferItemSnapshot,
   SwapOfferStatus,
@@ -54,6 +58,17 @@ function readNullableString(
 ): string | null {
   const value = record[key];
   return value === null || typeof value === 'string' ? value : null;
+}
+
+function readStringArray(
+  record: Record<string, unknown>,
+  key: string,
+): string[] | null {
+  const value = record[key];
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    return null;
+  }
+  return [...new Set(value)];
 }
 
 function readEnum<T extends string>(
@@ -171,7 +186,7 @@ function mapTransaction(
 
   const offerId = readString(raw, 'offerId');
   const listingId = readString(raw, 'listingId');
-  const participantIds = raw.participantIds;
+  const participantIds = readStringArray(raw, 'participantIds');
   const requesterId = readString(raw, 'requesterId');
   const listingOwnerId = readString(raw, 'listingOwnerId');
   const requestedWardrobeItemId = readString(raw, 'requestedWardrobeItemId');
@@ -182,6 +197,15 @@ function mapTransaction(
     SWAP_TRANSACTION_STATUSES,
   );
   const fulfilmentMode = raw.fulfilmentMode;
+  const modeConfirmedByIds = readStringArray(raw, 'modeConfirmedByIds');
+  const shippedByIds = readStringArray(raw, 'shippedByIds');
+  const receivedByIds = readStringArray(raw, 'receivedByIds');
+  const finalizationState = readEnum<SwapFinalizationState>(
+    raw,
+    'finalizationState',
+    SWAP_FINALIZATION_STATES,
+  );
+  const finalizationErrorCode = readNullableString(raw, 'finalizationErrorCode');
   const createdAt = timestampToIso(raw.createdAt);
   const updatedAt = timestampToIso(raw.updatedAt);
   const completedAt =
@@ -190,11 +214,12 @@ function mapTransaction(
   if (
     !offerId ||
     !listingId ||
-    !Array.isArray(participantIds) ||
+    !participantIds ||
     participantIds.length !== 2 ||
-    participantIds.some((id) => typeof id !== 'string') ||
     !requesterId ||
     !listingOwnerId ||
+    !participantIds.includes(requesterId) ||
+    !participantIds.includes(listingOwnerId) ||
     !requestedWardrobeItemId ||
     !offeredWardrobeItemId ||
     !status ||
@@ -203,6 +228,10 @@ function mapTransaction(
       fulfilmentMode === 'shipping' ||
       fulfilmentMode === 'meetup'
     ) ||
+    !modeConfirmedByIds ||
+    !shippedByIds ||
+    !receivedByIds ||
+    !finalizationState ||
     !createdAt ||
     !updatedAt ||
     raw.schemaVersion !== SWAP_TRANSACTION_SCHEMA_VERSION
@@ -222,6 +251,11 @@ function mapTransaction(
     offeredWardrobeItemId,
     status,
     fulfilmentMode,
+    modeConfirmedByIds,
+    shippedByIds,
+    receivedByIds,
+    finalizationState,
+    finalizationErrorCode,
     createdAt,
     updatedAt,
     completedAt,
@@ -345,5 +379,38 @@ export async function respondSwapOffer(
     offerId: response.data.offerId,
     status: response.data.status,
     transactionId: response.data.transactionId,
+  };
+}
+
+export async function advanceSwapTransaction(
+  input: AdvanceSwapTransactionInput,
+): Promise<AdvanceSwapTransactionResponse> {
+  const { functions } = getFirebaseServices();
+  const callable = httpsCallable<
+    AdvanceSwapTransactionInput,
+    AdvanceSwapTransactionResponse
+  >(functions, 'advanceSwapTransaction');
+  const response = await callable(input);
+
+  if (
+    !isRecord(response.data) ||
+    response.data.transactionId !== input.transactionId ||
+    typeof response.data.status !== 'string' ||
+    !SWAP_TRANSACTION_STATUSES.includes(
+      response.data.status as SwapTransactionStatus,
+    ) ||
+    typeof response.data.finalizationState !== 'string' ||
+    !SWAP_FINALIZATION_STATES.includes(
+      response.data.finalizationState as SwapFinalizationState,
+    )
+  ) {
+    throw new Error('SWAP_INVALID_TRANSACTION_PROGRESS_RESPONSE');
+  }
+
+  return {
+    transactionId: response.data.transactionId,
+    status: response.data.status as SwapTransactionStatus,
+    finalizationState:
+      response.data.finalizationState as SwapFinalizationState,
   };
 }
