@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 const FUNCTIONS_REGION = 'europe-west1';
-const TRANSACTION_SCHEMA_VERSION = 1;
+const TRANSACTION_SCHEMA_VERSION = 2;
 
 interface RespondSwapOfferInput {
   offerId: string;
@@ -206,7 +206,10 @@ export const respondSwapOffer = onCall(
         );
       }
       if (listing.ownerId !== uid) {
-        throw new HttpsError('permission-denied', 'Listing-Eigentümerprüfung fehlgeschlagen.');
+        throw new HttpsError(
+          'permission-denied',
+          'Listing-Eigentümerprüfung fehlgeschlagen.',
+        );
       }
       if (offeredItem.ownerId !== requesterId) {
         throw new HttpsError(
@@ -247,6 +250,11 @@ export const respondSwapOffer = onCall(
         offeredWardrobeItemId,
         status: 'accepted',
         fulfilmentMode: null,
+        modeConfirmedByIds: [],
+        shippedByIds: [],
+        receivedByIds: [],
+        finalizationState: 'pending',
+        finalizationErrorCode: null,
         createdAt: now,
         updatedAt: now,
         completedAt: null,
@@ -267,7 +275,10 @@ export const respondSwapOffer = onCall(
 
     return {
       offerId: input.offerId,
-      status: input.decision === 'accept' ? ('accepted' as const) : ('declined' as const),
+      status:
+        input.decision === 'accept'
+          ? ('accepted' as const)
+          : ('declined' as const),
       transactionId,
     };
   },
