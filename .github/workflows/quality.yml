@@ -78,4 +78,4 @@ jobs:
           npx --yes firebase-tools emulators:exec
           --project demo-omni-fashion-rules
           --only auth,firestore,storage
-          "node tests/security/firestore.rules.integration.mjs && node tests/security/trust-safety.rules.integration.mjs && node tests/security/storage.rules.integration.mjs"
+          "node tests/security/firestore.rules.integration.mjs && node tests/security/trust-safety.rules.integration.mjs && node tests/security/push.rules.integration.mjs && node tests/security/storage.rules.integration.mjs"
