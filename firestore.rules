@@ -394,9 +394,6 @@ service cloud.firestore {
     match /swapListings/{listingId} {
       allow read: if resource.data.status == 'active'
         || (signedIn() && resource.data.ownerId == request.auth.uid);
-
-      // Public listing media and Wardrobe linkage must remain in sync, so all
-      // listing mutations are reserved for trusted backend commands.
       allow create, update, delete: if false;
     }
 
@@ -410,25 +407,29 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /swapDisputes/{transactionId} {
+      allow read: if signedIn()
+        && request.auth.uid in resource.data.participantIds;
+      allow create, update, delete: if false;
+    }
+
     match /reviews/{reviewId} {
       allow read: if signedIn();
       allow create, update, delete: if false;
     }
 
+    // Moderation reports are private moderation records. Users submit them only
+    // through the trusted backend and cannot enumerate or mutate them later.
     match /reports/{reportId} {
-      allow create: if signedIn()
-        && request.resource.data.reporterId == request.auth.uid;
-      allow read, update, delete: if false;
+      allow read, create, update, delete: if false;
     }
 
+    // Users may read their own block list for local feed filtering. Creation
+    // and removal run through trusted backend validation.
     match /blocks/{blockId} {
       allow read: if signedIn()
         && resource.data.blockerId == request.auth.uid;
-      allow create: if signedIn()
-        && request.resource.data.blockerId == request.auth.uid;
-      allow delete: if signedIn()
-        && resource.data.blockerId == request.auth.uid;
-      allow update: if false;
+      allow create, update, delete: if false;
     }
 
     match /notificationPreferences/{userId} {
