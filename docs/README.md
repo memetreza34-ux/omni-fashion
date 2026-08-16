@@ -18,14 +18,14 @@ Die Master-Roadmap beschreibt **was** gebaut wird. Die Dateien hier beschreiben 
 | Zielarchitektur | [`02-architecture/TARGET_ARCHITECTURE.md`](./02-architecture/TARGET_ARCHITECTURE.md) | ✅ Entwurf |
 | Designsystem | `03-design-system/` | 🔴 offen |
 | Auth | [`04-auth/AUTH_IMPLEMENTATION.md`](./04-auth/AUTH_IMPLEMENTATION.md) | 🟡 Code + UI weit vorbereitet, echte Firebase-Validierung offen |
-| Backend | [`05-backend/FIREBASE_SETUP.md`](./05-backend/FIREBASE_SETUP.md) | 🟡 Bootstrap + Security Rules vorhanden |
-| Wardrobe | `06-wardrobe/` | 🔴 produktive Migration als nächster Kernblock |
-| AI | `07-ai/` | 🔴 offen |
+| Backend | [`05-backend/FIREBASE_SETUP.md`](./05-backend/FIREBASE_SETUP.md) | 🟡 Bootstrap + Security Rules + Emulator-Tests |
+| Wardrobe | [`06-wardrobe/CLOUD_WARDROBE.md`](./06-wardrobe/CLOUD_WARDROBE.md) | 🟡 Cloud-Migration im Code, reale Device-/Firebase-Validierung offen |
+| AI | `07-ai/` | 🔴 nächster Kernblock |
 | Stylist | `08-stylist/` | 🔴 produktive Migration offen |
 | OmniSwap | `09-omniswap/` | 🔴 produktive Migration offen |
 | Shop | `10-shop/` | ⚪ MVP+ |
-| Security/Privacy | `11-security-privacy/` | 🟡 Regeln/Prinzipien begonnen |
-| Testing | `12-testing/` | 🟡 CI Quality Gate vorhanden, echte Suite offen |
+| Security/Privacy | `11-security-privacy/` | 🟡 Rules + Systemgrenzen vorhanden |
+| Testing | `12-testing/` | 🟡 Type/Zero-any + Firebase Security CI vorhanden |
 | Release | `13-release/` | 🔴 offen |
 | Operations | `14-operations/` | 🔴 offen |
 
@@ -43,12 +43,10 @@ So soll verhindert werden, dass Dokumentation und tatsächlicher Repo-Stand wied
 ## Nächste technische Strecke
 
 ```text
-Auth/Firebase real validierbar machen
-→ Rules Tests
-→ Wardrobe Domain konsolidieren
-→ Cloud Wardrobe
-→ Storage Upload
-→ AI Kleidungsanalyse
+aktuellen CI-Lauf grün bestätigen
+→ AI Kleidungsanalyse Contract + Schema
+→ Trusted Backend für AI
+→ StyleProfile
 → Outfit Engine
 → OmniSwap an echte Wardrobe anbinden
 ```
