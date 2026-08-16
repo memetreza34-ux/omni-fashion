@@ -1,0 +1,44 @@
+name: Generate Functions Lockfile
+
+on:
+  push:
+    branches:
+      - docs/app-development-a-z
+    paths:
+      - functions/package.json
+
+permissions:
+  contents: write
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v6
+        with:
+          ref: docs/app-development-a-z
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Generate package-lock
+        working-directory: functions
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit generated lockfile
+        run: |
+          if git diff --quiet -- functions/package-lock.json && git ls-files --error-unmatch functions/package-lock.json >/dev/null 2>&1; then
+            echo "functions/package-lock.json is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions/package-lock.json
+          git commit -m "build: lock trusted backend dependencies"
+          git push origin HEAD:docs/app-development-a-z
