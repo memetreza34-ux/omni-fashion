@@ -109,6 +109,8 @@ export interface SwapTransaction {
   listingOwnerId: string;
   requestedWardrobeItemId: string;
   offeredWardrobeItemId: string;
+  shippingEnabled: boolean;
+  meetupEnabled: boolean;
   status: SwapTransactionStatus;
   fulfilmentMode: SwapFulfilmentMode | null;
   modeConfirmedByIds: string[];
