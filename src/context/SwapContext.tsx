@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 
 import { useAuth } from '@/context/AuthContext';
+import { useTrustSafety } from '@/context/TrustSafetyContext';
 import {
   createSwapListing,
   subscribeToActiveSwapListings,
@@ -58,6 +59,7 @@ const SwapContext = createContext<SwapContextType | undefined>(undefined);
 
 export function SwapProvider({ children }: { children: React.ReactNode }) {
   const { user, isBackendConfigured } = useAuth();
+  const { blockedUserIds, isLoading: isTrustSafetyLoading } = useTrustSafety();
   const [activeListings, setActiveListings] = useState<SwapListing[]>([]);
   const [ownListings, setOwnListings] = useState<SwapListing[]>([]);
   const [incomingOffers, setIncomingOffers] = useState<SwapOffer[]>([]);
@@ -152,9 +154,11 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
   const marketplaceListings = useMemo(
     () =>
       activeListings.filter(
-        (listing) => !user || listing.ownerId !== user.id,
+        (listing) =>
+          (!user || listing.ownerId !== user.id) &&
+          !blockedUserIds.has(listing.ownerId),
       ),
-    [activeListings, user],
+    [activeListings, blockedUserIds, user],
   );
 
   const requireCloud = () => {
@@ -213,7 +217,7 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
         incomingOffers,
         outgoingOffers,
         transactions,
-        isLoading: loadedKeys.size < 5,
+        isLoading: loadedKeys.size < 5 || isTrustSafetyLoading,
         error,
         isCloudBacked,
         createListing,
