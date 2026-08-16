@@ -113,6 +113,9 @@ function validWardrobeItem(ownerId, itemId) {
     aiStatus: 'not_requested',
     aiConfidence: null,
     aiModelVersion: null,
+    aiPromptVersion: null,
+    aiAnalyzedAt: null,
+    aiErrorCode: null,
     isListedForSwap: false,
     swapListingId: null,
     createdAt: now,
@@ -130,12 +133,10 @@ async function run() {
     const ownerId = await register(owner, 'owner@omni-fashion.test');
     const strangerId = await register(stranger, 'stranger@omni-fashion.test');
 
-    // UserProfile: owner can create/read their valid private profile.
     const ownerProfileRef = doc(owner.db, 'users', ownerId);
     await setDoc(ownerProfileRef, validUserProfile('Owner'));
     assert.equal((await getDoc(ownerProfileRef)).exists(), true);
 
-    // Invalid profile shapes are rejected.
     await expectPermissionDenied(
       setDoc(doc(stranger.db, 'users', strangerId), {
         displayName: 'Incomplete Profile',
@@ -143,7 +144,6 @@ async function run() {
       'invalid user profile shape',
     );
 
-    // Private profiles cannot be read by another user or anonymously.
     await expectPermissionDenied(
       getDoc(doc(stranger.db, 'users', ownerId)),
       'stranger reads private profile',
@@ -153,7 +153,6 @@ async function run() {
       'anonymous reads private profile',
     );
 
-    // Wardrobe: owner can create/read/update/delete a valid own item.
     const itemId = 'owner-item-1';
     const wardrobeRef = doc(owner.db, 'wardrobeItems', itemId);
     await setDoc(wardrobeRef, validWardrobeItem(ownerId, itemId));
@@ -166,7 +165,6 @@ async function run() {
       updatedAt: Timestamp.now(),
     });
 
-    // Another user cannot read/update/delete a private wardrobe item.
     await expectPermissionDenied(
       getDoc(doc(stranger.db, 'wardrobeItems', itemId)),
       'stranger reads private wardrobe item',
@@ -182,8 +180,6 @@ async function run() {
       'stranger deletes private wardrobe item',
     );
 
-    // Owner cannot transfer ownership or point the private record at another
-    // user's Storage path.
     await expectPermissionDenied(
       updateDoc(wardrobeRef, { ownerId: strangerId }),
       'owner changes wardrobe ownerId',
@@ -195,15 +191,24 @@ async function run() {
       'owner changes wardrobe image ownership path',
     );
 
-    // AI and marketplace state are trusted-system fields, not user-editable
-    // metadata.
+    // AI state is written by the trusted backend, never by a normal client.
     await expectPermissionDenied(
       updateDoc(wardrobeRef, {
         aiStatus: 'completed',
         aiConfidence: 0.99,
         aiModelVersion: 'fake-client-model',
+        aiPromptVersion: 'fake-client-prompt',
+        aiAnalyzedAt: Timestamp.now(),
+        aiErrorCode: null,
       }),
-      'client forges AI result',
+      'client forges completed AI result',
+    );
+    await expectPermissionDenied(
+      updateDoc(wardrobeRef, {
+        aiStatus: 'failed',
+        aiErrorCode: 'CLIENT_FORGED_ERROR',
+      }),
+      'client forges AI error state',
     );
     await expectPermissionDenied(
       updateDoc(wardrobeRef, {
@@ -213,19 +218,18 @@ async function run() {
       'client forges swap linkage',
     );
 
-    // A malformed create cannot start with fake AI/Swap state.
     await expectPermissionDenied(
       setDoc(doc(owner.db, 'wardrobeItems', 'forged-item'), {
         ...validWardrobeItem(ownerId, 'forged-item'),
         aiStatus: 'completed',
         aiConfidence: 1,
         aiModelVersion: 'client-forged',
+        aiPromptVersion: 'client-forged',
+        aiAnalyzedAt: Timestamp.now(),
       }),
       'client creates wardrobe item with forged AI state',
     );
 
-    // Marketplace: active listings are intentionally public-readable, while
-    // the private wardrobe document behind them remains hidden.
     const listingRef = doc(owner.db, 'swapListings', 'listing-1');
     await setDoc(listingRef, {
       ownerId,
@@ -244,7 +248,6 @@ async function run() {
       true,
     );
 
-    // Non-owner cannot mutate a listing.
     await expectPermissionDenied(
       updateDoc(doc(stranger.db, 'swapListings', 'listing-1'), {
         title: 'Manipulated listing',
@@ -252,7 +255,6 @@ async function run() {
       'stranger updates listing',
     );
 
-    // Security-critical trade writes are server-only by design.
     await expectPermissionDenied(
       setDoc(doc(owner.db, 'swapOffers', 'offer-1'), {
         requesterId: ownerId,
@@ -269,7 +271,6 @@ async function run() {
       'client creates trade transaction directly',
     );
 
-    // Unknown collections remain denied by the default-deny catch-all.
     await expectPermissionDenied(
       setDoc(doc(owner.db, 'unexpectedCollection', 'document-1'), {
         ownerId,
