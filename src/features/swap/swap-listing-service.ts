@@ -1,6 +1,8 @@
 import {
   collection,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   Timestamp,
   where,
@@ -29,6 +31,10 @@ import type {
   SwapListing,
   SwapListingStatus,
 } from './types';
+
+const MARKETPLACE_FEED_LIMIT = 100;
+const OWN_LISTINGS_LIMIT = 100;
+const listingImageUrlCache = new Map<string, string>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -159,7 +165,7 @@ function mapListing(snapshot: QueryDocumentSnapshot<unknown>): SwapListing | nul
     size,
     condition,
     publicImagePath,
-    publicImageUrl: null,
+    publicImageUrl: listingImageUrlCache.get(publicImagePath) ?? null,
     city,
     shippingEnabled,
     meetupEnabled,
@@ -172,11 +178,19 @@ function mapListing(snapshot: QueryDocumentSnapshot<unknown>): SwapListing | nul
 }
 
 async function hydrateListingImage(listing: SwapListing): Promise<SwapListing> {
+  if (listing.publicImageUrl) {
+    return listing;
+  }
+
   try {
     const { storage } = getFirebaseServices();
+    const publicImageUrl = await getDownloadURL(
+      ref(storage, listing.publicImagePath),
+    );
+    listingImageUrlCache.set(listing.publicImagePath, publicImageUrl);
     return {
       ...listing,
-      publicImageUrl: await getDownloadURL(ref(storage, listing.publicImagePath)),
+      publicImageUrl,
     };
   } catch (error: unknown) {
     console.error(`Failed to resolve listing image ${listing.id}`, error);
@@ -223,8 +237,7 @@ function subscribeListings(
     (snapshot) => {
       const mapped = snapshot.docs
         .map(mapListing)
-        .filter((listing): listing is SwapListing => listing !== null)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        .filter((listing): listing is SwapListing => listing !== null);
 
       void hydrateListings(mapped).then(onChange).catch(onError);
     },
@@ -238,7 +251,12 @@ export function subscribeToActiveSwapListings(
 ): () => void {
   const { db } = getFirebaseServices();
   return subscribeListings(
-    query(collection(db, 'swapListings'), where('status', '==', 'active')),
+    query(
+      collection(db, 'swapListings'),
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc'),
+      limit(MARKETPLACE_FEED_LIMIT),
+    ),
     onChange,
     onError,
   );
@@ -251,7 +269,12 @@ export function subscribeToOwnSwapListings(
 ): () => void {
   const { db } = getFirebaseServices();
   return subscribeListings(
-    query(collection(db, 'swapListings'), where('ownerId', '==', ownerId)),
+    query(
+      collection(db, 'swapListings'),
+      where('ownerId', '==', ownerId),
+      orderBy('createdAt', 'desc'),
+      limit(OWN_LISTINGS_LIMIT),
+    ),
     onChange,
     onError,
   );
