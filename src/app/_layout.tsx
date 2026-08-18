@@ -6,6 +6,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { FeatureFlagProvider } from '@/context/FeatureFlagContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { SavedOutfitsProvider } from '@/context/SavedOutfitsContext';
 import { StyleProfileProvider } from '@/context/StyleProfileContext';
@@ -62,7 +63,9 @@ export default function TabLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <ErrorBoundary>
         <AuthProvider>
-          <RootContent />
+          <FeatureFlagProvider>
+            <RootContent />
+          </FeatureFlagProvider>
         </AuthProvider>
       </ErrorBoundary>
     </ThemeProvider>
