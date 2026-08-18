@@ -3,15 +3,17 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { useAuth } from '@/context/AuthContext';
 import { useSwap } from '@/context/SwapContext';
 import { useWardrobe } from '@/context/WardrobeContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import { CreateSwapListingModal } from '@/features/swap/components/CreateSwapListingModal';
 import { SendSwapOfferModal } from '@/features/swap/components/SendSwapOfferModal';
 import { SwapTransactionCard } from '@/features/swap/components/SwapTransactionCard';
@@ -74,10 +76,14 @@ function ListingCard({
   const value = money(listing.estimatedValueCents);
 
   return (
-    <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden mb-4">
+    <View
+      accessibilityLabel={`${listing.title}, ${listing.category}, ${listing.color}, Status ${statusLabel(listing.status)}`}
+      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden mb-4"
+    >
       <View className="h-64 bg-zinc-100 dark:bg-zinc-800 items-center justify-center">
         {listing.publicImageUrl ? (
           <Image
+            accessibilityLabel={`Produktbild von ${listing.title}`}
             source={{ uri: listing.publicImageUrl }}
             className="w-full h-full"
             resizeMode="contain"
@@ -140,36 +146,36 @@ function ListingCard({
         </View>
 
         {actionLabel && onAction ? (
-          <TouchableOpacity
-            onPress={onAction}
-            className="bg-indigo-600 rounded-2xl py-4 items-center mt-3"
-          >
-            <Text className="text-white font-extrabold">{actionLabel}</Text>
-          </TouchableOpacity>
+          <View className="mt-3">
+            <AppButton
+              label={actionLabel}
+              accessibilityLabel={`${actionLabel}: ${listing.title}`}
+              onPress={onAction}
+            />
+          </View>
         ) : null}
 
         {ownerActions ? (
           <View className="flex-row mt-3">
-            <TouchableOpacity
-              onPress={ownerActions.onPrimary}
-              disabled={busy}
-              className="flex-1 bg-zinc-900 dark:bg-white rounded-xl py-3 items-center mr-2"
-            >
-              {busy ? (
-                <ActivityIndicator size="small" color="#71717a" />
-              ) : (
-                <Text className="text-white dark:text-black font-bold text-xs">
-                  {ownerActions.primaryLabel}
-                </Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={ownerActions.onRemove}
-              disabled={busy}
-              className="flex-1 bg-red-500/10 border border-red-500/30 rounded-xl py-3 items-center"
-            >
-              <Text className="text-red-500 font-bold text-xs">Entfernen</Text>
-            </TouchableOpacity>
+            <View className="flex-1 mr-2">
+              <AppButton
+                label={ownerActions.primaryLabel}
+                accessibilityLabel={`${ownerActions.primaryLabel}: ${listing.title}`}
+                variant="secondary"
+                loading={busy}
+                disabled={busy}
+                onPress={ownerActions.onPrimary}
+              />
+            </View>
+            <View className="flex-1">
+              <AppButton
+                label="Entfernen"
+                accessibilityLabel={`Listing entfernen: ${listing.title}`}
+                variant="danger"
+                disabled={busy}
+                onPress={ownerActions.onRemove}
+              />
+            </View>
           </View>
         ) : null}
       </View>
@@ -193,7 +199,10 @@ function OfferCard({
   busy?: boolean;
 }) {
   return (
-    <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-3">
+    <View
+      accessibilityLabel={`${incoming ? 'Eingehendes' : 'Ausgehendes'} Tauschangebot, Status ${statusLabel(offer.status)}`}
+      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-3"
+    >
       <View className="flex-row justify-between items-start mb-3">
         <Text className="text-black dark:text-white font-bold flex-1 pr-3">
           {incoming ? 'Eingehendes Angebot' : 'Dein Angebot'}
@@ -223,41 +232,38 @@ function OfferCard({
 
       {incoming && offer.status === 'sent' && onAccept && onDecline ? (
         <View className="flex-row mt-4">
-          <TouchableOpacity
-            onPress={onAccept}
-            disabled={busy}
-            className="flex-1 bg-emerald-600 rounded-xl py-3 items-center mr-2"
-          >
-            {busy ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text className="text-white font-bold text-xs">Annehmen</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onDecline}
-            disabled={busy}
-            className="flex-1 bg-red-500/10 border border-red-500/30 rounded-xl py-3 items-center"
-          >
-            <Text className="text-red-500 font-bold text-xs">Ablehnen</Text>
-          </TouchableOpacity>
+          <View className="flex-1 mr-2">
+            <AppButton
+              label="Annehmen"
+              accessibilityLabel={`Tauschangebot annehmen: ${offer.offeredSnapshot.title} gegen ${offer.requestedSnapshot.title}`}
+              loading={busy}
+              disabled={busy}
+              onPress={onAccept}
+            />
+          </View>
+          <View className="flex-1">
+            <AppButton
+              label="Ablehnen"
+              accessibilityLabel={`Tauschangebot ablehnen: ${offer.offeredSnapshot.title} gegen ${offer.requestedSnapshot.title}`}
+              variant="danger"
+              disabled={busy}
+              onPress={onDecline}
+            />
+          </View>
         </View>
       ) : null}
 
       {!incoming && offer.status === 'sent' && onCancel ? (
-        <TouchableOpacity
-          onPress={onCancel}
-          disabled={busy}
-          className="bg-zinc-100 dark:bg-zinc-800 rounded-xl py-3 items-center mt-4"
-        >
-          {busy ? (
-            <ActivityIndicator size="small" color="#71717a" />
-          ) : (
-            <Text className="text-zinc-700 dark:text-zinc-200 font-bold text-xs">
-              Angebot zurückziehen
-            </Text>
-          )}
-        </TouchableOpacity>
+        <View className="mt-4">
+          <AppButton
+            label="Angebot zurückziehen"
+            accessibilityLabel={`Tauschangebot zurückziehen: ${offer.offeredSnapshot.title} gegen ${offer.requestedSnapshot.title}`}
+            variant="secondary"
+            loading={busy}
+            disabled={busy}
+            onPress={onCancel}
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -440,36 +446,41 @@ export default function SwapScreen() {
           </Text>
         </View>
         {isCloudBacked ? (
-          <TouchableOpacity
-            onPress={() => setListingModalVisible(true)}
-            className="bg-indigo-600 rounded-xl px-4 py-3"
-          >
-            <Text className="text-white font-bold text-xs">Teil listen</Text>
-          </TouchableOpacity>
+          <View>
+            <AppButton
+              label="Teil listen"
+              accessibilityLabel="Kleidungsstück auf OmniSwap listen"
+              onPress={() => setListingModalVisible(true)}
+            />
+          </View>
         ) : null}
       </View>
 
       {!isCloudBacked ? (
-        <View className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
-          <Text className="text-amber-700 dark:text-amber-300 font-bold">
-            OmniSwap benötigt das echte Cloud-Backend
-          </Text>
-          <Text className="text-zinc-600 dark:text-zinc-400 text-sm mt-2 leading-6">
-            Im Development-Demo-Modus werden keine erfundenen Marketplace-Nutzer, Listings oder Trades mehr angezeigt.
-          </Text>
-        </View>
+        <StatusBanner
+          tone="warning"
+          title="OmniSwap benötigt das echte Cloud-Backend"
+          message="Im Development-Demo-Modus werden keine erfundenen Marketplace-Nutzer, Listings oder Trades angezeigt."
+        />
       ) : (
         <>
-          <View className="flex-row bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-1 mb-4">
+          <View
+            accessibilityRole="tablist"
+            className="flex-row bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-1 mb-4"
+          >
             {([
               ['market', 'Marktplatz'],
               ['mine', `Meine Listings (${ownListings.length})`],
               ['trades', `Trades (${incomingOffers.length + outgoingOffers.length})`],
             ] as const).map(([value, label]) => (
-              <TouchableOpacity
+              <Pressable
                 key={value}
+                accessibilityRole="tab"
+                accessibilityLabel={label}
+                accessibilityState={{ selected: tab === value }}
+                hitSlop={4}
                 onPress={() => setTab(value)}
-                className={`flex-1 py-3 rounded-xl items-center ${
+                className={`flex-1 min-h-12 rounded-xl items-center justify-center ${
                   tab === value ? 'bg-black dark:bg-white' : ''
                 }`}
               >
@@ -482,18 +493,26 @@ export default function SwapScreen() {
                 >
                   {label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
           {error ? (
-            <View className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
-              <Text className="text-red-500 text-xs">{error}</Text>
+            <View className="mb-4">
+              <StatusBanner
+                tone="danger"
+                title="OmniSwap konnte nicht aktualisiert werden"
+                message={error}
+              />
             </View>
           ) : null}
 
           {isLoading ? (
-            <View className="flex-1 items-center justify-center">
+            <View
+              accessibilityRole="progressbar"
+              accessibilityLabel="OmniSwap wird geladen"
+              className="flex-1 items-center justify-center"
+            >
               <ActivityIndicator size="large" color="#4f46e5" />
             </View>
           ) : (
@@ -533,12 +552,11 @@ export default function SwapScreen() {
                       <Text className="text-zinc-500 text-sm text-center mt-2 leading-6 mb-4">
                         Wähle ein noch verfügbares Kleidungsstück aus deinem Schrank.
                       </Text>
-                      <TouchableOpacity
+                      <AppButton
+                        label="Erstes Listing"
+                        accessibilityLabel="Erstes Kleidungsstück auf OmniSwap listen"
                         onPress={() => setListingModalVisible(true)}
-                        className="bg-indigo-600 rounded-xl px-5 py-3"
-                      >
-                        <Text className="text-white font-bold">Erstes Listing</Text>
-                      </TouchableOpacity>
+                      />
                     </View>
                   ) : (
                     ownListings.map((listing) => {
