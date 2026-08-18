@@ -1,13 +1,9 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 import { useTrustSafety } from '@/context/TrustSafetyContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import type { SwapTransaction } from '@/features/swap/types';
 import type { DisputeReason } from '@/features/trust-safety/types';
 
@@ -31,13 +27,12 @@ export function SwapDisputeAction({
 
   if (transaction.status === 'disputed') {
     return (
-      <View className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-3">
-        <Text className="text-amber-800 dark:text-amber-200 font-extrabold">
-          Klärungsfall geöffnet
-        </Text>
-        <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-2 leading-5">
-          Der normale Trade-Fortschritt ist gestoppt. Die Eigentumsübertragung wird während des offenen Klärungsfalls nicht automatisch fortgesetzt.
-        </Text>
+      <View className="mb-3">
+        <StatusBanner
+          tone="warning"
+          title="Klärungsfall geöffnet"
+          message="Der normale Trade-Fortschritt ist gestoppt. Die Eigentumsübertragung wird während des offenen Klärungsfalls nicht automatisch fortgesetzt."
+        />
       </View>
     );
   }
@@ -77,37 +72,44 @@ export function SwapDisputeAction({
 
   return (
     <View className="mb-4">
-      <TouchableOpacity
+      <AppButton
+        label={showReasons ? 'Klärungsfall-Auswahl schließen' : 'Problem melden / Klärungsfall öffnen'}
+        accessibilityLabel={
+          showReasons
+            ? 'Auswahl für Klärungsgrund schließen'
+            : `Problem für Trade ${transaction.id.slice(0, 6)} melden und Klärungsfall öffnen`
+        }
+        variant="secondary"
+        loading={submitting}
         onPress={() => setShowReasons((current) => !current)}
-        disabled={submitting}
-        className="bg-amber-500/10 border border-amber-500/25 rounded-xl py-3 items-center"
-      >
-        {submitting ? (
-          <ActivityIndicator size="small" color="#d97706" />
-        ) : (
-          <Text className="text-amber-700 dark:text-amber-300 font-bold text-xs">
-            Problem melden / Klärungsfall öffnen
-          </Text>
-        )}
-      </TouchableOpacity>
+      />
 
       {showReasons ? (
-        <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 mt-2">
+        <View
+          accessibilityLabel="Klärungsgrund auswählen"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 mt-2"
+        >
           <Text className="text-zinc-500 text-[11px] font-bold uppercase mb-2">
             Problem auswählen
           </Text>
           <View className="flex-row flex-wrap">
             {DISPUTE_OPTIONS.map((option) => (
-              <TouchableOpacity
+              <Pressable
                 key={option.value}
-                onPress={() => void submit(option.value)}
+                accessibilityRole="button"
+                accessibilityLabel={`Klärungsfall öffnen: ${option.label}`}
+                accessibilityState={{ disabled: submitting }}
                 disabled={submitting}
-                className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-3 py-2 mr-2 mb-2"
+                hitSlop={4}
+                onPress={() => void submit(option.value)}
+                className={`min-h-12 bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 mr-2 mb-2 items-center justify-center ${
+                  submitting ? 'opacity-50' : ''
+                }`}
               >
                 <Text className="text-black dark:text-white text-xs font-semibold">
                   {option.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
