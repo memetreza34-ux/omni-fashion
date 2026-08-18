@@ -2,12 +2,12 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
-import { isFeatureEnabled } from '@/config/feature-flags';
+import { useFeatureFlag } from '@/context/FeatureFlagContext';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
-  const shopEnabled = isFeatureEnabled('shopPartnerFeed');
+  const shopEnabled = useFeatureFlag('shopPartnerFeed');
 
   return (
     <NativeTabs
