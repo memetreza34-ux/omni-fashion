@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Modal,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import type { WardrobeItem } from '@/features/wardrobe/types';
 
 import type { CreateSwapListingInput } from '../types';
@@ -122,9 +123,12 @@ export function CreateSwapListingModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end bg-black/60">
-        <View className="bg-white dark:bg-zinc-950 rounded-t-3xl max-h-[92%] p-5">
+        <View
+          accessibilityViewIsModal
+          className="bg-white dark:bg-zinc-950 rounded-t-3xl max-h-[92%] p-5"
+        >
           <View className="flex-row justify-between items-center mb-5">
-            <View>
+            <View className="flex-1 pr-3">
               <Text className="text-black dark:text-white text-xl font-extrabold">
                 Für OmniSwap listen
               </Text>
@@ -132,21 +136,28 @@ export function CreateSwapListingModal({
                 Das Listing bleibt mit deinem echten WardrobeItem verknüpft.
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} className="px-3 py-2">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Listing-Dialog schließen"
+              disabled={isSubmitting}
+              hitSlop={8}
+              onPress={onClose}
+              className="min-h-12 px-3 items-center justify-center"
+            >
               <Text className="text-zinc-500 font-bold">Schließen</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {items.length === 0 ? (
-              <View className="bg-zinc-100 dark:bg-zinc-900 rounded-2xl p-6 items-center">
-                <Text className="text-black dark:text-white font-bold text-center">
-                  Kein verfügbares Kleidungsstück
-                </Text>
-                <Text className="text-zinc-500 text-xs text-center mt-2 leading-5">
-                  Nur noch nicht gelistete Cloud-WardrobeItems mit gespeichertem Bild können angeboten werden.
-                </Text>
-              </View>
+              <StatusBanner
+                tone="neutral"
+                title="Kein verfügbares Kleidungsstück"
+                message="Nur noch nicht gelistete Cloud-WardrobeItems mit gespeichertem Bild können angeboten werden."
+              />
             ) : (
               <>
                 <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
@@ -160,8 +171,11 @@ export function CreateSwapListingModal({
                   {items.map((item) => {
                     const selected = item.id === selectedItemId;
                     return (
-                      <TouchableOpacity
+                      <Pressable
                         key={item.id}
+                        accessibilityRole="radio"
+                        accessibilityLabel={`${item.name}, ${item.category}, Zustand ${item.condition}`}
+                        accessibilityState={{ selected }}
                         onPress={() => setSelectedItemId(item.id)}
                         className={`w-32 mr-3 rounded-2xl border overflow-hidden ${
                           selected
@@ -172,6 +186,7 @@ export function CreateSwapListingModal({
                         <View className="h-28 items-center justify-center bg-zinc-100 dark:bg-zinc-800">
                           {item.imageUrl ? (
                             <Image
+                              accessibilityLabel={`Bild von ${item.name}`}
                               source={{ uri: item.imageUrl }}
                               className="w-full h-full"
                               resizeMode="contain"
@@ -191,7 +206,7 @@ export function CreateSwapListingModal({
                             {item.category} · {item.condition}
                           </Text>
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
                     );
                   })}
                 </ScrollView>
@@ -200,8 +215,10 @@ export function CreateSwapListingModal({
                   Beschreibung
                 </Text>
                 <TextInput
+                  accessibilityLabel="Beschreibung des OmniSwap Listings"
                   value={description}
                   onChangeText={setDescription}
+                  editable={!isSubmitting}
                   maxLength={1000}
                   multiline
                   placeholder="Optional: Passform, Gebrauchsspuren, Besonderheiten …"
@@ -213,33 +230,41 @@ export function CreateSwapListingModal({
                   Stadt
                 </Text>
                 <TextInput
+                  accessibilityLabel="Stadt für das OmniSwap Listing"
                   value={city}
                   onChangeText={setCity}
+                  editable={!isSubmitting}
                   maxLength={80}
                   placeholder="z. B. Berlin"
                   placeholderTextColor="#a1a1aa"
-                  className="bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white rounded-xl px-4 py-3 mb-4"
+                  className="bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white rounded-xl px-4 py-3 mb-4 min-h-12"
                 />
 
                 <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
                   Optionaler Schätzwert in Euro
                 </Text>
                 <TextInput
+                  accessibilityLabel="Optionaler Schätzwert des Kleidungsstücks in Euro"
                   value={estimatedValue}
                   onChangeText={setEstimatedValue}
+                  editable={!isSubmitting}
                   keyboardType="decimal-pad"
                   placeholder="z. B. 45"
                   placeholderTextColor="#a1a1aa"
-                  className="bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white rounded-xl px-4 py-3 mb-5"
+                  className="bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white rounded-xl px-4 py-3 mb-5 min-h-12"
                 />
 
                 <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
                   Tauschweg
                 </Text>
                 <View className="flex-row mb-5">
-                  <TouchableOpacity
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityLabel="Versand erlauben"
+                    accessibilityState={{ checked: shippingEnabled }}
+                    disabled={isSubmitting}
                     onPress={() => setShippingEnabled((current) => !current)}
-                    className={`flex-1 mr-2 rounded-xl p-3 border ${
+                    className={`flex-1 mr-2 min-h-12 rounded-xl px-3 items-center justify-center border ${
                       shippingEnabled
                         ? 'bg-indigo-600 border-indigo-600'
                         : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
@@ -254,10 +279,14 @@ export function CreateSwapListingModal({
                     >
                       Versand
                     </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityLabel="Persönliche Übergabe erlauben"
+                    accessibilityState={{ checked: meetupEnabled }}
+                    disabled={isSubmitting}
                     onPress={() => setMeetupEnabled((current) => !current)}
-                    className={`flex-1 rounded-xl p-3 border ${
+                    className={`flex-1 min-h-12 rounded-xl px-3 items-center justify-center border ${
                       meetupEnabled
                         ? 'bg-indigo-600 border-indigo-600'
                         : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
@@ -272,22 +301,22 @@ export function CreateSwapListingModal({
                     >
                       Übergabe
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => void submit()}
-                  disabled={!selectedItem || isSubmitting}
-                  className="bg-indigo-600 rounded-2xl py-4 items-center mb-4"
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text className="text-white font-extrabold">
-                      Listing veröffentlichen
-                    </Text>
-                  )}
-                </TouchableOpacity>
+                <View className="mb-4">
+                  <AppButton
+                    label="Listing veröffentlichen"
+                    accessibilityLabel={
+                      selectedItem
+                        ? `Listing veröffentlichen: ${selectedItem.name}`
+                        : 'Listing veröffentlichen'
+                    }
+                    loading={isSubmitting}
+                    disabled={!selectedItem}
+                    onPress={() => void submit()}
+                  />
+                </View>
               </>
             )}
           </ScrollView>
