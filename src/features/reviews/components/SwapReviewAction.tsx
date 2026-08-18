@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
+import { AppButton } from '@/design-system/AppButton';
 import {
   submitSwapReview,
   subscribeToSwapReview,
@@ -65,7 +66,11 @@ export function SwapReviewAction({
 
   if (loading) {
     return (
-      <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-4 items-center">
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel="Bewertungsstatus wird geladen"
+        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-4 items-center"
+      >
         <ActivityIndicator size="small" color="#4f46e5" />
       </View>
     );
@@ -73,7 +78,10 @@ export function SwapReviewAction({
 
   if (existingReview) {
     return (
-      <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-4">
+      <View
+        accessibilityLabel={`Bewertung abgegeben, ${existingReview.rating} von 5 Punkten`}
+        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-4"
+      >
         <Text className="text-black dark:text-white font-extrabold">
           Bewertung abgegeben
         </Text>
@@ -119,14 +127,14 @@ export function SwapReviewAction({
 
   if (!expanded) {
     return (
-      <TouchableOpacity
-        onPress={() => setExpanded(true)}
-        className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl py-4 items-center mb-4"
-      >
-        <Text className="text-indigo-700 dark:text-indigo-300 font-extrabold text-sm">
-          Tauschpartner bewerten
-        </Text>
-      </TouchableOpacity>
+      <View className="mb-4">
+        <AppButton
+          label="Tauschpartner bewerten"
+          accessibilityLabel={`Tauschpartner für Trade ${transaction.id.slice(0, 6)} bewerten`}
+          variant="secondary"
+          onPress={() => setExpanded(true)}
+        />
+      </View>
     );
   }
 
@@ -139,17 +147,22 @@ export function SwapReviewAction({
         Die Bewertung ist dauerhaft diesem abgeschlossenen Trade zugeordnet.
       </Text>
 
-      <View className="flex-row mt-4">
-        {RATINGS.map((value) => (
-          <TouchableOpacity
+      <View accessibilityRole="radiogroup" className="flex-row mt-4">
+        {RATINGS.map((value, index) => (
+          <Pressable
             key={value}
+            accessibilityRole="radio"
+            accessibilityLabel={`${value} von 5 Punkten`}
+            accessibilityState={{ selected: rating === value, disabled: submitting }}
             onPress={() => setRating(value)}
             disabled={submitting}
-            className={`flex-1 rounded-xl py-3 items-center mr-2 ${
+            className={`flex-1 min-h-12 rounded-xl items-center justify-center ${
+              index < RATINGS.length - 1 ? 'mr-2' : ''
+            } ${
               rating === value
                 ? 'bg-indigo-600'
                 : 'bg-zinc-100 dark:bg-zinc-800'
-            }`}
+            } ${submitting ? 'opacity-50' : ''}`}
           >
             <Text
               className={
@@ -160,11 +173,12 @@ export function SwapReviewAction({
             >
               {value}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </View>
 
       <TextInput
+        accessibilityLabel="Optionaler Kommentar zur Bewertung"
         value={comment}
         onChangeText={setComment}
         editable={!submitting}
@@ -180,26 +194,22 @@ export function SwapReviewAction({
       </Text>
 
       <View className="flex-row mt-3">
-        <TouchableOpacity
-          onPress={() => setExpanded(false)}
-          disabled={submitting}
-          className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl py-3 items-center mr-2"
-        >
-          <Text className="text-zinc-700 dark:text-zinc-300 font-bold text-xs">
-            Abbrechen
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => void submit()}
-          disabled={submitting}
-          className="flex-1 bg-indigo-600 rounded-xl py-3 items-center"
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text className="text-white font-bold text-xs">Bewertung senden</Text>
-          )}
-        </TouchableOpacity>
+        <View className="flex-1 mr-2">
+          <AppButton
+            label="Abbrechen"
+            variant="secondary"
+            disabled={submitting}
+            onPress={() => setExpanded(false)}
+          />
+        </View>
+        <View className="flex-1">
+          <AppButton
+            label="Bewertung senden"
+            accessibilityLabel={`${rating} von 5 Punkten als Bewertung senden`}
+            loading={submitting}
+            onPress={() => void submit()}
+          />
+        </View>
       </View>
     </View>
   );
