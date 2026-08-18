@@ -2,6 +2,8 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
+import { enforceUserRateLimit } from '../security/rate-limit.js';
+
 const FUNCTIONS_REGION = 'europe-west1';
 const OFFER_SCHEMA_VERSION = 1;
 
@@ -115,6 +117,12 @@ export const sendSwapOffer = onCall(
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();
+    await enforceUserRateLimit({
+      uid: requesterId,
+      scope: 'send_swap_offer',
+      maxAttempts: 60,
+      windowSeconds: 60 * 60,
+    });
 
     const db = getFirestore();
     const offerRef = db.collection('swapOffers').doc();
