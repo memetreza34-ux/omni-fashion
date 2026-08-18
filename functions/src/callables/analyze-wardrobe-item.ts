@@ -18,12 +18,11 @@ import type {
   GarmentAnalysisResponse,
   GarmentAnalysisResult,
 } from '../ai/contracts.js';
-import {
-  GarmentAnalysisError,
-} from '../ai/errors.js';
+import { GarmentAnalysisError } from '../ai/errors.js';
 import type { GarmentAnalysisFailureCode } from '../ai/errors.js';
 import { parseGarmentProviderResult } from '../ai/garment-result.js';
 import { GeminiGarmentVisionProvider } from '../ai/providers/gemini-garment-vision-provider.js';
+import { enforceUserRateLimit } from '../security/rate-limit.js';
 
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 const FUNCTIONS_REGION = 'europe-west1';
@@ -403,6 +402,14 @@ export const analyzeWardrobeItem = onCall(
 
     const input = parseRequest(request.data);
     const userId = request.auth.uid;
+    ensureAdminInitialized();
+    await enforceUserRateLimit({
+      uid: userId,
+      scope: 'analyze_wardrobe_item',
+      maxAttempts: 20,
+      windowSeconds: 60 * 60,
+    });
+
     let markedPending = false;
 
     try {
