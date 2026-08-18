@@ -1,10 +1,7 @@
-import {
-  ActivityIndicator,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import { SwapReviewAction } from '@/features/reviews/components/SwapReviewAction';
 import { SwapDisputeAction } from '@/features/trust-safety/components/SwapDisputeAction';
 
@@ -52,6 +49,7 @@ export function SwapTransactionCard({
 
   const requestedTitle = offer?.requestedSnapshot.title ?? 'Angefragtes Teil';
   const offeredTitle = offer?.offeredSnapshot.title ?? 'Angebotenes Teil';
+  const tradeLabel = `${requestedTitle} gegen ${offeredTitle}`;
 
   if (transaction.status === 'disputed') {
     return <SwapDisputeAction transaction={transaction} />;
@@ -60,13 +58,12 @@ export function SwapTransactionCard({
   if (transaction.status === 'completed') {
     return (
       <>
-        <View className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 mb-3">
-          <Text className="text-emerald-800 dark:text-emerald-200 font-extrabold">
-            Trade abgeschlossen
-          </Text>
-          <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-2 leading-5">
-            Beide Empfänge wurden bestätigt. OmniSwap hat Eigentum und private Wardrobe-Bilder serverseitig in die neuen Schränke übertragen.
-          </Text>
+        <View className="mb-3">
+          <StatusBanner
+            tone="success"
+            title="Trade abgeschlossen"
+            message="Beide Empfänge wurden bestätigt. OmniSwap hat Eigentum und private Wardrobe-Bilder serverseitig in die neuen Schränke übertragen."
+          />
         </View>
         <SwapReviewAction
           transaction={transaction}
@@ -78,7 +75,10 @@ export function SwapTransactionCard({
 
   return (
     <>
-      <View className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-3">
+      <View
+        accessibilityLabel={`Trade ${transaction.id.slice(0, 6)}, ${tradeLabel}, Tauschweg ${modeLabel(transaction.fulfilmentMode)}`}
+        className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-3"
+      >
         <View className="flex-row justify-between items-start mb-3">
           <View className="flex-1 pr-3">
             <Text className="text-indigo-900 dark:text-indigo-100 font-extrabold">
@@ -120,7 +120,11 @@ export function SwapTransactionCard({
 
         {transaction.finalizationState === 'processing' ||
         transaction.finalizationState === 'ready' ? (
-          <View className="flex-row items-center bg-white dark:bg-zinc-900 rounded-xl p-3">
+          <View
+            accessibilityRole="progressbar"
+            accessibilityLabel="Eigentumsübertragung wird abgeschlossen"
+            className="flex-row items-center bg-white dark:bg-zinc-900 rounded-xl p-3"
+          >
             <ActivityIndicator size="small" color="#4f46e5" />
             <Text className="text-zinc-600 dark:text-zinc-300 text-xs ml-3 flex-1 leading-5">
               Beide Empfänge sind bestätigt. Die private Zwei-Wege-Eigentumsübertragung wird sicher abgeschlossen.
@@ -129,26 +133,21 @@ export function SwapTransactionCard({
         ) : null}
 
         {transaction.finalizationState === 'failed' ? (
-          <View className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 mb-3">
-            <Text className="text-red-600 dark:text-red-300 font-bold text-xs">
-              Eigentumsübertragung nicht abgeschlossen
-            </Text>
-            <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-1 leading-5">
-              Die vorhandenen Wardrobe-Daten werden nicht als erfolgreich übertragen markiert. Du kannst den serverseitigen Abschluss erneut versuchen.
-            </Text>
-            <TouchableOpacity
-              onPress={() => void onAdvance({ type: 'retry_finalize' })}
-              disabled={busy}
-              className="bg-red-600 rounded-xl py-3 items-center mt-3"
-            >
-              {busy ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text className="text-white font-bold text-xs">
-                  Abschluss erneut versuchen
-                </Text>
-              )}
-            </TouchableOpacity>
+          <View className="mb-3">
+            <StatusBanner
+              tone="danger"
+              title="Eigentumsübertragung nicht abgeschlossen"
+              message="Die vorhandenen Wardrobe-Daten werden nicht als erfolgreich übertragen markiert. Du kannst den serverseitigen Abschluss erneut versuchen."
+            />
+            <View className="mt-3">
+              <AppButton
+                label="Abschluss erneut versuchen"
+                accessibilityLabel={`Eigentumsübertragung für ${tradeLabel} erneut versuchen`}
+                variant="danger"
+                loading={busy}
+                onPress={() => void onAdvance({ type: 'retry_finalize' })}
+              />
+            </View>
           </View>
         ) : null}
 
@@ -161,30 +160,31 @@ export function SwapTransactionCard({
               {(transaction.fulfilmentMode === null ||
                 transaction.fulfilmentMode === 'shipping') &&
               transaction.shippingEnabled ? (
-                <TouchableOpacity
-                  onPress={() =>
-                    void onAdvance({ type: 'confirm_mode', mode: 'shipping' })
-                  }
-                  disabled={busy}
-                  className="flex-1 bg-indigo-600 rounded-xl py-3 items-center mr-2"
-                >
-                  <Text className="text-white font-bold text-xs">Versand</Text>
-                </TouchableOpacity>
+                <View className="flex-1 mr-2">
+                  <AppButton
+                    label="Versand"
+                    accessibilityLabel={`Versand als Tauschweg bestätigen für ${tradeLabel}`}
+                    loading={busy}
+                    onPress={() =>
+                      void onAdvance({ type: 'confirm_mode', mode: 'shipping' })
+                    }
+                  />
+                </View>
               ) : null}
               {(transaction.fulfilmentMode === null ||
                 transaction.fulfilmentMode === 'meetup') &&
               transaction.meetupEnabled ? (
-                <TouchableOpacity
-                  onPress={() =>
-                    void onAdvance({ type: 'confirm_mode', mode: 'meetup' })
-                  }
-                  disabled={busy}
-                  className="flex-1 bg-zinc-900 dark:bg-white rounded-xl py-3 items-center"
-                >
-                  <Text className="text-white dark:text-black font-bold text-xs">
-                    Übergabe
-                  </Text>
-                </TouchableOpacity>
+                <View className="flex-1">
+                  <AppButton
+                    label="Übergabe"
+                    accessibilityLabel={`Persönliche Übergabe als Tauschweg bestätigen für ${tradeLabel}`}
+                    variant="secondary"
+                    loading={busy}
+                    onPress={() =>
+                      void onAdvance({ type: 'confirm_mode', mode: 'meetup' })
+                    }
+                  />
+                </View>
               ) : null}
             </View>
           </View>
@@ -203,19 +203,14 @@ export function SwapTransactionCard({
         transaction.fulfilmentMode === 'shipping' ? (
           <View>
             {!userShipped ? (
-              <TouchableOpacity
-                onPress={() => void onAdvance({ type: 'mark_shipped' })}
-                disabled={busy}
-                className="bg-indigo-600 rounded-xl py-3 items-center mb-2"
-              >
-                {busy ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text className="text-white font-bold text-xs">
-                    Ich habe mein Teil versendet
-                  </Text>
-                )}
-              </TouchableOpacity>
+              <View className="mb-2">
+                <AppButton
+                  label="Ich habe mein Teil versendet"
+                  accessibilityLabel={`Versand bestätigen für ${tradeLabel}`}
+                  loading={busy}
+                  onPress={() => void onAdvance({ type: 'mark_shipped' })}
+                />
+              </View>
             ) : (
               <Text className="text-zinc-600 dark:text-zinc-400 text-xs mb-2">
                 Dein Versand ist bestätigt.
@@ -223,15 +218,12 @@ export function SwapTransactionCard({
             )}
 
             {!userReceived && counterpartShipped ? (
-              <TouchableOpacity
+              <AppButton
+                label="Ich habe das andere Teil erhalten"
+                accessibilityLabel={`Empfang bestätigen für ${tradeLabel}`}
+                loading={busy}
                 onPress={() => void onAdvance({ type: 'mark_received' })}
-                disabled={busy}
-                className="bg-emerald-600 rounded-xl py-3 items-center"
-              >
-                <Text className="text-white font-bold text-xs">
-                  Ich habe das andere Teil erhalten
-                </Text>
-              </TouchableOpacity>
+              />
             ) : !userReceived ? (
               <Text className="text-zinc-500 text-xs leading-5">
                 Die Empfangsbestätigung wird freigeschaltet, sobald die andere Person ihren Versand bestätigt hat.
@@ -249,19 +241,12 @@ export function SwapTransactionCard({
         transaction.fulfilmentMode === 'meetup' ? (
           <View>
             {!userReceived ? (
-              <TouchableOpacity
+              <AppButton
+                label="Übergabe erhalten bestätigen"
+                accessibilityLabel={`Persönliche Übergabe als erhalten bestätigen für ${tradeLabel}`}
+                loading={busy}
                 onPress={() => void onAdvance({ type: 'mark_received' })}
-                disabled={busy}
-                className="bg-emerald-600 rounded-xl py-3 items-center"
-              >
-                {busy ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text className="text-white font-bold text-xs">
-                    Übergabe erhalten bestätigen
-                  </Text>
-                )}
-              </TouchableOpacity>
+              />
             ) : (
               <Text className="text-zinc-600 dark:text-zinc-400 text-xs leading-5">
                 Deine Übergabe ist bestätigt. OmniSwap wartet auf die Bestätigung der anderen Person.
