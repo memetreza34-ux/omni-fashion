@@ -1,10 +1,10 @@
 import { Text, View } from 'react-native';
 
+import { useFeatureFlag } from '@/context/FeatureFlagContext';
 import { StatusBanner } from '@/design-system/StatusBanner';
-import { isFeatureEnabled } from '@/config/feature-flags';
 
 export default function ShopScreen() {
-  const partnerFeedEnabled = isFeatureEnabled('shopPartnerFeed');
+  const partnerFeedEnabled = useFeatureFlag('shopPartnerFeed');
 
   return (
     <View className="flex-1 bg-white dark:bg-zinc-950 pt-16 px-4">
