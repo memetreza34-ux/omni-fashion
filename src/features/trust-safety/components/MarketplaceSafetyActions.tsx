@@ -1,13 +1,8 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 import { useTrustSafety } from '@/context/TrustSafetyContext';
+import { AppButton } from '@/design-system/AppButton';
 import type { ReportReason } from '@/features/trust-safety/types';
 
 const REPORT_OPTIONS: readonly { value: ReportReason; label: string }[] = [
@@ -99,49 +94,58 @@ export function MarketplaceSafetyActions({
   return (
     <View className="mb-4 -mt-1 px-1">
       <View className="flex-row">
-        <TouchableOpacity
-          onPress={() => setShowReasons((current) => !current)}
-          disabled={reporting}
-          className="flex-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-3 items-center mr-2"
-        >
-          {reporting ? (
-            <ActivityIndicator size="small" color="#71717a" />
-          ) : (
-            <Text className="text-zinc-600 dark:text-zinc-300 font-bold text-xs">
-              Melden
-            </Text>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={confirmBlock}
-          disabled={blocking}
-          className="flex-1 bg-red-500/10 border border-red-500/25 rounded-xl py-3 items-center"
-        >
-          {blocking ? (
-            <ActivityIndicator size="small" color="#ef4444" />
-          ) : (
-            <Text className="text-red-500 font-bold text-xs">Blockieren</Text>
-          )}
-        </TouchableOpacity>
+        <View className="flex-1 mr-2">
+          <AppButton
+            label={showReasons ? 'Meldung schließen' : 'Melden'}
+            accessibilityLabel={
+              showReasons
+                ? 'Auswahl für Meldungsgrund schließen'
+                : 'Dieses OmniSwap Listing melden'
+            }
+            variant="secondary"
+            loading={reporting}
+            disabled={blocking}
+            onPress={() => setShowReasons((current) => !current)}
+          />
+        </View>
+        <View className="flex-1">
+          <AppButton
+            label="Blockieren"
+            accessibilityLabel="Konto des Listing-Eigentümers blockieren"
+            variant="danger"
+            loading={blocking}
+            disabled={reporting}
+            onPress={confirmBlock}
+          />
+        </View>
       </View>
 
       {showReasons ? (
-        <View className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 mt-2">
+        <View
+          accessibilityLabel="Meldungsgrund auswählen"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 mt-2"
+        >
           <Text className="text-zinc-500 text-[11px] font-bold uppercase mb-2">
             Grund auswählen
           </Text>
           <View className="flex-row flex-wrap">
             {REPORT_OPTIONS.map((option) => (
-              <TouchableOpacity
+              <Pressable
                 key={option.value}
-                onPress={() => void submitReport(option.value)}
+                accessibilityRole="button"
+                accessibilityLabel={`Listing melden wegen ${option.label}`}
+                accessibilityState={{ disabled: reporting }}
                 disabled={reporting}
-                className="bg-zinc-100 dark:bg-zinc-800 rounded-full px-3 py-2 mr-2 mb-2"
+                hitSlop={4}
+                onPress={() => void submitReport(option.value)}
+                className={`min-h-12 bg-zinc-100 dark:bg-zinc-800 rounded-full px-4 mr-2 mb-2 items-center justify-center ${
+                  reporting ? 'opacity-50' : ''
+                }`}
               >
                 <Text className="text-black dark:text-white text-xs font-semibold">
                   {option.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
