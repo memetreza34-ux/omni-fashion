@@ -6,6 +6,7 @@ export { deleteMyAccount } from './callables/delete-my-account.js';
 export { exportMyData } from './callables/export-my-data.js';
 export { getAccountDeletionReadiness } from './callables/get-account-deletion-readiness.js';
 export { getOutfitWeather } from './callables/get-outfit-weather.js';
+export { getPublicFeatureFlags } from './callables/get-public-feature-flags.js';
 export { listModerationQueue } from './callables/list-moderation-queue.js';
 export { listRecoveryQueue } from './callables/list-recovery-queue.js';
 export { markNotificationRead } from './callables/mark-notification-read.js';
