@@ -44,7 +44,15 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "check-no-any": "node scripts/check-no-any.js",
-    "verify:quality": "node scripts/check-no-any.js && npx tsc --noEmit"
+    "verify:foundation": "node scripts/verify-production-foundation.js",
+    "verify:quality": "node scripts/check-no-any.js && node scripts/verify-production-foundation.js && npx tsc --noEmit",
+    "validate:release-config": "node scripts/validate-release-config.js",
+    "firebase:preflight": "node scripts/firebase-project-command.js preflight",
+    "firebase:emulators": "node scripts/firebase-project-command.js emulators",
+    "firebase:deploy:firestore": "node scripts/firebase-project-command.js firestore",
+    "firebase:deploy:storage": "node scripts/firebase-project-command.js storage",
+    "firebase:deploy:functions": "node scripts/firebase-project-command.js functions",
+    "firebase:deploy:all": "node scripts/firebase-project-command.js all"
   },
   "private": true
 }
