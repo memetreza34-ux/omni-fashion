@@ -4,6 +4,8 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
+import { enforceUserRateLimit } from '../security/rate-limit.js';
+
 const FUNCTIONS_REGION = 'europe-west1';
 const PUSH_DEVICE_SCHEMA_VERSION = 1;
 
@@ -68,6 +70,12 @@ export const registerPushDevice = onCall(
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();
+    await enforceUserRateLimit({
+      uid,
+      scope: 'register_push_device',
+      maxAttempts: 20,
+      windowSeconds: 60 * 60,
+    });
 
     const db = getFirestore();
     const deviceId = deviceIdForToken(input.expoPushToken);
