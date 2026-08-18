@@ -3,15 +3,17 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { useSavedOutfits } from '@/context/SavedOutfitsContext';
 import { useStyleProfile } from '@/context/StyleProfileContext';
 import { useWardrobe } from '@/context/WardrobeContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import { SavedOutfitsPanel } from '@/features/stylist/components/SavedOutfitsPanel';
 import { generateOutfitRecommendations } from '@/features/stylist/outfit-engine';
 import { generateWeatherAwareOutfits, seasonFromWeather } from '@/features/stylist/weather-outfit-engine';
@@ -152,7 +154,11 @@ export default function StylistScreen() {
 
   if (wardrobeLoading || profileLoading || savedOutfitsLoading) {
     return (
-      <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center">
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel="Stylist wird geladen"
+        className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center"
+      >
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
@@ -175,21 +181,22 @@ export default function StylistScreen() {
         </View>
 
         {!profile ? (
-          <View className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-4">
-            <Text className="text-amber-700 dark:text-amber-300 font-bold">
-              Noch keine Style-DNA
-            </Text>
-            <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-1 leading-5">
-              Der Stylist funktioniert bereits mit deinem Schrank. Mit einer Style-DNA im Profil wird die persönliche Gewichtung stärker.
-            </Text>
+          <View className="mb-4">
+            <StatusBanner
+              tone="warning"
+              title="Noch keine Style-DNA"
+              message="Der Stylist funktioniert bereits mit deinem Schrank. Mit einer Style-DNA im Profil wird die persönliche Gewichtung stärker."
+            />
           </View>
         ) : null}
 
         {wardrobeNeedsRefresh ? (
-          <View className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-4">
-            <Text className="text-indigo-700 dark:text-indigo-300 font-bold text-sm">
-              Dein Schrank hat sich seit der letzten Style-DNA-Auswertung verändert.
-            </Text>
+          <View className="mb-4">
+            <StatusBanner
+              tone="neutral"
+              title="Style-DNA ist nicht mehr vollständig synchron"
+              message="Dein Schrank hat sich seit der letzten Style-DNA-Auswertung verändert. Du kannst ihn im Profil neu auswerten."
+            />
           </View>
         ) : null}
 
@@ -197,6 +204,7 @@ export default function StylistScreen() {
           Anlass
         </Text>
         <ScrollView
+          accessibilityRole="radiogroup"
           horizontal
           showsHorizontalScrollIndicator={false}
           className="-mx-4 px-4 mb-5"
@@ -205,10 +213,13 @@ export default function StylistScreen() {
           {OCCASIONS.map((entry) => {
             const selected = occasion === entry.value;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={entry.value}
+                accessibilityRole="radio"
+                accessibilityLabel={`Anlass ${entry.label}`}
+                accessibilityState={{ selected }}
                 onPress={() => setOccasion(entry.value)}
-                className={`mr-2 px-4 py-2 rounded-full border ${
+                className={`mr-2 min-h-12 px-4 rounded-full border items-center justify-center ${
                   selected
                     ? 'bg-black dark:bg-white border-black dark:border-white'
                     : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
@@ -223,7 +234,7 @@ export default function StylistScreen() {
                 >
                   {entry.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </ScrollView>
@@ -250,14 +261,17 @@ export default function StylistScreen() {
             <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
               Saison
             </Text>
-            <View className="flex-row flex-wrap">
+            <View accessibilityRole="radiogroup" className="flex-row flex-wrap">
               {SEASONS.map((entry) => {
                 const selected = manualSeason === entry.value;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={entry.value}
+                    accessibilityRole="radio"
+                    accessibilityLabel={`Saison ${entry.label}`}
+                    accessibilityState={{ selected }}
                     onPress={() => setManualSeason(entry.value)}
-                    className={`mr-2 mb-2 px-3.5 py-2 rounded-full border ${
+                    className={`mr-2 mb-2 min-h-12 px-3.5 rounded-full border items-center justify-center ${
                       selected
                         ? 'bg-blue-600 border-blue-600'
                         : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
@@ -272,7 +286,7 @@ export default function StylistScreen() {
                     >
                       {entry.label}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -308,42 +322,40 @@ export default function StylistScreen() {
                   <Text className="text-zinc-500 text-xs font-bold uppercase">
                     Empfehlung {recommendationIndex + 1} von {result.recommendations.length}
                   </Text>
-                  <Text className="text-black dark:text-white text-3xl font-black mt-1">
+                  <Text
+                    accessibilityLabel={`${recommendation.score} Prozent Outfit Match`}
+                    className="text-black dark:text-white text-3xl font-black mt-1"
+                  >
                     {recommendation.score}% Match
                   </Text>
                 </View>
-                <TouchableOpacity
-                  onPress={() => void handleSave()}
-                  disabled={saving || recommendationSaved}
-                  className={`px-4 py-3 rounded-xl ${
-                    recommendationSaved
-                      ? 'bg-emerald-500/15'
-                      : 'bg-blue-600'
-                  }`}
-                >
-                  {saving ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text
-                      className={
-                        recommendationSaved
-                          ? 'text-emerald-600 dark:text-emerald-300 font-bold text-xs'
-                          : 'text-white font-bold text-xs'
-                      }
-                    >
-                      {recommendationSaved ? 'Gespeichert' : 'Speichern'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
+                <View>
+                  <AppButton
+                    label={recommendationSaved ? 'Gespeichert' : 'Speichern'}
+                    accessibilityLabel={
+                      recommendationSaved
+                        ? 'Dieses Outfit ist bereits gespeichert'
+                        : 'Dieses Outfit speichern'
+                    }
+                    variant={recommendationSaved ? 'secondary' : 'primary'}
+                    loading={saving}
+                    disabled={recommendationSaved}
+                    onPress={() => void handleSave()}
+                  />
+                </View>
               </View>
 
               <View className="flex-row flex-wrap -mx-1 mb-4">
                 {recommendation.items.map((item) => (
                   <View key={item.id} className="w-1/2 px-1 mb-2">
-                    <View className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <View
+                      accessibilityLabel={`${item.name}, ${CATEGORY_LABELS[item.category] ?? item.category}, ${item.color}`}
+                      className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                    >
                       <View className="h-36 items-center justify-center bg-zinc-100 dark:bg-zinc-900">
                         {item.imageUrl ? (
                           <Image
+                            accessibilityLabel={`Bild von ${item.name}`}
                             source={{ uri: item.imageUrl }}
                             className="w-full h-full"
                             resizeMode="contain"
@@ -400,18 +412,17 @@ export default function StylistScreen() {
             </View>
 
             {result.recommendations.length > 1 ? (
-              <TouchableOpacity
-                onPress={() =>
-                  setRecommendationIndex(
-                    (current) => (current + 1) % result.recommendations.length,
-                  )
-                }
-                className="bg-black dark:bg-white rounded-2xl py-4 items-center mt-4"
-              >
-                <Text className="text-white dark:text-black font-extrabold">
-                  Nächste echte Kombination
-                </Text>
-              </TouchableOpacity>
+              <View className="mt-4">
+                <AppButton
+                  label="Nächste echte Kombination"
+                  accessibilityLabel="Nächste Outfit-Empfehlung anzeigen"
+                  onPress={() =>
+                    setRecommendationIndex(
+                      (current) => (current + 1) % result.recommendations.length,
+                    )
+                  }
+                />
+              </View>
             ) : null}
           </View>
         ) : (
