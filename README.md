@@ -1,165 +1,68 @@
 # Omni Fashion
 
-Omni Fashion ist eine Expo-/React-Native-Super-App rund um einen intelligenten digitalen Kleiderschrank. Ein gemeinsamer Wardrobe-Datensatz soll langfristig den KI-Stylisten, OmniSwap und intelligente Kaufempfehlungen antreiben.
-
-> **Projektstatus:** Übergang vom High-End-Prototyp zur produktionsreifen App.
->
-> **Wichtig:** Eine UI oder Demo gilt ab jetzt nicht als fertiges Feature, solange echte Daten, Fehlerfälle, Sicherheit und Tests fehlen.
+Omni Fashion wird auf diesem Branch vom High-End-Prototyp in einen produktionsorientierten Core überführt.
 
 ## Produktkern
 
 ```text
-Nutzer
-  ↓
-Style-Profil
-  ↓
-Digitaler Kleiderschrank
-  ↓
-KI-/Regel-Engine
-  ↓
-Outfit-Empfehlungen
-  ↓
-┌──────────────────┬──────────────────┐
-│ OmniSwap         │ Smart Shopping   │
-│ Kleidung tauschen│ Lücken ergänzen  │
-└──────────────────┴──────────────────┘
-  ↓
-Kleiderschrank und Nutzerprofil werden besser
+OWN → STYLE → SWAP → BUY BETTER
 ```
 
-Der zentrale Produktgrundsatz lautet:
+Der digitale Kleiderschrank ist die private Source of Truth. Darauf bauen Style-DNA, Outfit-Empfehlungen, OmniSwap und später echte Shop-/Partnerdaten auf.
 
-> **Ein Kleidungsstück, ein Datenmodell, viele Funktionen.**
+## Aktueller technischer Stand
 
-Stylist, OmniSwap, Profil und Smart Shopping dürfen keine voneinander getrennten Mock-Welten bleiben.
+Bereits im Repo vorhanden:
 
-## Aktueller Stand
+- Firebase Auth mit Registrierung, Verifikation und Passwort-Reset
+- Cloud Wardrobe mit Firestore + privatem Storage
+- Trusted AI-Kleidungsanalyse mit strukturiertem Ergebnis
+- StyleProfile + deterministischer Outfit Engine
+- Saved Outfits + Feedback
+- Trusted Wetterkontext
+- echtes OmniSwap Listing-/Offer-/Trade-System
+- Trust & Safety, Disputes und completed-Trade Reviews
+- In-App Notifications
+- Remote-Push-Backend-Grundlage
+- Moderations-/Recovery-Backend + interne UI-Basis
+- Privacy Export / Deletion Readiness / Account Deletion
+- Remote Feature Flags / Kill-Switches
+- serverseitige Rate Limits für kosten-/abuse-relevante Callables
+- Designsystem-/Accessibility-Grundlage
+- Performance-Query-Limits und Listen-Virtualisierung
+- permanente TypeScript-/Functions-/Security-/Production-Bundle-CI-Gates
+- EAS-/Release-/Rollback-Vorbereitung
 
-Bereits vorhanden sind unter anderem:
+## Noch nicht als Production fertig markieren
 
-- Expo + React Native + Expo Router
-- TypeScript
-- NativeWind
-- digitaler Kleiderschrank als UI und lokaler Prototyp
-- Kamera-/Galerie-Auswahl
-- Stylist-Oberfläche
-- Style-DNA-Oberfläche
-- Shop / Smart Investment Advisor UI
-- OmniSwap Swipe Deck
-- Trade Studio
-- Peer Closets
-- responsive Web-/Mobile-Navigation
+Es fehlen weiterhin reale externe Voraussetzungen und Device-Validierung:
 
-Noch nicht produktionsreif sind unter anderem:
-
-- echte Authentifizierung
-- produktives Firebase-Backend
-- Cloud-Wardrobe
-- echte KI-Kleidungsanalyse
-- echter Outfit-Algorithmus auf Nutzerdaten
-- echtes Wetter
-- persistenter OmniSwap-Marktplatz
-- Trust & Safety / Moderation
-- Push Notifications
-- Security Rules
-- echte E2E-Tests
-- Analytics / Crash Reporting
-- Store-/Release-Konfiguration
+- echte Firebase Dev-/Prod-Projekte und Deployments
+- Gemini Secret im Dev-/Prod-Backend
+- App Check
+- echtes Expo/EAS-Projekt
+- finale Android Package ID / iOS Bundle ID
+- Signing/Credentials
+- SDK-57-konforme native Push-Konfiguration
+- reale Android-/iOS-Zwei-Nutzer-E2E-Tests
+- Crash-/Analytics-/Cost-Monitoring mit realen Daten
+- finale Privacy-/Retention-/Store-Angaben
+- Store Release Candidate und kontrollierter Rollout
 
 ## Dokumentation
 
-Die zentrale A-bis-Z-Roadmap befindet sich hier:
+Die operative Dokumentation liegt unter [`docs/`](./docs/).
+
+Wichtige Einstiege:
 
 - [`APP_ENTWICKLUNG_A_BIS_Z.md`](./APP_ENTWICKLUNG_A_BIS_Z.md)
+- [`docs/README.md`](./docs/README.md)
+- [`docs/00-governance/ROADMAP_STATUS.md`](./docs/00-governance/ROADMAP_STATUS.md)
+- [`docs/14-operations/FEATURE_FLAGS.md`](./docs/14-operations/FEATURE_FLAGS.md)
+- [`docs/14-operations/RATE_LIMITS.md`](./docs/14-operations/RATE_LIMITS.md)
 
-Die konkrete Entwicklungsdokumentation wird schrittweise unter `docs/` aufgebaut:
+## Entwicklungsregel
 
-```text
-docs/
-├── 00-governance/
-│   └── ENGINEERING_RULES.md
-├── 01-product/
-│   ├── PRODUCT_FOUNDATION.md
-│   ├── MVP_SCOPE.md
-│   └── USER_JOURNEYS.md
-├── 02-architecture/
-├── 03-design-system/
-├── 04-auth/
-├── 05-backend/
-├── 06-wardrobe/
-├── 07-ai/
-├── 08-stylist/
-├── 09-omniswap/
-├── 10-shop/
-├── 11-security-privacy/
-├── 12-testing/
-├── 13-release/
-└── 14-operations/
-```
+Keine Mock-Funktion wird als echte Produktfunktion ausgegeben. Kritische AI-, Marketplace-, Trade-, Moderations-, Push-, Feature-Flag- und Privacy-Mutationen laufen über Trusted Backend Grenzen.
 
-Die Master-Roadmap sagt **was und in welcher Reihenfolge** gebaut wird. Die Detaildokumente sagen **wie, in welchen Dateien, mit welchen Datenmodellen, Tests und Abnahmekriterien** es umgesetzt wird.
-
-## Entwicklungsmodus ab jetzt
-
-Wir arbeiten phasenweise:
-
-```text
-Produkt festziehen
-→ Architektur festlegen
-→ Fundament bauen
-→ Kernprodukt real machen
-→ OmniSwap real machen
-→ Monetarisierung
-→ Produktionsreife
-→ Store Release
-→ Betrieb
-```
-
-Für jedes Feature gilt dieselbe Definition:
-
-```text
-Plan
-→ Datenmodell
-→ UI/UX
-→ echte Logik
-→ Loading / Empty / Error States
-→ Security / Privacy
-→ Tests
-→ Telemetrie
-→ Dokumentation
-→ Definition of Done
-```
-
-## Lokale Entwicklung
-
-```bash
-npm install
-npx expo start
-```
-
-Zusätzliche Qualitätsbefehle laut `package.json`:
-
-```bash
-npm run lint
-npm run check-no-any
-npm run verify:quality
-```
-
-Vor technischen Änderungen müssen die für dieses Repo geltenden Expo-SDK-57-Dokumente berücksichtigt werden. Siehe auch `AGENTS.md`.
-
-## Wichtige Regeln
-
-1. Keine echten Secrets committen.
-2. Keine neue Mock-Funktion als produktionsfertig markieren.
-3. `WardrobeItem` wird zur gemeinsamen Quelle für Stylist, Swap und Shopping.
-4. Sensible Aktionen erhalten serverseitige Validierung bzw. Security Rules.
-5. KI-API-Keys gehören nie in die Client-App.
-6. Deutsch/Englisch nicht unkontrolliert in Components mischen; Lokalisierung wird zentralisiert.
-7. Neue Features dürfen das Kernprodukt nicht verzögern.
-8. Release erst, wenn die Definition of Done in der Master-Roadmap erfüllt ist.
-
-## Aktuelle Arbeitsphase
-
-**Phase 0–1: Produktfundament, MVP und User Journeys.**
-
-Danach folgt die technische Zielarchitektur und anschließend das echte Fundament aus Umgebungen, Backend, Auth und Security.
+Der große Arbeits-PR bleibt Draft, bis reale Firebase-/EAS-/Device-/Store-Validierung abgeschlossen ist.
