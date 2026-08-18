@@ -1,13 +1,14 @@
 # Omni Fashion – Roadmap Status
 
-**Stand:** 16. August 2026  
+**Stand:** 18. August 2026  
 **Arbeitsbranch:** `docs/app-development-a-z`  
-**Prinzip:** Nur realer Code wird als umgesetzt markiert. Externe Firebase-/EAS-/Device-/Rechts-Blocker bleiben offen.
+**Draft-PR:** #1  
+**Prinzip:** Nur real implementierte und überprüfte Funktionen werden als erledigt markiert. Externe Firebase-/EAS-/Device-/Rechts-Blocker bleiben offen.
 
 ## Legende
 
-- ✅ technischer Kern implementiert und durch Quality-Gates abgesichert
-- 🟡 belastbare Basis vorhanden, Production-/Device-/Restarbeit offen
+- ✅ technischer Kern im Repo implementiert und über Quality-Gates abgesichert
+- 🟡 belastbare Basis vorhanden, reale Production-/Device-/Betriebsvalidierung noch offen
 - 🔴 noch nicht ausreichend umgesetzt
 - ⚪ bewusst später / MVP+
 
@@ -17,143 +18,174 @@
 
 **Status: ✅**
 
-- [x] `OWN → STYLE → SWAP → BUY BETTER`
-- [x] Wardrobe als Source of Truth
-- [x] MVP Scope / Nicht-Ziele
-- [x] User Journeys
+- [x] Produktloop `OWN → STYLE → SWAP → BUY BETTER`
+- [x] Wardrobe als private Source of Truth
+- [x] MVP Scope und Nicht-Ziele
+- [x] zentrale User Journeys
 - [x] Engineering Rules
-- [x] Security/Privacy by Design
+- [x] Security und Privacy by Design
 - [x] Trusted-Backend-Grenzen
+- [x] keine Demo-Funktion wird als real ausgegeben
 
-Offen: finaler Launch-Markt und Monetarisierungsmodell.
+Offen:
+
+- [ ] finaler Launch-Markt
+- [ ] finales Monetarisierungsmodell
 
 ---
 
-## 1. Zielarchitektur
+## 1. Architektur
 
 **Status: ✅ Kernarchitektur**
 
 - [x] Expo SDK 57 / React Native / Expo Router
+- [x] React 19.2.3 / RN 0.86.2
 - [x] TypeScript strict
 - [x] Firebase Auth / Firestore / Storage / Functions
 - [x] Functions 2nd Gen / Node 22
-- [x] Feature-Domains
-- [x] Trusted Backend für AI, Swap, Moderation, Push und Privacy
+- [x] Feature-Domains statt Firebase-Zugriff aus beliebigen Screens
+- [x] Trusted Backend für AI, Swap, Moderation, Push, Feature Flags und Privacy
 - [x] kein Big-Bang-Rewrite
 
 Offen:
 
 - [ ] finaler Analytics-Anbieter
-- [ ] finaler Crash-Anbieter
-- [ ] finales E2E-Tooling
+- [ ] finaler Crash-Reporting-Anbieter
+- [ ] finales natives E2E-Tooling
 
 ---
 
 ## 2. Repo / CI / Build
 
-**Status: 🟡 weit fortgeschritten**
+**Status: ✅ interne Quality-Basis**
 
-- [x] README / Docs-System
+- [x] produktbezogenes README
+- [x] Dokumentationssystem
 - [x] `.env.example`
-- [x] Dummy-Firebase-Konfiguration entfernt
+- [x] Secrets aus Git ausgeschlossen
 - [x] typisierte Expo-Environment-Schicht
-- [x] Node 22.13.x
+- [x] Dummy-Firebase-Werte entfernt
+- [x] Node 22.13.x im CI
 - [x] `npm ci`
 - [x] TypeScript Gate
 - [x] Zero-any Gate
 - [x] Functions Typecheck + Build + Unit Tests
 - [x] Firebase Emulator Security Tests
-- [x] Trust-&-Safety Regression
-- [x] Push Regression
 - [x] echter Expo Router Production-Webbundle-Smoke-Test
-- [x] NativeWind-v4/Babel/Metro/Tailwind-Fehler durch Smoke-Test gefunden und behoben
+- [x] NativeWind-v4/Babel/Metro/Tailwind-Konfiguration repariert
+
+Der letzte vollständige Runtime-/Security-Checkpoint des Rate-Limit-Blocks war auf allen vier Hauptjobs grün.
 
 Offen:
 
-- [ ] ESLint finalisieren
+- [ ] ESLint final konsolidieren
 - [ ] Formatter festlegen
-- [ ] EAS Development/Staging/Production Environments
-- [ ] Dependency Audit paketweise aufarbeiten
+- [ ] Dependency-Audit paketweise bearbeiten
+- [ ] native Development-/Preview-Builds in EAS ausführen
 
 Kein `npm audit fix --force` ohne Expo-SDK-57-Kompatibilitätsprüfung.
 
 ---
 
-## 3. Designsystem / Accessibility
+## 3. Designsystem / Accessibility / Performance
 
-**Status: 🟡 Grundlage implementiert**
+**Status: 🟡 belastbare Grundlage**
 
-- [x] semantische Design Tokens
+Designsystem:
+
+- [x] semantische Tokens
 - [x] `AppButton`
 - [x] `AppCard`
 - [x] `StatusBanner`
-- [x] 48px normale Mindest-Controlhöhe
 - [x] Busy/Disabled Accessibility State
-- [x] Privacy auf Primitives migriert
-- [x] ErrorBoundary auf Primitives + Telemetry migriert
+- [x] 48px Mindest-Controlhöhe für zentrale Buttons
+
+Accessibility:
+
+- [x] Privacy auf gemeinsame Primitives migriert
+- [x] Login auf gemeinsame Primitives migriert
+- [x] E-Mail-Verifikations-Gate migriert
+- [x] Auth Inputs mit Accessibility Labels
+- [x] ErrorBoundary semantisch gehärtet
 - [x] Wardrobe-/Activity-Grundlabels und Progress-Semantik
+
+Performance:
+
+- [x] Wardrobe Grid virtualisiert
+- [x] Activity Inbox virtualisiert
+- [x] Notifications auf 100 neueste Datensätze begrenzt
+- [x] Marketplace Feed und eigene Listings auf 100 begrenzt
+- [x] Offer-/Transaction-Historien auf 100 begrenzt
+- [x] serverseitige Sortierung + Firestore-Indizes
+- [x] Cache für öffentliche Listing-Download-URLs
 
 Offen:
 
-- [ ] OmniSwap Controls migrieren
-- [ ] Auth Controls migrieren
-- [ ] Stylist/Profile Controls migrieren
-- [ ] vollständiger VoiceOver/TalkBack Audit
-- [ ] Dynamic Type
-- [ ] Farbkontrast-Audit
-- [ ] Keyboard/Web Focus
+- [ ] OmniSwap Controls vollständig auf Design-Primitives migrieren
+- [ ] Stylist/Profile vollständig migrieren
+- [ ] VoiceOver/TalkBack Device Audit
+- [ ] Dynamic Type Audit
+- [ ] Kontrast-Audit
+- [ ] Keyboard/Web Focus Audit
 - [ ] Reduced Motion
+- [ ] natives Performance Profiling
 
 ---
 
 ## 4. Auth / UserProfile
 
-**Status: 🟡 Codebasis weitgehend vorhanden**
+**Status: 🟡 technischer Kern weitgehend fertig**
 
-- [x] Login
+- [x] E-Mail/Passwort Login
 - [x] Registrierung
 - [x] DisplayName
-- [x] E-Mail-Verifikation + Gate
+- [x] E-Mail-Verifikation + Verification Gate
 - [x] Verification erneut senden
+- [x] 60-Sekunden Resend-Cooldown nach erfolgreichem Versand
 - [x] Passwort-Reset
 - [x] zentrale Fehlercodes
-- [x] UserProfile + Repair
-- [x] Dev-Demo nur Development
+- [x] UserProfile Domain + Repair
+- [x] Dev-Demo ausschließlich Development
 - [x] Production fail-closed ohne Firebase
 - [x] Passwort-Reauthentication für sensible Privacy-Aktion
+- [x] zugängliche Auth-/Verification-Controls
 
 Offen:
 
 - [ ] reales Firebase Dev-Projekt validieren
-- [ ] native Auth-Persistenz über Neustart
-- [ ] Verification Resend Cooldown
+- [ ] native Auth-Persistenz über App-Neustart validieren
 - [ ] vollständiger Onboarding-State
-- [ ] Auth E2E Android/iOS
+- [ ] Auth E2E auf Android/iOS
 
 ---
 
 ## 5. Firebase / Security
 
-**Status: 🟡 lokale/CI-Sicherheitsbasis stark**
+**Status: 🟡 lokale/CI-Basis stark, reales Deployment offen**
 
 - [x] Auth / Firestore / Storage / Functions Bootstrap
-- [x] Default-Deny Firestore
-- [x] Default-Deny Storage
+- [x] Default-Deny Firestore Rules
+- [x] Default-Deny Storage Rules
+- [x] UserProfile Validation
 - [x] private Wardrobe
 - [x] geschützte AI-/Swap-Systemfelder
-- [x] server-only Offers / Transactions
-- [x] server-only Reports / Push / Moderation Audit
-- [x] Security Emulator Suite
+- [x] server-only Offers / Transactions / Reports
+- [x] server-only Push-/Moderations-/Rate-Limit-/RuntimeConfig-Daten
+- [x] Security Emulator Suite in CI
 - [x] benötigte Feed-Indizes im Repo
 
 Production offen:
 
-- [ ] echte Dev-/Prod-Projekte
-- [ ] Rules deployen
+- [ ] echte Firebase Dev- und Prod-Projekte
+- [ ] Auth Provider aktivieren
+- [ ] Firestore Rules deployen
+- [ ] Storage Rules deployen
+- [ ] Firestore Indizes deployen
 - [ ] Functions deployen
-- [ ] App Check
-- [ ] Budget Alerts
-- [ ] reale Indizes nach Deployment validieren
+- [ ] Secrets setzen
+- [ ] App Check konfigurieren und durchsetzen
+- [ ] Budget Alerts / Quotas
+- [ ] TTL für `rateLimits.expiresAt` aktivieren
 
 ---
 
@@ -161,144 +193,126 @@ Production offen:
 
 **Status: 🟡 produktionsorientierter Kern**
 
-- [x] kanonisches WardrobeItem
+- [x] kanonisches `WardrobeItem`
 - [x] Firestore Live-Sync
 - [x] private Storage Uploads
 - [x] runtime Download URLs
-- [x] Cloud-aware Context
-- [x] echte Fehlerzustände
+- [x] Cloud-aware Wardrobe Context
+- [x] Development-Fallback ohne Fake-Production-State
+- [x] echte Create/Update/Delete-Fehlerzustände
 - [x] Brand / Material / Größe / Zustand
-- [x] `Dress`
-- [x] AI-/Swap-Felder geschützt
-- [x] virtualisiertes 2-Spalten-Grid
+- [x] `Dress` als echte Kategorie
+- [x] AI-/Swap-Felder clientseitig geschützt
+- [x] virtualisiertes Wardrobe Grid
 
 Offen:
 
-- [ ] reale Kamera-/Galerie-Device-Tests
-- [ ] HEIC/HEIF
-- [ ] Resize/Compression
-- [ ] Upload Progress/Cancel
-- [ ] Offline/Reconnect
+- [ ] echte Kamera-/Galerie-Device-Tests
+- [ ] HEIC/HEIF-Validierung
+- [ ] Bild-Resize/Kompression
+- [ ] Upload-Fortschritt/Cancel
+- [ ] Offline/Reconnect-Verhalten
+- [ ] reales Storage-Cleanup validieren
 
 ---
 
 ## 7. Kleidungsanalyse
 
-**Status: 🟡 echter Backendpfad**
+**Status: 🟡 echter Trusted-Backend-Pfad**
 
 - [x] Fake-AI entfernt
-- [x] Trusted Callable
-- [x] Provider-Abstraktion
-- [x] Gemini Development Provider
+- [x] `analyzeWardrobeItem` Callable
+- [x] Gemini Provider-Abstraktion
 - [x] Structured Output
 - [x] Runtime Validation
 - [x] Confidence pro Feld
 - [x] Modell-/Prompt-Versionierung
 - [x] Brand-Halluzinationsschutz
-- [x] Owner/Storage/Datei-Prüfung
-- [x] pending/completed/failed
-- [x] Idempotenz
-- [x] Retry/Confidence UI
+- [x] Owner-/Storage-/Datei-Prüfung
+- [x] pending/completed/failed Lifecycle
+- [x] Idempotenz / Parallelaufrufschutz
+- [x] Retry/Confidence/Fehlerstatus in UI
 - [x] Functions Tests
+- [x] serverseitiges Rate Limit: 20 Analysen pro Nutzer/Stunde
 
 Offen:
 
-- [ ] echtes Gemini Secret im Dev-Projekt
-- [ ] Functions Deployment
-- [ ] Eval Dataset
-- [ ] Kosten-/Qualitätsmessung
+- [ ] reales Gemini Secret im Dev-Projekt
+- [ ] echtes Functions Deployment
+- [ ] Evaluation Dataset
+- [ ] Qualitäts-/Kostenmessung mit echten Wardrobe-Bildern
 - [ ] finale Datenresidenz-/Privacy-Entscheidung
 
 ---
 
-## 8. StyleProfile / Stylist
+## 8. StyleProfile / Stylist / Wetter
 
-**Status: ✅ technischer Kern**
+**Status: ✅ technischer Stylist-Kern / 🟡 externe Wettervalidierung**
 
 - [x] Fake Style Scan entfernt
-- [x] echte Präferenzen
-- [x] Wardrobe-Signale
+- [x] echte Präferenzen + Wardrobe-Signale
 - [x] deterministische StyleProfile Engine
 - [x] echter Outfit Engine aus Wardrobe IDs
-- [x] Top + Bottom + Shoes
-- [x] Dress + Shoes
-- [x] Outerwear/Accessories optional
-- [x] Style/Farbe/Anlass/Saison/Datenqualität
+- [x] `Top + Bottom + Shoes`
+- [x] `Dress + Shoes`
+- [x] optionale Outerwear/Accessories
+- [x] Style/Farbe/Anlass/Saison/Datenqualität Scoring
 - [x] fehlende Kategorien statt erfundener Produkte
 - [x] Saved Outfits
-- [x] Like / Dislike / Worn
-
-Offen: reale Nutzer-Evaluation der Outfit-Qualität.
-
----
-
-## 9. Wetter
-
-**Status: 🟡**
-
-- [x] provider-neutraler Context
-- [x] Trusted Backend
-- [x] Stadt → Geocoding → Wetter
+- [x] Like / Dislike / Worn Feedback
+- [x] provider-neutraler Weather Context
+- [x] Trusted Weather Backend
 - [x] kein Fake-Wetter
-- [x] manueller Saison-Fallback
-- [x] Outfit-Ranking-Signale
-- [x] Normalisierungs-Tests
-
-Offen: reales Provider-/Quota-/Caching-Monitoring.
-
----
-
-## 10. OmniSwap Marketplace
-
-**Status: 🟡 echter End-to-End-Kern**
-
-- [x] Mock-Hub entfernt
-- [x] private Wardrobe bleibt privat
-- [x] öffentliche Listing-Projektion
-- [x] serverseitige öffentliche Medienkopie
-- [x] Listing Create/Pause/Resume/Remove
-- [x] echter Feed
-- [x] echte Offers
-- [x] Locks + Offer Keys
-- [x] Offer Accept/Decline/Cancel
-- [x] konkurrierende Offers laufen ab
-- [x] aktive Marketplace-Query auf 100 neueste begrenzt
-- [x] eigene Listings auf 100 begrenzt
-- [x] serverseitige Sortierung + Indizes
-- [x] Cache für öffentliche Storage Download URLs
+- [x] Wetter-Signale im Outfit-Ranking
 
 Offen:
 
-- [ ] reale Zwei-Nutzer-E2E-Tests
-- [ ] Offer-/Transaction-Historie später paginieren/begrenzen
-- [ ] Tracking/Shipping nur falls Produktentscheidung
+- [ ] reale Nutzer-Evaluation der Outfit-Qualität
+- [ ] Provider-/Quota-/Caching-Monitoring im echten Projekt
 
 ---
 
-## 11. Zwei-Parteien-Trade
+## 9. OmniSwap Marketplace / Trade
 
-**Status: ✅ technischer Kern**
+**Status: 🟡 echter End-to-End-Kern**
+
+Marketplace:
+
+- [x] alter Mock-Hub entfernt
+- [x] private Wardrobe bleibt privat
+- [x] reduzierte öffentliche Listing-Projektion
+- [x] serverseitige öffentliche Medienkopie
+- [x] Listing Create/Pause/Resume/Remove über Trusted Backend
+- [x] echter Marketplace Feed
+- [x] echte Offers
+- [x] Locks + Offer Keys gegen Doppelangebote
+- [x] Offer Accept/Decline/Cancel
+- [x] konkurrierende Offers laufen ab
+- [x] Query-Limits + Indizes + URL-Cache
+- [x] Listing-Erstellung Rate Limit: 30/Stunde
+- [x] Offer-Erstellung Rate Limit: 60/Stunde
+
+Trade:
 
 - [x] Transaction Schema v2
 - [x] Tauschweg pro Teilnehmer
-- [x] Versand pro Teilnehmer
-- [x] Empfang pro Teilnehmer
+- [x] Versand und Empfang pro Teilnehmer
 - [x] unit-testbare State Machine
 - [x] Finalization Claim
 - [x] Zwei-Wege-Storage-Kopie + Verifikation
-- [x] atomarer ownerId/imagePath-Tausch
-- [x] Listing erst danach traded
-- [x] Transaction erst danach completed
+- [x] atomarer `ownerId + imagePath` Tausch
+- [x] Listing erst danach `traded`
+- [x] Transaction erst danach `completed`
 - [x] retry-fähige Finalization
 
 Offen:
 
-- [ ] reale Zwei-Geräte-Tests
-- [ ] Manual Recovery Runbooks
+- [ ] reale Zwei-Nutzer-/Zwei-Geräte-E2E-Tests
+- [ ] Shipping/Tracking nur falls Produktentscheidung
 
 ---
 
-## 12. Trust & Safety / Reviews
+## 10. Trust & Safety / Reviews
 
 **Status: ✅ technische Nutzerbasis**
 
@@ -307,10 +321,11 @@ Offen:
 - [x] blockierte Konten aus Feed filtern
 - [x] Offers zwischen blockierten Konten serverseitig verhindern
 - [x] Disputes
-- [x] Dispute stoppt normalen Trade
+- [x] Dispute stoppt normalen Trade-Fortschritt
 - [x] Reports moderation-only
-- [x] completed-Trade Reviews
-- [x] Reviewee aus Gegenpartei
+- [x] Report Rate Limit: 8/Stunde
+- [x] completed-Trade Reviews 1–5 + Kommentar
+- [x] Reviewee aus Gegenpartei bestimmt
 - [x] genau eine Review pro Nutzer/Trade
 - [x] persistierter Already-Reviewed-State
 
@@ -322,222 +337,237 @@ Später:
 
 ---
 
-## 13. Notifications / Push
+## 11. Notifications / Push
 
 ### In-App
 
 **Status: ✅**
 
-- [x] persistente Domain
-- [x] Dedup Keys
+- [x] persistente Notification Domain
+- [x] idempotente Dedup Keys
 - [x] Offer/Trade/Dispute Trigger
 - [x] Live-Inbox
 - [x] Read State
 - [x] Activity Tab
 - [x] kein Fake-Demo-Fallback
-- [x] Feed auf 100 neueste Notifications begrenzt
-- [x] serverseitige Sortierung + Index
-- [x] FlatList statt unlimitierter ScrollView
+- [x] 100 neueste Notifications + Index
+- [x] virtualisierte Liste
 
 ### Remote Push Backend
 
-**Status: 🟡 serverseitig fertig, Native extern blockiert**
+**Status: 🟡 Backend fertig, Native extern offen**
 
 - [x] Register/Unregister Push Device
 - [x] Token Hash Device ID
 - [x] server-only Push Collections
 - [x] explizites `pushEnabled` Opt-in
-- [x] Delivery Claim
-- [x] Expo Tickets
+- [x] Delivery Claim gegen Trigger-Duplikate
+- [x] Expo Push Tickets
 - [x] Receipt Worker
-- [x] DeviceNotRegistered Cleanup
+- [x] `DeviceNotRegistered` Cleanup
 - [x] Stale Claim Markierung
-- [x] Security Regression
+- [x] Push Security Regression
+- [x] Device-Registration Rate Limit: 20/Stunde
 
 Native offen:
 
-- [ ] EAS Projekt
+- [ ] echtes EAS Projekt
 - [ ] Android Package / iOS Bundle ID
 - [ ] SDK-57-kompatibles `expo-notifications`
-- [ ] Config Plugin
-- [ ] Android Channel
+- [ ] native Config
+- [ ] Android Notification Channel
 - [ ] Permission Flow
-- [ ] echte projectId / Tokens
-- [ ] physische Device-Tests
+- [ ] echte EAS `projectId`
+- [ ] echte Expo Push Tokens
+- [ ] physische Android/iOS Tests
 
 ---
 
-## 14. Admin Moderation
+## 12. Moderation / Support / Recovery
 
-**Status: 🟡 Trusted Backend Foundation**
+**Status: 🟡 technische Betriebsbasis**
 
-- [x] Custom Claim Guard admin|moderator
-- [x] Unit-Test gegen normale Nutzer
+Moderation:
+
+- [x] Custom Claim Guard `admin|moderator`
+- [x] normale Nutzer serverseitig abgewiesen
 - [x] Report-/Dispute-Queue
 - [x] auditiertes Report Resolution
 - [x] Dispute Vorzustand
-- [x] resume_trade
-- [x] manual_recovery
-- [x] moderationAudit
-- [x] gemeinsame CI-Checkpoints grün
+- [x] `resume_trade`
+- [x] `manual_recovery`
+- [x] `moderationAudit`
+- [x] interne Moderator-Oberfläche vorhanden
+- [x] UI standardmäßig per `internalModeratorUi=false` deaktiviert
+- [x] UI besitzt keine eigenen Privilegien; jeder Callable prüft Claims erneut
 
-Offen:
-
-- [ ] interne Moderator-UI
-- [ ] Account Suspension/Ban Lifecycle
-- [ ] Listing Takedown
-- [ ] Appeals
-- [ ] Evidence Attachments
-- [ ] SLA/Monitoring
-
----
-
-## 15. Support / Recovery
-
-**Status: 🟡 technische Basis**
+Recovery:
 
 - [x] Moderator Recovery Queue
 - [x] failed Finalizations sichtbar
 - [x] Manual-Recovery Disputes sichtbar
 - [x] Push send_failed / needs_review sichtbar
-- [x] täglicher Cleanup ausschließlich öffentlicher inaktiver Listing-Medien
+- [x] read-only interne Recovery-Oberfläche
+- [x] täglicher Cleanup ausschließlich inaktiver öffentlicher Listing-Medien
 - [x] Stale Push Claim Markierung
-- [x] keine gefährliche automatische Trade-Rückabwicklung
+- [x] keine gefährliche automatische physische Trade-Rückabwicklung
 
 Offen:
 
+- [ ] Account Suspension/Ban Lifecycle
+- [ ] Listing Takedown Moderationsaktion
+- [ ] Appeals
+- [ ] Evidence Attachments
 - [ ] Support Case Domain
-- [ ] interne Support-UI
-- [ ] Manual Trade Recovery Runbooks
-- [ ] Nutzerkommunikation / SLA
-- [ ] Recovery-Metriken
+- [ ] echte Manual-Recovery-Aktionen + Runbooks
+- [ ] Betriebs-SLA/Metriken
 
 ---
 
-## 16. Privacy / Account Lifecycle
+## 13. Privacy / Account Lifecycle
 
 **Status: 🟡 technischer Lifecycle implementiert**
 
 - [x] Trusted Datenexport
-- [x] Push/Auth/Server Credentials vom Export ausgeschlossen
+- [x] Sicherheits-Credentials aus Export ausgeschlossen
 - [x] Deletion Readiness
-- [x] offene Listings / sent Offers / offene Trades / Locks blockieren Löschung
-- [x] Fresh Auth via Firebase auth_time
+- [x] offene Listings/Offers/Trades/Locks blockieren Löschung
+- [x] Fresh Auth über `auth_time`
 - [x] Passwort-Reauthentication
-- [x] `LÖSCHEN` + zweite destructive Confirmation
+- [x] exakte `LÖSCHEN`-Bestätigung + zweite destruktive Bestätigung
 - [x] private Firestore-Daten löschen
 - [x] privater Storage Prefix `users/{uid}/` löschen
+- [x] Push-Geräte/-Delivery/-Ticket-Daten löschen
+- [x] Rate-Limit-State löschen
 - [x] gemeinsame abgeschlossene Marketplace-Historie pseudonymisieren/redigieren
 - [x] minimaler pseudonymer Deletion Audit
 - [x] Firebase Auth zuletzt löschen
 - [x] Privacy aus Profil erreichbar
-- [x] Privacy UI auf Accessible Design Primitives migriert
+- [x] zugängliche Privacy UI
 
 Offen:
 
 - [ ] reale Firebase Dev-E2E-Tests
 - [ ] finale Retention Policy
-- [ ] rechtliche Prüfung der Historien-Pseudonymisierung
+- [ ] rechtliche Prüfung der historischen Pseudonymisierung
 - [ ] finale Privacy Policy
 - [ ] Store Data Safety / Privacy Labels
 
 ---
 
-## 17. Shop / Monetarisierung
+## 14. Feature Flags / Abuse Control / Observability
 
-**Status: ⚪ MVP+ / deaktiviert**
+**Status: 🟡 starke Betriebsgrundlage**
 
-- [x] hartcodierter Demo-Shop entfernt
-- [x] Shop Tab hinter `shopPartnerFeed=false` verborgen
-- [x] direkter Screen-Zugriff zeigt keine Fake-Produkte/Preise
+Feature Flags:
 
-Offen:
+- [x] typisierte Flag Boundary
+- [x] alle lokalen Defaults `false`
+- [x] Trusted `getPublicFeatureFlags`
+- [x] Whitelist ausschließlich bekannter Boolean-Keys
+- [x] ungültige/missing Remote Config fällt auf alle Flags `false`
+- [x] direkter Client-Zugriff auf `runtimeConfig` verboten + Emulator-Test
+- [x] reaktiver React Provider
+- [x] Refresh bei Auth-Verfügbarkeit und App-Foreground
+- [x] Shop/Moderation/Recovery nutzen reaktive Flags
+- [x] `internalModeratorUi` ersetzt niemals serverseitige Claims
 
-- [ ] echte Produktquelle
-- [ ] Gap-to-Shop-Verbindung
-- [ ] Affiliate/Partner-Regeln
-- [ ] Tracking Consent
-- [ ] Monetarisierungs-Evaluation
+Rate Limits:
 
----
-
-## 18. Performance / Observability / Feature Flags
-
-**Status: 🟡 Grundlage aktiv**
-
-Performance:
-
-- [x] Wardrobe FlatList
-- [x] Activity FlatList + Query Limit
-- [x] Marketplace Query Limits
-- [x] Marketplace Image URL Cache
-- [x] Feed Composite Indizes
-- [x] Production Bundle Smoke
+- [x] zentrale transaktionale Firestore-Primitive
+- [x] Unit-Tests für Window/Increment/Block/Reset
+- [x] AI, Listings, Offers, Reports und Push-Registrierung geschützt
+- [x] `rateLimits` server-only + Emulator-Regression
+- [x] Account Deletion entfernt Rate-Limit-State
+- [x] `expiresAt` für späteres TTL vorbereitet
 
 Observability:
 
 - [x] provider-neutrale Telemetry Boundary
-- [x] ErrorBoundary captureException
-- [x] Production versteckt Raw Error Details
-
-Feature Flags:
-
-- [x] typed Flag Boundary
-- [x] `nativePushRegistration=false`
-- [x] `internalModeratorUi=false`
-- [x] `shopPartnerFeed=false`
-- [x] `photorealisticTryOn=false`
-- [x] Shop Flag tatsächlich in Navigation verwendet
+- [x] ErrorBoundary `captureException`
+- [x] Raw Error Details nur Development
 
 Offen:
 
 - [ ] echter Crash Provider
 - [ ] Analytics Provider
-- [ ] Remote Config / serverseitige Flags
-- [ ] Cost Monitoring
-- [ ] Abuse/Rate Monitoring
-- [ ] Device Performance Profiling
-- [ ] Offers/Transactions pagination
-- [ ] Bildkompression/Thumbnail-Strategie
-- [ ] Rollback Runbook
-
----
-
-## 19. EAS / Production / Store
-
-**Status: 🔴 externe Hauptphase**
-
-- [ ] echte Firebase Dev/Prod Environments
-- [ ] EAS Projekt
-- [ ] Android Package
-- [ ] iOS Bundle ID
-- [ ] Development Builds
-- [ ] Internal Testing
+- [ ] Cost/Budget Monitoring
+- [ ] Abuse-/Rate-Limit-Metriken
 - [ ] App Check
-- [ ] Signing / Credentials
-- [ ] native Push-Registrierung
-- [ ] reale Android/iOS Zwei-Nutzer-E2E-Tests
-- [ ] Store Assets
-- [ ] Privacy Labels / Data Safety
-- [ ] Release Candidate
-- [ ] gestufter Rollout
-- [ ] Monitoring / Rollback
+- [ ] Firestore TTL auf `rateLimits.expiresAt` im echten Projekt aktivieren
 
 ---
 
-# Aktuelle Reihenfolge
+## 15. Shop / Monetarisierung
+
+**Status: ⚪ MVP+ / bewusst deaktiviert**
+
+- [x] hartcodierter Demo-Shop entfernt
+- [x] Shop Tab hinter `shopPartnerFeed=false`
+- [x] direkter Screen zeigt keine Fake-Produkte/Preise
+- [x] Remote Kill-Switch-Grenze vorhanden
+
+Offen:
+
+- [ ] echte Produktquelle
+- [ ] Gap-to-Shop Verbindung
+- [ ] Affiliate-/Partner-Regeln
+- [ ] Tracking Consent
+- [ ] Monetarisierungs-Evaluation
+
+---
+
+## 16. EAS / Release / Store
+
+**Status: 🟡 intern vorbereitet, externe Konfiguration offen**
+
+- [x] `eas.json` mit getrennten Preview-/Production-Environments
+- [x] Firebase/EAS Setup-Anleitung
+- [x] Release Candidate Checklist
+- [x] Rollback Runbook
+- [x] fail-closed Release-Config-Validator
+- [x] Production-Webbundle als permanentes CI-Gate
+- [x] Remote Feature Flags als Kill-Switch-Baustein
+
+Extern offen:
+
+- [ ] reales Expo/EAS Projekt
+- [ ] finale Android Package ID
+- [ ] finale iOS Bundle ID
+- [ ] Signing / Credentials
+- [ ] Firebase Dev/Prod Environment Variablen
+- [ ] Gemini Secret
+- [ ] echte Deployments
+- [ ] Development Builds
+- [ ] Internal Testing Builds
+- [ ] native Push
+- [ ] App Check
+- [ ] Store Assets
+- [ ] Data Safety / Privacy Labels
+- [ ] Release Candidate auf realen Geräten
+- [ ] kontrollierter Rollout + Monitoring
+
+---
+
+# Nächste Reihenfolge
+
+Der größte verbleibende Sprung ist jetzt **nicht mehr ein weiterer Demo-Screen**, sondern reale Infrastruktur und Device-Validierung.
 
 ```text
-1. aktuellen Performance/Shop-Head vollständig grün validieren
-2. verbleibende Accessibility-Migration an kritischen Controls
-3. Offers/Transactions skalierbarer machen
-4. Analytics/Crash-Provider + Remote Feature Flags entscheiden
-5. echte Firebase Dev-/Prod-Projekte
-6. EAS Projekt + Bundle IDs + Development Builds
-7. App Check + native Push
-8. reale Android/iOS Zwei-Nutzer-E2E- und Privacy-E2E-Tests
-9. Store Privacy / Data Safety / Assets
-10. Release Candidate + Rollout/Monitoring/Rollback
+1. Firebase Dev-Projekt real anlegen und konfigurieren
+2. Firestore/Storage Rules + Indizes + Functions deployen
+3. Gemini Secret und RuntimeConfig im Dev-Projekt setzen
+4. App Check vorbereiten/aktivieren
+5. Expo/EAS Projekt + finale App-Identifier festlegen
+6. SDK-57-konforme native Push-/Development-Build-Abhängigkeiten installieren
+7. echte Android/iOS Builds erzeugen
+8. Zwei-Nutzer-E2E: Auth → Wardrobe → AI → Stylist → OmniSwap → Trade → Review → Privacy
+9. Crash/Analytics/Cost Monitoring mit realen Daten aktivieren
+10. rechtliche/Store-Angaben finalisieren
+11. Release Candidate prüfen
+12. kontrollierter Store-Rollout
 ```
 
-Die Roadmap darf weiter angepasst werden, aber nur anhand des realen Omni-Fashion-Codes und realer externer Voraussetzungen.
+## Release-Grenze
+
+Der Draft-PR bleibt Draft, solange reale Firebase-/EAS-/Device-/Store-Validierung fehlt. Der technische Repo-Core ist weit fortgeschritten, aber das wird nicht mit einer produktionsveröffentlichten App gleichgesetzt.
