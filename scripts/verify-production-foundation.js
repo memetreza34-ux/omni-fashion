@@ -37,6 +37,28 @@ function requireFile(relativePath) {
   return true;
 }
 
+function functionsSources(functionsConfig) {
+  if (Array.isArray(functionsConfig)) {
+    return functionsConfig
+      .map((entry) =>
+        entry && typeof entry === 'object' && typeof entry.source === 'string'
+          ? entry.source
+          : null,
+      )
+      .filter((entry) => entry !== null);
+  }
+
+  if (
+    functionsConfig &&
+    typeof functionsConfig === 'object' &&
+    typeof functionsConfig.source === 'string'
+  ) {
+    return [functionsConfig.source];
+  }
+
+  return [];
+}
+
 function main() {
   console.log('🔎 Omni Fashion Production Foundation Preflight');
 
@@ -76,10 +98,31 @@ function main() {
       pass('Storage Rules Source korrekt.');
     }
 
-    if (firebase.functions?.source !== 'functions') {
+    const sources = functionsSources(firebase.functions);
+    if (!sources.includes('functions')) {
       fail('firebase.json muss functions/ als Functions Source verwenden.');
     } else {
       pass('Functions Source korrekt.');
+    }
+
+    if (firebase.emulators?.singleProjectMode !== true) {
+      fail('Firebase Emulator Suite muss singleProjectMode=true verwenden.');
+    } else {
+      pass('Firebase Emulator Single-Project-Modus aktiv.');
+    }
+
+    const expectedPorts = {
+      auth: 9099,
+      functions: 5001,
+      firestore: 8080,
+      storage: 9199,
+    };
+    for (const [name, expectedPort] of Object.entries(expectedPorts)) {
+      if (firebase.emulators?.[name]?.port !== expectedPort) {
+        fail(`Firebase ${name} Emulator muss Port ${expectedPort} verwenden.`);
+      } else {
+        pass(`Firebase ${name} Emulator Port ${expectedPort} bestätigt.`);
+      }
     }
   }
 
@@ -126,7 +169,11 @@ function main() {
     }
   }
 
-  const obsoleteMockIntegrityPath = path.join(ROOT, 'scripts', 'verify-data-integrity.js');
+  const obsoleteMockIntegrityPath = path.join(
+    ROOT,
+    'scripts',
+    'verify-data-integrity.js',
+  );
   if (fs.existsSync(obsoleteMockIntegrityPath)) {
     fail('Veraltetes mockSwapItems-Integritätsskript ist noch vorhanden.');
   } else {
