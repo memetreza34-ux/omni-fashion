@@ -2,6 +2,8 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
+import { enforceUserRateLimit } from '../security/rate-limit.js';
+
 const FUNCTIONS_REGION = 'europe-west1';
 const TRUST_SAFETY_SCHEMA_VERSION = 1;
 const REPORT_REASONS = [
@@ -72,6 +74,13 @@ export const submitReport = onCall(
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();
+    await enforceUserRateLimit({
+      uid,
+      scope: 'submit_report',
+      maxAttempts: 8,
+      windowSeconds: 60 * 60,
+    });
+
     const db = getFirestore();
     let targetOwnerId: string | null = null;
 
