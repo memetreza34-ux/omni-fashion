@@ -4,6 +4,8 @@ import { getStorage } from 'firebase-admin/storage';
 import { logger } from 'firebase-functions';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
+import { enforceUserRateLimit } from '../security/rate-limit.js';
+
 const FUNCTIONS_REGION = 'europe-west1';
 const LISTING_SCHEMA_VERSION = 1;
 const MAX_DESCRIPTION_LENGTH = 1000;
@@ -147,6 +149,12 @@ export const createSwapListing = onCall(
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();
+    await enforceUserRateLimit({
+      uid,
+      scope: 'create_swap_listing',
+      maxAttempts: 30,
+      windowSeconds: 60 * 60,
+    });
 
     const db = getFirestore();
     const bucket = getStorage().bucket();
