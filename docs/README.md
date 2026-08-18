@@ -32,7 +32,7 @@ Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Tr
 | Moderation | [`11-moderation/`](./11-moderation/) | 🟡 Backend + interne UI-Basis |
 | Support / Recovery | [`12-support/`](./12-support/) | 🟡 Backend + read-only interne UI |
 | Privacy / Account Lifecycle | [`13-privacy/`](./13-privacy/) | 🟡 technischer Lifecycle, Recht/E2E offen |
-| Operations | [`14-operations/`](./14-operations/) | 🟡 Feature Flags + Rate Limits |
+| Operations | [`14-operations/`](./14-operations/) | 🟡 Remote Flags + Rate Limits |
 | Qualität | [`14-quality/`](./14-quality/) | 🟡 permanente CI-Gates, Device-E2E offen |
 | Release / EAS | [`15-release/`](./15-release/) | 🟡 vorbereitet, echte Cloud-/Store-Konfiguration offen |
 
