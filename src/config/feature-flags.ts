@@ -6,21 +6,26 @@ export const FEATURE_FLAG_KEYS = [
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
+export type FeatureFlags = Record<FeatureFlagKey, boolean>;
 
-const DEFAULT_FEATURE_FLAGS: Record<FeatureFlagKey, boolean> = {
+const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   nativePushRegistration: false,
   internalModeratorUi: false,
   shopPartnerFeed: false,
   photorealisticTryOn: false,
 };
 
-let runtimeOverrides: Partial<Record<FeatureFlagKey, boolean>> = {};
+let runtimeOverrides: Partial<FeatureFlags> = {};
+
+export function getDefaultFeatureFlags(): FeatureFlags {
+  return { ...DEFAULT_FEATURE_FLAGS };
+}
 
 export function isFeatureEnabled(key: FeatureFlagKey): boolean {
   return runtimeOverrides[key] ?? DEFAULT_FEATURE_FLAGS[key];
 }
 
-export function getFeatureFlags(): Readonly<Record<FeatureFlagKey, boolean>> {
+export function getFeatureFlags(): FeatureFlags {
   return {
     ...DEFAULT_FEATURE_FLAGS,
     ...runtimeOverrides,
@@ -28,13 +33,10 @@ export function getFeatureFlags(): Readonly<Record<FeatureFlagKey, boolean>> {
 }
 
 /**
- * Runtime overrides are intentionally process-local for now. Production remote
- * config can feed this boundary later without spreading provider code through
- * screens and domains.
+ * Runtime overrides are process-local. The React FeatureFlagProvider feeds this
+ * boundary from the trusted backend while preserving safe local defaults.
  */
-export function setFeatureFlagOverrides(
-  overrides: Partial<Record<FeatureFlagKey, boolean>>,
-): void {
+export function setFeatureFlagOverrides(overrides: Partial<FeatureFlags>): void {
   runtimeOverrides = { ...overrides };
 }
 
