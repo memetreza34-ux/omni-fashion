@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 
-import { isFeatureEnabled } from '@/config/feature-flags';
+import { useFeatureFlag } from '@/context/FeatureFlagContext';
 import { AppButton } from '@/design-system/AppButton';
 import { AppCard } from '@/design-system/AppCard';
 import { StatusBanner } from '@/design-system/StatusBanner';
@@ -172,7 +172,7 @@ function DisputeCard({
 }
 
 export default function ModerationScreen() {
-  const enabled = isFeatureEnabled('internalModeratorUi');
+  const enabled = useFeatureFlag('internalModeratorUi');
   const [queue, setQueue] = useState<ModerationQueue | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [busy, setBusy] = useState(false);
