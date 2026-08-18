@@ -1,52 +1,80 @@
 # Omni Fashion – Entwicklungsdokumentation
 
-Diese Dokumentation wird parallel zum Code gepflegt und ist die operative Ergänzung zu [`APP_ENTWICKLUNG_A_BIS_Z.md`](../APP_ENTWICKLUNG_A_BIS_Z.md).
+Diese Dokumentation ist die operative Ergänzung zu [`APP_ENTWICKLUNG_A_BIS_Z.md`](../APP_ENTWICKLUNG_A_BIS_Z.md) und wird zusammen mit dem Code gepflegt.
 
-## Prinzip
+## Leitprinzip
 
-Die Master-Roadmap beschreibt **was** gebaut wird. Die Dateien hier beschreiben **wie Omni Fashion konkret gebaut wird**.
+Die Master-Roadmap beschreibt **was** Omni Fashion werden soll. Die Dateien unter `docs/` beschreiben **wie der aktuelle produktionsorientierte Stand konkret umgesetzt ist**.
 
-## Aktueller Stand
+Produktkern:
 
-| Bereich | Dokument | Status |
+```text
+OWN → STYLE → SWAP → BUY BETTER
+```
+
+Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Trade-, Moderations-, Push-, Feature-Flag- und Privacy-Mutationen laufen über Trusted Backend Grenzen.
+
+## Dokumentationsstruktur
+
+| Bereich | Pfad | Aktueller Stand |
 |---|---|---|
-| Engineering-Regeln | [`00-governance/ENGINEERING_RULES.md`](./00-governance/ENGINEERING_RULES.md) | ✅ definiert |
-| Roadmap-Fortschritt | [`00-governance/ROADMAP_STATUS.md`](./00-governance/ROADMAP_STATUS.md) | ✅ aktiv |
-| Produktfundament | [`01-product/PRODUCT_FOUNDATION.md`](./01-product/PRODUCT_FOUNDATION.md) | ✅ definiert |
-| MVP | [`01-product/MVP_SCOPE.md`](./01-product/MVP_SCOPE.md) | ✅ definiert |
-| Kernjourneys | [`01-product/USER_JOURNEYS.md`](./01-product/USER_JOURNEYS.md) | ✅ definiert |
-| Zielarchitektur | [`02-architecture/TARGET_ARCHITECTURE.md`](./02-architecture/TARGET_ARCHITECTURE.md) | ✅ Entwurf |
-| Designsystem | `03-design-system/` | 🔴 offen |
-| Auth | [`04-auth/AUTH_IMPLEMENTATION.md`](./04-auth/AUTH_IMPLEMENTATION.md) | 🟡 Code + UI weit vorbereitet, echte Firebase-Validierung offen |
-| Backend | [`05-backend/FIREBASE_SETUP.md`](./05-backend/FIREBASE_SETUP.md) | 🟡 Bootstrap + Security Rules + Emulator-Tests |
-| Wardrobe | [`06-wardrobe/CLOUD_WARDROBE.md`](./06-wardrobe/CLOUD_WARDROBE.md) | 🟡 Cloud-Migration im Code, reale Device-/Firebase-Validierung offen |
-| AI | [`07-ai/GARMENT_ANALYSIS.md`](./07-ai/GARMENT_ANALYSIS.md) | 🟡 Contract + Client Validation, Trusted Backend offen |
-| Stylist | `08-stylist/` | 🔴 produktive Migration offen |
-| OmniSwap | `09-omniswap/` | 🔴 produktive Migration offen |
-| Shop | `10-shop/` | ⚪ MVP+ |
-| Security/Privacy | `11-security-privacy/` | 🟡 Rules + Systemgrenzen vorhanden |
-| Testing | `12-testing/` | 🟡 Type/Zero-any + Firebase Security CI vorhanden |
-| Release | `13-release/` | 🔴 offen |
-| Operations | `14-operations/` | 🔴 offen |
+| Governance / Roadmap | [`00-governance/`](./00-governance/) | ✅ aktiv |
+| Produkt / MVP / Journeys | [`01-product/`](./01-product/) | ✅ definiert |
+| Architektur | [`02-architecture/`](./02-architecture/) | ✅ Kern definiert |
+| Design / Accessibility | [`03-design/`](./03-design/) | 🟡 Primitives + erste Migrationen |
+| Auth | [`04-auth/`](./04-auth/) | 🟡 technischer Kern, Device-/Firebase-Validierung offen |
+| Firebase Backend | [`05-backend/`](./05-backend/) | 🟡 Security-/Functions-Basis, reales Deployment offen |
+| Cloud Wardrobe | [`06-wardrobe/`](./06-wardrobe/) | 🟡 Kern implementiert, Device-E2E offen |
+| AI Kleidungsanalyse | [`07-ai/`](./07-ai/) | 🟡 Trusted Backend implementiert, reales Secret/Evals offen |
+| Stylist | [`08-stylist/`](./08-stylist/) | ✅ technischer Kern |
+| OmniSwap | [`09-omniswap/`](./09-omniswap/) | 🟡 End-to-End-Kern, reale Zwei-Nutzer-Tests offen |
+| Notifications / Push | [`10-notifications/`](./10-notifications/) | 🟡 In-App fertig, native Push-Registrierung offen |
+| Moderation | [`11-moderation/`](./11-moderation/) | 🟡 Backend + interne UI-Basis |
+| Support / Recovery | [`12-support/`](./12-support/) | 🟡 Backend + read-only interne UI |
+| Privacy / Account Lifecycle | [`13-privacy/`](./13-privacy/) | 🟡 technischer Lifecycle, Recht/E2E offen |
+| Operations | [`14-operations/`](./14-operations/) | 🟡 Feature Flags + Rate Limits |
+| Qualität | [`14-quality/`](./14-quality/) | 🟡 permanente CI-Gates, Device-E2E offen |
+| Release / EAS | [`15-release/`](./15-release/) | 🟡 vorbereitet, echte Cloud-/Store-Konfiguration offen |
+
+## Operations-Dokumente
+
+- [`14-operations/FEATURE_FLAGS.md`](./14-operations/FEATURE_FLAGS.md) – Trusted Remote Flags, Kill-Switches und Rollback
+- [`14-operations/RATE_LIMITS.md`](./14-operations/RATE_LIMITS.md) – serverseitige Abuse-/Cost-Grenzen
+
+## Permanente Quality-Gates
+
+Der aktuelle Arbeitsbranch prüft bei relevanten Änderungen:
+
+1. TypeScript strict + Zero-any
+2. echten Expo Router Production-Webbundle
+3. Functions Typecheck + Build + Unit Tests
+4. Firebase Auth/Firestore/Storage Emulator Security Tests
+
+Der letzte vollständige Runtime-/Security-Checkpoint des Rate-Limit-Blocks war auf allen vier Gates grün.
 
 ## Arbeitsregel
 
-Bei jedem größeren Schritt werden gemeinsam aktualisiert:
+Bei jedem größeren Block werden gemeinsam gepflegt:
 
-1. Code
-2. passende Detaildokumentation
-3. `ROADMAP_STATUS.md`
-4. automatisierte Qualitätsprüfung
+1. Produktcode
+2. Trusted Backend / Security soweit relevant
+3. passende Detaildokumentation
+4. [`ROADMAP_STATUS.md`](./00-governance/ROADMAP_STATUS.md)
+5. automatisierte Quality-Gates
 
-So soll verhindert werden, dass Dokumentation und tatsächlicher Repo-Stand wieder auseinanderlaufen.
+Ein Mock, Feature-Flag, Dokument oder UI-Prototyp wird nicht als produktionsfertige Funktion bezeichnet.
 
-## Nächste technische Strecke
+## Nächste große Strecke
+
+Der intern ohne externe Konten umsetzbare Core ist weit fortgeschritten. Der nächste große Block benötigt reale Infrastruktur:
 
 ```text
-aktuellen CI-Lauf grün bestätigen
-→ Trusted Backend für AI reproduzierbar aufsetzen
-→ Garment Vision Provider Adapter
-→ StyleProfile
-→ Outfit Engine
-→ OmniSwap an echte Wardrobe anbinden
+Firebase Dev/Prod anlegen
+→ Rules + Indizes + Functions + Secrets deployen
+→ App Check aktivieren
+→ EAS Projekt + echte App-Identifier
+→ native Push-/Development-Build-Konfiguration
+→ reale Android/iOS Zwei-Nutzer-E2E-Tests
+→ Monitoring / Recht / Store-Vorbereitung
+→ Release Candidate
 ```
