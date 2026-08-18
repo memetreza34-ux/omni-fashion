@@ -161,6 +161,7 @@ export const deleteMyAccount = onCall(
       pushDeliveriesSnapshot,
       pushTicketsSnapshot,
       offerKeysSnapshot,
+      rateLimitsSnapshot,
     ] = await Promise.all([
       db.collection('wardrobeItems').where('ownerId', '==', uid).get(),
       db.collection('outfits').where('ownerId', '==', uid).get(),
@@ -180,6 +181,7 @@ export const deleteMyAccount = onCall(
       db.collection('pushDeliveries').where('userId', '==', uid).get(),
       db.collection('pushTickets').where('userId', '==', uid).get(),
       db.collection('swapOfferKeys').where('requesterId', '==', uid).get(),
+      db.collection('rateLimits').where('userId', '==', uid).get(),
     ]);
 
     const writer = db.bulkWriter();
@@ -196,6 +198,7 @@ export const deleteMyAccount = onCall(
       ...pushDeliveriesSnapshot.docs.map((document) => document.ref),
       ...pushTicketsSnapshot.docs.map((document) => document.ref),
       ...offerKeysSnapshot.docs.map((document) => document.ref),
+      ...rateLimitsSnapshot.docs.map((document) => document.ref),
       db.collection('styleProfiles').doc(uid),
       db.collection('notificationPreferences').doc(uid),
     ]);
