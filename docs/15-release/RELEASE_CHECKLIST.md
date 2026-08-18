@@ -4,6 +4,8 @@ Status: **pre-release gate; nothing in this document implies that the current br
 
 A Release Candidate may be created only when every mandatory item below is explicitly verified.
 
+The executable two-user/device validation sequence is defined in [`DEVICE_E2E_PLAN.md`](./DEVICE_E2E_PLAN.md). The checklist below is the release gate; the device plan is the required test procedure and evidence guide.
+
 ## A. Source control
 
 - [ ] target commit SHA recorded
@@ -94,7 +96,7 @@ On real Preview builds:
 
 ## H. OmniSwap two-user E2E
 
-Use two real accounts, preferably two physical devices.
+Use two real accounts, preferably two physical devices. Execute the detailed sequence in [`DEVICE_E2E_PLAN.md`](./DEVICE_E2E_PLAN.md) and attach PASS/FAIL evidence to the candidate record.
 
 - [ ] User A creates listing
 - [ ] User B sees listing
@@ -229,4 +231,4 @@ If native push is not completed, the feature flag/preference must keep it unavai
 
 ## Final Release Candidate rule
 
-A build becomes a Release Candidate only after the exact source SHA, Firebase backend revision and native build identifiers can be tied together and reproduced.
+A build becomes a Release Candidate only after the exact source SHA, Firebase backend revision and native build identifiers can be tied together and reproduced. The corresponding `DEVICE_E2E_PLAN.md` run must be complete for the candidate, not copied from an older build.
