@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Modal,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import type { WardrobeItem } from '../types/wardrobe';
 
 interface Props {
@@ -149,6 +152,21 @@ export function ItemDetailsModal({
     }
   };
 
+  const confirmDelete = () => {
+    Alert.alert(
+      'Kleidungsstück löschen?',
+      'Das Kleidungsstück und sein privates Wardrobe-Bild werden aus deinem Schrank entfernt. Diese Aktion kann nicht rückgängig gemacht werden.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Löschen',
+          style: 'destructive',
+          onPress: () => onDelete(item.id),
+        },
+      ],
+    );
+  };
+
   const analysisBusy = item.aiStatus === 'pending' || analysisRequesting;
   const showAnalyzeButton =
     canAnalyze &&
@@ -163,22 +181,34 @@ export function ItemDetailsModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end bg-black/50">
-        <View className="bg-white dark:bg-zinc-900 rounded-t-3xl h-[88%] overflow-hidden">
+        <View
+          accessibilityViewIsModal
+          className="bg-white dark:bg-zinc-900 rounded-t-3xl h-[88%] overflow-hidden"
+        >
           <View className="flex-row justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-800">
-            <TouchableOpacity onPress={onClose} className="p-2">
-              <Text className="text-zinc-500">Abbrechen</Text>
-            </TouchableOpacity>
-            <Text className="font-bold text-lg dark:text-white">
+            <View className="flex-1">
+              <AppButton
+                label="Abbrechen"
+                variant="ghost"
+                onPress={onClose}
+              />
+            </View>
+            <Text className="font-bold text-lg dark:text-white px-3">
               Kleidungsstück
             </Text>
-            <TouchableOpacity onPress={handleSave} className="p-2">
-              <Text className="text-blue-500 font-bold">Speichern</Text>
-            </TouchableOpacity>
+            <View className="flex-1">
+              <AppButton
+                label="Speichern"
+                accessibilityLabel={`Änderungen an ${item.name} speichern`}
+                onPress={handleSave}
+              />
+            </View>
           </View>
 
           <ScrollView className="p-6" keyboardShouldPersistTaps="handled">
             {item.imageUrl ? (
               <Image
+                accessibilityLabel={`Bild von ${item.name}`}
                 source={{ uri: item.imageUrl }}
                 className="w-full h-64 rounded-2xl mb-4 bg-zinc-100 dark:bg-zinc-800"
                 resizeMode="contain"
@@ -189,18 +219,30 @@ export function ItemDetailsModal({
               </View>
             )}
 
-            <View className="bg-indigo-500/10 border border-indigo-500/25 rounded-2xl p-4 mb-6">
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-bold text-indigo-700 dark:text-indigo-300">
-                  KI-Kleidungsanalyse
-                </Text>
-                {analysisBusy ? <ActivityIndicator size="small" /> : null}
-              </View>
-              <Text className="text-zinc-600 dark:text-zinc-300 text-xs leading-5">
-                {canAnalyze
-                  ? analysisDescription(item)
-                  : 'Echte KI-Analyse ist nur mit dem verbundenen Cloud-/Trusted-Backend aktiv.'}
-              </Text>
+            <View className="mb-6">
+              <StatusBanner
+                tone={item.aiStatus === 'failed' || analysisError ? 'danger' : 'neutral'}
+                title="KI-Kleidungsanalyse"
+                message={
+                  analysisError ??
+                  (canAnalyze
+                    ? analysisDescription(item)
+                    : 'Echte KI-Analyse ist nur mit dem verbundenen Cloud-/Trusted-Backend aktiv.')
+                }
+              />
+
+              {analysisBusy ? (
+                <View
+                  accessibilityRole="progressbar"
+                  accessibilityLabel="Kleidungsanalyse läuft"
+                  className="flex-row items-center mt-3"
+                >
+                  <ActivityIndicator size="small" />
+                  <Text className="text-zinc-500 text-xs ml-2">
+                    Analyse läuft…
+                  </Text>
+                </View>
+              ) : null}
 
               {item.aiStatus === 'completed' && item.styleTags.length > 0 ? (
                 <Text className="text-indigo-600 dark:text-indigo-300 text-xs mt-2">
@@ -214,23 +256,18 @@ export function ItemDetailsModal({
                 </Text>
               ) : null}
 
-              {analysisError ? (
-                <Text className="text-red-500 text-xs mt-2">
-                  {analysisError}
-                </Text>
-              ) : null}
-
               {showAnalyzeButton ? (
-                <TouchableOpacity
-                  onPress={() => void handleAnalyze()}
-                  className="bg-indigo-600 rounded-xl py-3 items-center mt-3"
-                >
-                  <Text className="text-white font-bold text-sm">
-                    {item.aiStatus === 'failed'
-                      ? 'Analyse erneut versuchen'
-                      : 'Jetzt analysieren'}
-                  </Text>
-                </TouchableOpacity>
+                <View className="mt-3">
+                  <AppButton
+                    label={
+                      item.aiStatus === 'failed'
+                        ? 'Analyse erneut versuchen'
+                        : 'Jetzt analysieren'
+                    }
+                    accessibilityLabel={`${item.name} ${item.aiStatus === 'failed' ? 'erneut analysieren' : 'analysieren'}`}
+                    onPress={() => void handleAnalyze()}
+                  />
+                </View>
               ) : null}
             </View>
 
@@ -238,20 +275,22 @@ export function ItemDetailsModal({
               Name
             </Text>
             <TextInput
+              accessibilityLabel="Name des Kleidungsstücks"
               value={name}
               onChangeText={setName}
               placeholder="Name des Kleidungsstücks..."
-              className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-5 dark:text-white"
+              className="min-h-12 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-5 dark:text-white"
             />
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Farbe
             </Text>
             <TextInput
+              accessibilityLabel="Farbe des Kleidungsstücks"
               value={color}
               onChangeText={setColor}
               placeholder="z. B. Schwarz"
-              className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-5 dark:text-white"
+              className="min-h-12 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-5 dark:text-white"
             />
 
             <View className="flex-row gap-3 mb-5">
@@ -260,10 +299,11 @@ export function ItemDetailsModal({
                   Marke
                 </Text>
                 <TextInput
+                  accessibilityLabel="Marke des Kleidungsstücks"
                   value={brand}
                   onChangeText={setBrand}
                   placeholder="Optional"
-                  className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl dark:text-white"
+                  className="min-h-12 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl dark:text-white"
                 />
               </View>
               <View className="w-28">
@@ -271,10 +311,11 @@ export function ItemDetailsModal({
                   Größe
                 </Text>
                 <TextInput
+                  accessibilityLabel="Größe des Kleidungsstücks"
                   value={size}
                   onChangeText={setSize}
                   placeholder="z. B. M"
-                  className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl dark:text-white"
+                  className="min-h-12 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl dark:text-white"
                 />
               </View>
             </View>
@@ -283,21 +324,25 @@ export function ItemDetailsModal({
               Material
             </Text>
             <TextInput
+              accessibilityLabel="Material des Kleidungsstücks"
               value={material}
               onChangeText={setMaterial}
               placeholder="z. B. Baumwolle"
-              className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-6 dark:text-white"
+              className="min-h-12 bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-6 dark:text-white"
             />
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Kategorie
             </Text>
-            <View className="flex-row flex-wrap mb-6">
+            <View accessibilityRole="radiogroup" className="flex-row flex-wrap mb-6">
               {CATEGORIES.map((currentCategory) => (
-                <TouchableOpacity
+                <Pressable
                   key={currentCategory}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Kategorie ${currentCategory}`}
+                  accessibilityState={{ selected: category === currentCategory }}
                   onPress={() => setCategory(currentCategory)}
-                  className={`px-4 py-2 rounded-full mr-2 mb-2 ${
+                  className={`min-h-12 px-4 rounded-full mr-2 mb-2 items-center justify-center ${
                     category === currentCategory
                       ? 'bg-black dark:bg-white'
                       : 'bg-zinc-100 dark:bg-zinc-800'
@@ -312,19 +357,22 @@ export function ItemDetailsModal({
                   >
                     {currentCategory}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Saison
             </Text>
-            <View className="flex-row flex-wrap mb-6">
+            <View accessibilityRole="radiogroup" className="flex-row flex-wrap mb-6">
               {SEASONS.map((currentSeason) => (
-                <TouchableOpacity
+                <Pressable
                   key={currentSeason}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Saison ${currentSeason}`}
+                  accessibilityState={{ selected: season === currentSeason }}
                   onPress={() => setSeason(currentSeason)}
-                  className={`px-4 py-2 rounded-full mr-2 mb-2 ${
+                  className={`min-h-12 px-4 rounded-full mr-2 mb-2 items-center justify-center ${
                     season === currentSeason
                       ? 'bg-black dark:bg-white'
                       : 'bg-zinc-100 dark:bg-zinc-800'
@@ -339,19 +387,22 @@ export function ItemDetailsModal({
                   >
                     {currentSeason}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Zustand
             </Text>
-            <View className="flex-row flex-wrap mb-8">
+            <View accessibilityRole="radiogroup" className="flex-row flex-wrap mb-8">
               {CONDITIONS.map((entry) => (
-                <TouchableOpacity
+                <Pressable
                   key={entry.value}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Zustand ${entry.label}`}
+                  accessibilityState={{ selected: condition === entry.value }}
                   onPress={() => setCondition(entry.value)}
-                  className={`px-4 py-2 rounded-full mr-2 mb-2 ${
+                  className={`min-h-12 px-4 rounded-full mr-2 mb-2 items-center justify-center ${
                     condition === entry.value
                       ? 'bg-black dark:bg-white'
                       : 'bg-zinc-100 dark:bg-zinc-800'
@@ -366,18 +417,18 @@ export function ItemDetailsModal({
                   >
                     {entry.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
-            <TouchableOpacity
-              onPress={() => onDelete(item.id)}
-              className="bg-red-500/10 border border-red-500 p-4 rounded-xl items-center mb-10"
-            >
-              <Text className="text-red-500 font-bold">
-                Kleidungsstück löschen
-              </Text>
-            </TouchableOpacity>
+            <View className="mb-10">
+              <AppButton
+                label="Kleidungsstück löschen"
+                accessibilityLabel={`${item.name} aus dem Kleiderschrank löschen`}
+                variant="danger"
+                onPress={confirmDelete}
+              />
+            </View>
           </ScrollView>
         </View>
       </View>
