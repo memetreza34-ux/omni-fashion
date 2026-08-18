@@ -21,7 +21,7 @@ Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Tr
 | Governance / Roadmap | [`00-governance/`](./00-governance/) | ✅ aktiv |
 | Produkt / MVP / Journeys | [`01-product/`](./01-product/) | ✅ definiert |
 | Architektur | [`02-architecture/`](./02-architecture/) | ✅ Kern definiert |
-| Design / Accessibility | [`03-design/`](./03-design/) | 🟡 Primitives + erste Migrationen |
+| Design / Accessibility | [`03-design/`](./03-design/) | 🟡 Kernflows migriert, Device-Audit offen |
 | Auth | [`04-auth/`](./04-auth/) | 🟡 technischer Kern, Device-/Firebase-Validierung offen |
 | Firebase Backend | [`05-backend/`](./05-backend/) | 🟡 Security-/Functions-Basis, reales Deployment offen |
 | Cloud Wardrobe | [`06-wardrobe/`](./06-wardrobe/) | 🟡 Kern implementiert, Device-E2E offen |
@@ -36,8 +36,10 @@ Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Tr
 | Qualität | [`14-quality/`](./14-quality/) | 🟡 permanente CI-Gates, Device-E2E offen |
 | Release / EAS | [`15-release/`](./15-release/) | 🟡 vorbereitet, echte Cloud-/Store-Konfiguration offen |
 
-## Operations-Dokumente
+## Kern-Dokumente
 
+- [`03-design/ACCESSIBILITY.md`](./03-design/ACCESSIBILITY.md) – migrierte Kernflows und noch offene Device-Audits
+- [`05-backend/APP_CHECK_STRATEGY.md`](./05-backend/APP_CHECK_STRATEGY.md) – native Attestation und kontrolliertes Enforcement
 - [`14-operations/FEATURE_FLAGS.md`](./14-operations/FEATURE_FLAGS.md) – Trusted Remote Flags, Kill-Switches und Rollback
 - [`14-operations/RATE_LIMITS.md`](./14-operations/RATE_LIMITS.md) – serverseitige Abuse-/Cost-Grenzen
 
@@ -50,7 +52,7 @@ Der aktuelle Arbeitsbranch prüft bei relevanten Änderungen:
 3. Functions Typecheck + Build + Unit Tests
 4. Firebase Auth/Firestore/Storage Emulator Security Tests
 
-Der letzte vollständige Runtime-/Security-Checkpoint des Rate-Limit-Blocks war auf allen vier Gates grün.
+Der kombinierte Kern-UI-Checkpoint `00f2a385a331e075c5c104fcb6f9b74006dcc4f2` war auf allen vier Gates grün.
 
 ## Arbeitsregel
 
@@ -71,10 +73,11 @@ Der intern ohne externe Konten umsetzbare Core ist weit fortgeschritten. Der nä
 ```text
 Firebase Dev/Prod anlegen
 → Rules + Indizes + Functions + Secrets deployen
-→ App Check aktivieren
+→ App Check im echten Development Build validieren
 → EAS Projekt + echte App-Identifier
 → native Push-/Development-Build-Konfiguration
 → reale Android/iOS Zwei-Nutzer-E2E-Tests
+→ VoiceOver/TalkBack/Dynamic-Type/Performance Device-Audits
 → Monitoring / Recht / Store-Vorbereitung
 → Release Candidate
 ```
