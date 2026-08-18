@@ -1,17 +1,9 @@
-import {
-  Alert,
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, Text, View } from 'react-native';
 
+import { AppButton } from '@/design-system/AppButton';
 import type { WardrobeItem } from '@/features/wardrobe/types';
 
-import type {
-  OutfitFeedback,
-  SavedOutfit,
-} from '../saved-outfit-types';
+import type { OutfitFeedback, SavedOutfit } from '../saved-outfit-types';
 
 const FEEDBACK_ACTIONS: readonly {
   value: OutfitFeedback;
@@ -79,7 +71,10 @@ export function SavedOutfitsPanel({
           </Text>
         </View>
         <View className="bg-zinc-200 dark:bg-zinc-800 rounded-full px-3 py-1.5">
-          <Text className="text-zinc-700 dark:text-zinc-200 text-xs font-bold">
+          <Text
+            accessibilityLabel={`${outfits.length} gespeicherte Outfits`}
+            className="text-zinc-700 dark:text-zinc-200 text-xs font-bold"
+          >
             {outfits.length}
           </Text>
         </View>
@@ -93,10 +88,11 @@ export function SavedOutfitsPanel({
         return (
           <View
             key={outfit.id}
+            accessibilityLabel={`Gespeichertes Outfit, ${outfit.score} Prozent Match, ${outfit.occasion}, ${outfit.season}`}
             className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-4 mb-4"
           >
             <View className="flex-row justify-between items-start mb-3">
-              <View>
+              <View className="flex-1 pr-3">
                 <Text className="text-black dark:text-white font-bold text-lg">
                   {outfit.score}% Match
                 </Text>
@@ -104,12 +100,14 @@ export function SavedOutfitsPanel({
                   {outfit.occasion} · {outfit.season}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => confirmDelete(outfit.id)}
-                className="px-3 py-2 rounded-xl bg-red-500/10"
-              >
-                <Text className="text-red-500 text-xs font-bold">Entfernen</Text>
-              </TouchableOpacity>
+              <View>
+                <AppButton
+                  label="Entfernen"
+                  accessibilityLabel={`Gespeichertes Outfit mit ${outfit.score} Prozent Match entfernen`}
+                  variant="danger"
+                  onPress={() => confirmDelete(outfit.id)}
+                />
+              </View>
             </View>
 
             <View className="flex-row mb-4">
@@ -118,10 +116,12 @@ export function SavedOutfitsPanel({
                 return (
                   <View
                     key={itemId}
+                    accessibilityLabel={item?.name ?? 'Kleidungsstück nicht mehr im Schrank'}
                     className="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 mr-2 overflow-hidden items-center justify-center"
                   >
                     {item?.imageUrl ? (
                       <Image
+                        accessibilityLabel={`Bild von ${item.name}`}
                         source={{ uri: item.imageUrl }}
                         className="w-full h-full"
                         resizeMode="contain"
@@ -146,8 +146,12 @@ export function SavedOutfitsPanel({
               {FEEDBACK_ACTIONS.map((action) => {
                 const selected = outfit.feedback === action.value;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={action.value}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={`Outfit-Feedback: ${action.label}`}
+                    accessibilityState={{ checked: selected }}
+                    hitSlop={4}
                     onPress={() =>
                       void onFeedback(
                         outfit.id,
@@ -160,7 +164,7 @@ export function SavedOutfitsPanel({
                         );
                       })
                     }
-                    className={`px-3 py-2 rounded-full mr-2 mb-2 border ${
+                    className={`min-h-12 px-3 rounded-full mr-2 mb-2 border items-center justify-center ${
                       selected
                         ? 'bg-black dark:bg-white border-black dark:border-white'
                         : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
@@ -175,7 +179,7 @@ export function SavedOutfitsPanel({
                     >
                       {action.label}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
