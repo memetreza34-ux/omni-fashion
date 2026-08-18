@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { useAuth } from '@/context/AuthContext';
 import { useStyleProfile } from '@/context/StyleProfileContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 import { STYLE_LABELS } from '@/features/style-profile/style-profile-engine';
 import {
   FIT_PREFERENCES,
@@ -74,9 +76,13 @@ function ChoiceChip({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: selected }}
+      hitSlop={4}
       onPress={onPress}
-      className={`px-4 py-2.5 rounded-full mr-2 mb-2 border ${
+      className={`min-h-12 px-4 rounded-full mr-2 mb-2 border items-center justify-center ${
         selected
           ? 'bg-black dark:bg-white border-black dark:border-white'
           : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
@@ -91,7 +97,7 @@ function ChoiceChip({
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -113,14 +119,17 @@ function AxisSelector({
       <Text className="text-zinc-500 mb-3 uppercase text-xs font-bold">
         {title}
       </Text>
-      <View className="flex-row gap-2">
+      <View accessibilityRole="radiogroup" className="flex-row gap-2">
         {values.map((currentValue, index) => {
           const selected = Math.abs(value - currentValue) < 0.1;
           return (
-            <TouchableOpacity
+            <Pressable
               key={currentValue}
+              accessibilityRole="radio"
+              accessibilityLabel={`${title}: ${labels[index]}`}
+              accessibilityState={{ selected }}
               onPress={() => onChange(currentValue)}
-              className={`flex-1 rounded-xl py-3 items-center border ${
+              className={`flex-1 min-h-12 rounded-xl items-center justify-center border ${
                 selected
                   ? 'bg-black dark:bg-white border-black dark:border-white'
                   : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'
@@ -135,7 +144,7 @@ function AxisSelector({
               >
                 {labels[index]}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -228,7 +237,11 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-white dark:bg-zinc-900 items-center justify-center">
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel="Style-DNA wird geladen"
+        className="flex-1 bg-white dark:bg-zinc-900 items-center justify-center"
+      >
         <ActivityIndicator size="large" />
         <Text className="text-zinc-500 mt-4">Style-DNA wird geladen…</Text>
       </View>
@@ -252,29 +265,29 @@ export default function ProfileScreen() {
               Deine Präferenzen + dein echter Kleiderschrank
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={() => void logout()}
-            className="bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-xl"
-          >
-            <Text className="text-red-500 font-bold">Logout</Text>
-          </TouchableOpacity>
+          <View>
+            <AppButton
+              label="Logout"
+              accessibilityLabel="Von Omni Fashion abmelden"
+              variant="danger"
+              onPress={() => void logout()}
+            />
+          </View>
         </View>
 
         <View className="px-4 mb-4">
-          <View className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-            <Text className="text-blue-700 dark:text-blue-300 font-bold text-sm">
-              {isCloudBacked ? 'Cloud StyleProfile' : 'Entwicklungsprofil lokal'}
-            </Text>
-            <Text className="text-zinc-600 dark:text-zinc-300 text-xs mt-1 leading-5">
-              Deine Style-DNA entsteht aus deinen Antworten und den erkannten
-              Eigenschaften deiner echten Kleidungsstücke. Ein Foto-Scan wird
-              nicht als fertige KI-Funktion vorgetäuscht.
-            </Text>
-          </View>
+          <StatusBanner
+            tone="neutral"
+            title={isCloudBacked ? 'Cloud StyleProfile' : 'Entwicklungsprofil lokal'}
+            message="Deine Style-DNA entsteht aus deinen Antworten und den erkannten Eigenschaften deiner echten Kleidungsstücke. Ein Foto-Scan wird nicht als fertige KI-Funktion vorgetäuscht."
+          />
 
-          <TouchableOpacity
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Datenschutz und Konto öffnen"
+            accessibilityHint="Öffnet Datenexport, Re-Authentifizierung und Kontolöschung"
             onPress={() => setShowPrivacy(true)}
-            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 mt-3 flex-row justify-between items-center"
+            className="min-h-16 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 mt-3 flex-row justify-between items-center"
           >
             <View className="flex-1 pr-4">
               <Text className="text-black dark:text-white font-extrabold">
@@ -285,14 +298,16 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Text className="text-zinc-400 text-xl">›</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {error ? (
           <View className="px-4 mb-4">
-            <View className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <Text className="text-red-500 text-sm">{error}</Text>
-            </View>
+            <StatusBanner
+              tone="danger"
+              title="Style-DNA nicht aktuell"
+              message={error}
+            />
           </View>
         ) : null}
 
@@ -382,19 +397,15 @@ export default function ProfileScreen() {
               ) : null}
 
               {wardrobeNeedsRefresh ? (
-                <TouchableOpacity
-                  disabled={isSaving}
-                  onPress={() => void handleRefresh()}
-                  className="bg-white rounded-xl py-3 items-center mt-5"
-                >
-                  {isSaving ? (
-                    <ActivityIndicator color="#000" />
-                  ) : (
-                    <Text className="text-black font-bold">
-                      Schrank neu auswerten
-                    </Text>
-                  )}
-                </TouchableOpacity>
+                <View className="mt-5">
+                  <AppButton
+                    label="Schrank neu auswerten"
+                    accessibilityLabel="Style-DNA aus dem aktuellen Kleiderschrank neu berechnen"
+                    variant="secondary"
+                    loading={isSaving}
+                    onPress={() => void handleRefresh()}
+                  />
+                </View>
               ) : (
                 <Text className="text-emerald-400 text-xs mt-4 font-semibold">
                   Style-DNA ist mit deinem Schrank synchron.
@@ -402,14 +413,12 @@ export default function ProfileScreen() {
               )}
             </View>
 
-            <TouchableOpacity
-              onPress={() => setEditing(true)}
-              className="bg-black dark:bg-white rounded-2xl py-4 items-center mb-4"
-            >
-              <Text className="text-white dark:text-black font-bold">
-                Präferenzen bearbeiten
-              </Text>
-            </TouchableOpacity>
+            <View className="mb-4">
+              <AppButton
+                label="Präferenzen bearbeiten"
+                onPress={() => setEditing(true)}
+              />
+            </View>
 
             <View className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-4">
               <Text className="font-bold text-black dark:text-white mb-1">
@@ -546,30 +555,26 @@ export default function ProfileScreen() {
               }
             />
 
-            <TouchableOpacity
-              disabled={isSaving}
-              onPress={() => void handleSave()}
-              className="bg-black dark:bg-white rounded-2xl py-4 items-center mt-2"
-            >
-              {isSaving ? (
-                <ActivityIndicator />
-              ) : (
-                <Text className="text-white dark:text-black font-bold text-base">
-                  Style-DNA speichern
-                </Text>
-              )}
-            </TouchableOpacity>
+            <View className="mt-2">
+              <AppButton
+                label="Style-DNA speichern"
+                loading={isSaving}
+                onPress={() => void handleSave()}
+              />
+            </View>
 
             {profile ? (
-              <TouchableOpacity
-                onPress={() => {
-                  setQuestionnaire(profile.questionnaire);
-                  setEditing(false);
-                }}
-                className="items-center py-4"
-              >
-                <Text className="text-zinc-500 font-medium">Abbrechen</Text>
-              </TouchableOpacity>
+              <View className="mt-2">
+                <AppButton
+                  label="Abbrechen"
+                  variant="ghost"
+                  disabled={isSaving}
+                  onPress={() => {
+                    setQuestionnaire(profile.questionnaire);
+                    setEditing(false);
+                  }}
+                />
+              </View>
             ) : null}
           </View>
         )}
