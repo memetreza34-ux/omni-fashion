@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 
 import {
   getDefaultFeatureFlags,
@@ -74,6 +75,16 @@ export function FeatureFlagProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void refresh();
+      }
+    });
+
+    return () => subscription.remove();
   }, [refresh]);
 
   const value = useMemo<FeatureFlagContextValue>(
