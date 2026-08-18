@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
-import { isFeatureEnabled } from '@/config/feature-flags';
+import { useFeatureFlag } from '@/context/FeatureFlagContext';
 import { AppButton } from '@/design-system/AppButton';
 import { AppCard } from '@/design-system/AppCard';
 import { StatusBanner } from '@/design-system/StatusBanner';
@@ -13,7 +13,7 @@ function dateLabel(millis: number): string {
 }
 
 export default function RecoveryScreen() {
-  const enabled = isFeatureEnabled('internalModeratorUi');
+  const enabled = useFeatureFlag('internalModeratorUi');
   const [queue, setQueue] = useState<RecoveryQueue | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
