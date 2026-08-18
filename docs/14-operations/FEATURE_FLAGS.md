@@ -53,7 +53,7 @@ Fehler, fehlende Firebase-Konfiguration oder Development-Demo führen zu sichere
 
 Ein Feature Flag darf **niemals** eine Berechtigungsprüfung ersetzen.
 
-Beispiel: `internalModeratorUi=true` macht die interne Oberfläche sichtbar. Die Moderations-Callables prüfen trotzdem bei jeder Anfrage erneut den serverseitigen Firebase Custom Claim `admin|moderator`.
+Beispiel: `internalModeratorUi=true` macht die interne Oberfläche sichtbar. Die Moderations-Callables prüfen trotzdem bei jeder Anfrage erneut den serverseitigen Firebase Custom Claim `admin` oder `moderator`.
 
 ## Rollout
 
