@@ -1,10 +1,7 @@
-import {
-  ActivityIndicator,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Text, TextInput, View } from 'react-native';
+
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
 
 import type { OutfitWeatherContext } from '../types';
 
@@ -53,39 +50,48 @@ export function StylistWeatherPanel({
         Gib eine Stadt ein. Standortzugriff ist für diesen MVP-Schritt nicht nötig.
       </Text>
 
-      <View className="flex-row gap-2">
+      <View className="flex-row gap-2 items-end">
         <TextInput
+          accessibilityLabel="Stadt für Wetterdaten"
+          accessibilityHint="Gib eine Stadt ein, zum Beispiel Berlin"
           value={city}
           onChangeText={onCityChange}
           editable={!loading}
           autoCapitalize="words"
           placeholder="z. B. Berlin"
           placeholderTextColor="#a1a1aa"
-          className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl px-4 py-3 text-black dark:text-white"
+          className="flex-1 min-h-12 bg-zinc-100 dark:bg-zinc-800 rounded-xl px-4 py-3 text-black dark:text-white"
           onSubmitEditing={onLoad}
           returnKeyType="search"
         />
-        <TouchableOpacity
-          onPress={onLoad}
-          disabled={loading || city.trim().length < 2}
-          className="bg-blue-600 rounded-xl px-4 items-center justify-center"
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-white font-bold">Laden</Text>
-          )}
-        </TouchableOpacity>
+        <View>
+          <AppButton
+            label="Laden"
+            accessibilityLabel={`Wetter für ${city.trim() || 'eingegebene Stadt'} laden`}
+            loading={loading}
+            disabled={city.trim().length < 2}
+            onPress={onLoad}
+          />
+        </View>
       </View>
 
       {error ? (
-        <Text className="text-red-500 text-xs mt-3">{error}</Text>
+        <View className="mt-3">
+          <StatusBanner
+            tone="warning"
+            title="Wetter nicht verfügbar"
+            message={error}
+          />
+        </View>
       ) : null}
 
       {weather ? (
         <View className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
           <View className="flex-row justify-between items-start">
-            <View className="flex-1 pr-4">
+            <View
+              accessibilityLabel={`${weather.city}, ${temperatureLabel(weather)}, ${layerLabel(weather)}, Wind ${Math.round(weather.windSpeedKmh)} Kilometer pro Stunde`}
+              className="flex-1 pr-4"
+            >
               <Text className="text-black dark:text-white text-lg font-bold">
                 {weather.city}
                 {weather.countryCode ? ` · ${weather.countryCode}` : ''}
@@ -102,9 +108,14 @@ export function StylistWeatherPanel({
                 </Text>
               ) : null}
             </View>
-            <TouchableOpacity onPress={onClear} className="px-2 py-1">
-              <Text className="text-zinc-400 text-xs font-bold">Manuell</Text>
-            </TouchableOpacity>
+            <View>
+              <AppButton
+                label="Manuell"
+                accessibilityLabel="Wetter entfernen und manuelle Saison verwenden"
+                variant="ghost"
+                onPress={onClear}
+              />
+            </View>
           </View>
         </View>
       ) : null}
