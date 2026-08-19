@@ -2,6 +2,13 @@ name: Dependency Fix Plan
 
 on:
   pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - functions/package.json
+      - functions/package-lock.json
+      - .github/workflows/dependency-fix-plan.yml
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -36,7 +43,7 @@ jobs:
         run: npm run verify:expo
 
       - name: Verify lint and TypeScript foundation
-        run: npm run lint && npm run verify:quality
+        run: npm run lint && npm run format:check && npm run verify:quality
 
       - name: Summarize remaining vulnerabilities
         run: |
