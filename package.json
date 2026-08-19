@@ -47,6 +47,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "check-no-any": "node scripts/check-no-any.js",
     "verify:foundation": "node scripts/verify-production-foundation.js",
     "verify:expo": "npx expo install --check",
