@@ -379,9 +379,7 @@ service cloud.firestore {
         && ownerIdIsUnchanged()
         && wardrobeItemHasValidShape()
         && wardrobeProtectedFieldsAreUnchanged();
-      allow delete: if ownsExistingDocument()
-        && resource.data.isListedForSwap == false
-        && !exists(/databases/$(database)/documents/swapLocks/$(itemId));
+      allow delete: if false;
     }
 
     match /outfits/{outfitId} {
