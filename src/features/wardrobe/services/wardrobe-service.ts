@@ -1,6 +1,5 @@
 import {
   collection,
-  deleteDoc,
   doc,
   onSnapshot,
   query,
@@ -14,6 +13,7 @@ import type { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 import { getFirebaseServices } from '@/services/firebase/app';
 
+import { requestCloudWardrobeItemDelete } from './wardrobe-command-service';
 import {
   WARDROBE_AI_STATUSES,
   WARDROBE_CATEGORIES,
@@ -308,6 +308,5 @@ export async function updateCloudWardrobeItem(
 }
 
 export async function deleteCloudWardrobeItem(itemId: string): Promise<void> {
-  const { db } = getFirebaseServices();
-  await deleteDoc(doc(db, 'wardrobeItems', itemId));
+  await requestCloudWardrobeItemDelete(itemId);
 }
