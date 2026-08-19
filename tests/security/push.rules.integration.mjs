@@ -33,16 +33,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
-connectFirestoreEmulator(
-  db,
-  FIRESTORE_EMULATOR_HOST,
-  FIRESTORE_EMULATOR_PORT,
-);
+connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
 
 async function expectPermissionDenied(operation, label) {
   try {
     await operation;
-    assert.fail(`${label}: expected permission-denied, but operation succeeded.`);
+    assert.fail(
+      `${label}: expected permission-denied, but operation succeeded.`,
+    );
   } catch (error) {
     if (error instanceof assert.AssertionError) {
       throw error;

@@ -78,7 +78,10 @@ function parseRequest(data: unknown): AdvanceSwapTransactionInput {
   };
 }
 
-function requiredString(record: Record<string, unknown>, field: string): string {
+function requiredString(
+  record: Record<string, unknown>,
+  field: string,
+): string {
   const value = record[field];
   if (typeof value !== 'string' || !value.trim()) {
     throw new HttpsError('failed-precondition', `Feld ${field} fehlt.`);
@@ -86,12 +89,12 @@ function requiredString(record: Record<string, unknown>, field: string): string 
   return value.trim();
 }
 
-function stringArray(
-  record: Record<string, unknown>,
-  field: string,
-): string[] {
+function stringArray(record: Record<string, unknown>, field: string): string[] {
   const value = record[field];
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+  if (
+    !Array.isArray(value) ||
+    value.some((entry) => typeof entry !== 'string')
+  ) {
     throw new HttpsError('failed-precondition', `Feld ${field} ist ungültig.`);
   }
   return value;
@@ -107,7 +110,10 @@ function parseParticipants(value: unknown): [string, string] {
     !value[1] ||
     value[0] === value[1]
   ) {
-    throw new HttpsError('failed-precondition', 'Trade-Teilnehmer sind ungültig.');
+    throw new HttpsError(
+      'failed-precondition',
+      'Trade-Teilnehmer sind ungültig.',
+    );
   }
   return [value[0], value[1]];
 }
@@ -147,7 +153,10 @@ function parseFinalizationState(value: unknown): SwapFinalizationState {
   ) {
     return value;
   }
-  throw new HttpsError('failed-precondition', 'Finalisierungsstatus ist ungültig.');
+  throw new HttpsError(
+    'failed-precondition',
+    'Finalisierungsstatus ist ungültig.',
+  );
 }
 
 function parseProgress(data: Record<string, unknown>): SwapProgressState {
@@ -217,7 +226,10 @@ export const advanceSwapTransaction = onCall(
 
         const data = snapshot.data();
         if (!data) {
-          throw new HttpsError('internal', 'Trade konnte nicht gelesen werden.');
+          throw new HttpsError(
+            'internal',
+            'Trade konnte nicht gelesen werden.',
+          );
         }
 
         const current = parseProgress(data);
@@ -254,7 +266,7 @@ export const advanceSwapTransaction = onCall(
           finalizationErrorCode:
             input.action.type === 'retry_finalize'
               ? null
-              : data.finalizationErrorCode ?? null,
+              : (data.finalizationErrorCode ?? null),
           updatedAt: FieldValue.serverTimestamp(),
         });
 
@@ -270,7 +282,10 @@ export const advanceSwapTransaction = onCall(
         });
       }
       logger.error('Failed to advance OmniSwap transaction', error);
-      throw new HttpsError('internal', 'Trade-Fortschritt konnte nicht gespeichert werden.');
+      throw new HttpsError(
+        'internal',
+        'Trade-Fortschritt konnte nicht gespeichert werden.',
+      );
     }
 
     if (updatedState.finalizationState === 'ready') {
@@ -288,7 +303,10 @@ export const advanceSwapTransaction = onCall(
     const latestSnapshot = await transactionRef.get();
     const latest = latestSnapshot.data();
     if (!latest) {
-      throw new HttpsError('internal', 'Trade-Status konnte nicht erneut geladen werden.');
+      throw new HttpsError(
+        'internal',
+        'Trade-Status konnte nicht erneut geladen werden.',
+      );
     }
 
     return {

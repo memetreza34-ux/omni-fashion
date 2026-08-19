@@ -236,17 +236,26 @@ export default function ModerationScreen() {
   return (
     <ScrollView
       className="flex-1 bg-zinc-50 dark:bg-zinc-950"
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 64, paddingBottom: 120 }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: 64,
+        paddingBottom: 120,
+      }}
     >
       <Text className="text-black dark:text-white text-3xl font-black">
         Interne Moderation
       </Text>
       <Text className="text-zinc-500 text-sm mt-2 mb-5 leading-6">
-        Diese Oberfläche besitzt keine eigenen Admin-Rechte. Der Trusted Backend Claim entscheidet jede Aktion erneut.
+        Diese Oberfläche besitzt keine eigenen Admin-Rechte. Der Trusted Backend
+        Claim entscheidet jede Aktion erneut.
       </Text>
 
       {error ? (
-        <StatusBanner tone="danger" title="Kein Moderationszugriff" message={error} />
+        <StatusBanner
+          tone="danger"
+          title="Kein Moderationszugriff"
+          message={error}
+        />
       ) : null}
 
       <View className="mt-4">
@@ -297,7 +306,9 @@ export default function ModerationScreen() {
             ))}
           </View>
 
-          {queue && queue.reports.length === 0 && queue.disputes.length === 0 ? (
+          {queue &&
+          queue.reports.length === 0 &&
+          queue.disputes.length === 0 ? (
             <View className="mt-6">
               <StatusBanner
                 tone="success"

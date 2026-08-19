@@ -84,15 +84,13 @@ function parseRequest(data: unknown): CreateSwapListingInput {
     );
   }
 
-  if (
-    !(
-      estimatedValueCents === null ||
-      (typeof estimatedValueCents === 'number' &&
-        Number.isInteger(estimatedValueCents) &&
-        estimatedValueCents >= 0 &&
-        estimatedValueCents <= MAX_VALUE_CENTS)
-    )
-  ) {
+  if (!(
+    estimatedValueCents === null ||
+    (typeof estimatedValueCents === 'number' &&
+      Number.isInteger(estimatedValueCents) &&
+      estimatedValueCents >= 0 &&
+      estimatedValueCents <= MAX_VALUE_CENTS)
+  )) {
     throw new HttpsError('invalid-argument', 'Der Schätzwert ist ungültig.');
   }
 
@@ -214,7 +212,10 @@ export const createSwapListing = onCall(
 
         const item = currentSnapshot.data();
         if (!item || item.ownerId !== uid) {
-          throw new HttpsError('permission-denied', 'Eigentümerprüfung fehlgeschlagen.');
+          throw new HttpsError(
+            'permission-denied',
+            'Eigentümerprüfung fehlgeschlagen.',
+          );
         }
         if (item.isListedForSwap === true || item.swapListingId) {
           throw new HttpsError(

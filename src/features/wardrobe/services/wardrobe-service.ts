@@ -48,7 +48,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function readString(record: Record<string, unknown>, key: string): string | null {
+function readString(
+  record: Record<string, unknown>,
+  key: string,
+): string | null {
   const value = record[key];
   return typeof value === 'string' ? value : null;
 }
@@ -134,11 +137,7 @@ function readNullableAiFieldConfidence(
 
   for (const key of keys) {
     const confidence = value[key];
-    if (
-      typeof confidence !== 'number' ||
-      confidence < 0 ||
-      confidence > 1
-    ) {
+    if (typeof confidence !== 'number' || confidence < 0 || confidence > 1) {
       return null;
     }
   }

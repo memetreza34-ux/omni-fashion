@@ -143,16 +143,16 @@ Diese Dinge werden erst umgesetzt, wenn Retention und Kernnutzen messbar sind.
 
 # 4. MVP-Scope nach vorhandenen Screens
 
-| Bestehender Bereich | Release-Entscheidung |
-|---|---|
-| Schrank | **MVP Kern – komplett real machen** |
-| Stylist | **MVP Kern – komplett real machen** |
-| OmniSwap | **MVP Kern – komplett real machen** |
-| Profil | **MVP Kern – Account/Style/Privacy real machen** |
-| Shop | **UI kann bleiben, aber nicht Release-kritisch** |
-| Smart Investment | **später / MVP+** |
-| 3D Avatar | **als Preview kennzeichnen oder für MVP zurückstellen** |
-| Eco Impact | **nur mit echten Daten anzeigen** |
+| Bestehender Bereich | Release-Entscheidung                                    |
+| ------------------- | ------------------------------------------------------- |
+| Schrank             | **MVP Kern – komplett real machen**                     |
+| Stylist             | **MVP Kern – komplett real machen**                     |
+| OmniSwap            | **MVP Kern – komplett real machen**                     |
+| Profil              | **MVP Kern – Account/Style/Privacy real machen**        |
+| Shop                | **UI kann bleiben, aber nicht Release-kritisch**        |
+| Smart Investment    | **später / MVP+**                                       |
+| 3D Avatar           | **als Preview kennzeichnen oder für MVP zurückstellen** |
+| Eco Impact          | **nur mit echten Daten anzeigen**                       |
 
 ---
 

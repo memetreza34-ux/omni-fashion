@@ -83,7 +83,10 @@ export function TrustSafetyProvider({
         });
       },
       (subscriptionError) => {
-        console.error('Trust & Safety blocks subscription failed', subscriptionError);
+        console.error(
+          'Trust & Safety blocks subscription failed',
+          subscriptionError,
+        );
         setSnapshot({
           ownerId,
           blockedIds: [],

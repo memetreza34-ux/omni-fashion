@@ -47,7 +47,8 @@ export function StylistWeatherPanel({
         Echtes Wetter
       </Text>
       <Text className="text-zinc-500 text-xs leading-5 mb-3">
-        Gib eine Stadt ein. Standortzugriff ist für diesen MVP-Schritt nicht nötig.
+        Gib eine Stadt ein. Standortzugriff ist für diesen MVP-Schritt nicht
+        nötig.
       </Text>
 
       <View className="flex-row gap-2 items-end">
@@ -100,7 +101,8 @@ export function StylistWeatherPanel({
                 {temperatureLabel(weather)}
               </Text>
               <Text className="text-zinc-500 text-xs mt-1">
-                {layerLabel(weather)} · Wind {Math.round(weather.windSpeedKmh)} km/h
+                {layerLabel(weather)} · Wind {Math.round(weather.windSpeedKmh)}{' '}
+                km/h
               </Text>
               {weather.rainProtectionRecommended ? (
                 <Text className="text-blue-600 dark:text-blue-400 text-xs font-semibold mt-2">

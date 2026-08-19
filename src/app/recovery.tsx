@@ -83,7 +83,8 @@ export default function RecoveryScreen() {
         Interne Recovery
       </Text>
       <Text className="text-zinc-500 text-sm mt-2 leading-6">
-        Read-only Übersicht für technische Fälle. Diese Oberfläche führt bewusst keine automatische Trade- oder Datenreparatur aus.
+        Read-only Übersicht für technische Fälle. Diese Oberfläche führt bewusst
+        keine automatische Trade- oder Datenreparatur aus.
       </Text>
 
       {error ? (
@@ -126,7 +127,8 @@ export default function RecoveryScreen() {
           ) : null}
 
           <Text className="text-black dark:text-white text-xl font-extrabold mt-8 mb-3">
-            Fehlgeschlagene Trade-Finalisierung ({queue?.failedTransactions.length ?? 0})
+            Fehlgeschlagene Trade-Finalisierung (
+            {queue?.failedTransactions.length ?? 0})
           </Text>
           <View className="gap-3">
             {queue?.failedTransactions.map((item) => (

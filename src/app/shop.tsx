@@ -12,7 +12,8 @@ export default function ShopScreen() {
         Entdecken
       </Text>
       <Text className="text-zinc-500 mt-1 mb-6 leading-6">
-        Fehlende Teile sollen später nur aus echten Partner-/Produktdaten vorgeschlagen werden.
+        Fehlende Teile sollen später nur aus echten Partner-/Produktdaten
+        vorgeschlagen werden.
       </Text>
 
       {partnerFeedEnabled ? (

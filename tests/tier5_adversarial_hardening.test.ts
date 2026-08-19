@@ -1,24 +1,45 @@
 /// <reference types="node" />
 import test from 'node:test';
 import assert from 'node:assert';
-import type { SwapItem, SwapTradeProposal, UserSwapProfileStats, EcoImpactMetrics } from '../src/types/swap.ts';
-import { mockSwapItems, mockTradeProposals, mockUserProfileStats, mockEcoImpactMetrics } from '../src/data/swap-data.ts';
+import type {
+  SwapItem,
+  SwapTradeProposal,
+  UserSwapProfileStats,
+  EcoImpactMetrics,
+} from '../src/types/swap.ts';
+import {
+  mockSwapItems,
+  mockTradeProposals,
+  mockUserProfileStats,
+  mockEcoImpactMetrics,
+} from '../src/data/swap-data.ts';
 
 test('Tier 5: Property Invariants & Fuzz Resilience on SwapItems', () => {
   // Verify all mock items satisfy non-negative physical values and valid enum ranges
   for (const item of mockSwapItems) {
     assert.strictEqual(typeof item.id, 'string');
     assert.ok(item.id.length > 0, 'Item ID must be non-empty string');
-    assert.ok(item.estimatedValue >= 0, `Estimated value must be non-negative: ${item.id}`);
-    assert.ok(item.co2SavedKg >= 0, `CO2 saved must be non-negative: ${item.id}`);
-    assert.ok(item.waterSavedLiters >= 0, `Water saved must be non-negative: ${item.id}`);
     assert.ok(
-      ['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'].includes(item.category),
-      `Invalid category: ${item.category}`
+      item.estimatedValue >= 0,
+      `Estimated value must be non-negative: ${item.id}`,
+    );
+    assert.ok(
+      item.co2SavedKg >= 0,
+      `CO2 saved must be non-negative: ${item.id}`,
+    );
+    assert.ok(
+      item.waterSavedLiters >= 0,
+      `Water saved must be non-negative: ${item.id}`,
+    );
+    assert.ok(
+      ['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'].includes(
+        item.category,
+      ),
+      `Invalid category: ${item.category}`,
     );
     assert.ok(
       ['Like New', 'Excellent', 'Good', 'Upcycled'].includes(item.condition),
-      `Invalid condition: ${item.condition}`
+      `Invalid condition: ${item.condition}`,
     );
   }
 });
@@ -46,17 +67,29 @@ test('Tier 5: Numerical Edge Cases & Overflow Resilience in Eco Math', () => {
 
 test('Tier 5: Adversarial Search Queries & Special Regex Characters', () => {
   // Test filtering function logic from ClosetHubView
-  const filterItems = (items: SwapItem[], query: string, arch: string, size: string) => {
+  const filterItems = (
+    items: SwapItem[],
+    query: string,
+    arch: string,
+    size: string,
+  ) => {
     return items.filter((item) => {
       if (query.trim()) {
         const q = query.toLowerCase();
-        const matchText = `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
+        const matchText =
+          `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
         if (!matchText.includes(q)) return false;
       }
-      if (arch !== 'All' && item.aestheticTag.toLowerCase() !== arch.toLowerCase()) {
+      if (
+        arch !== 'All' &&
+        item.aestheticTag.toLowerCase() !== arch.toLowerCase()
+      ) {
         return false;
       }
-      if (size !== 'All Sizes' && item.size.toLowerCase() !== size.toLowerCase()) {
+      if (
+        size !== 'All Sizes' &&
+        item.size.toLowerCase() !== size.toLowerCase()
+      ) {
         return false;
       }
       return true;
@@ -65,13 +98,23 @@ test('Tier 5: Adversarial Search Queries & Special Regex Characters', () => {
 
   // Test regex characters in query do not throw errors or fail string inclusion
   const regexQuery = '([.*+?^${}()|[\\]\\])';
-  assert.doesNotThrow(() => filterItems(mockSwapItems, regexQuery, 'All', 'All Sizes'));
-  assert.strictEqual(filterItems(mockSwapItems, regexQuery, 'All', 'All Sizes').length, 0);
+  assert.doesNotThrow(() =>
+    filterItems(mockSwapItems, regexQuery, 'All', 'All Sizes'),
+  );
+  assert.strictEqual(
+    filterItems(mockSwapItems, regexQuery, 'All', 'All Sizes').length,
+    0,
+  );
 
   // Test ultra-long query string
   const longQuery = 'A'.repeat(5000);
-  assert.doesNotThrow(() => filterItems(mockSwapItems, longQuery, 'All', 'All Sizes'));
-  assert.strictEqual(filterItems(mockSwapItems, longQuery, 'All', 'All Sizes').length, 0);
+  assert.doesNotThrow(() =>
+    filterItems(mockSwapItems, longQuery, 'All', 'All Sizes'),
+  );
+  assert.strictEqual(
+    filterItems(mockSwapItems, longQuery, 'All', 'All Sizes').length,
+    0,
+  );
 
   // Test exact substring matching
   const exactMatch = filterItems(mockSwapItems, 'Margiela', 'All', 'All Sizes');
@@ -83,7 +126,10 @@ test('Tier 5: Proposal Lifecycle State Invariants & Immutability', () => {
   // Model state transitions for trade proposals
   let proposals: SwapTradeProposal[] = [...mockTradeProposals];
 
-  const addProposal = (offeredId: string, requestedId: string): SwapTradeProposal => {
+  const addProposal = (
+    offeredId: string,
+    requestedId: string,
+  ): SwapTradeProposal => {
     const newProp: SwapTradeProposal = {
       id: `tp-${Date.now()}-${Math.random()}`,
       offeredItemId: offeredId,
@@ -95,8 +141,13 @@ test('Tier 5: Proposal Lifecycle State Invariants & Immutability', () => {
     return newProp;
   };
 
-  const updateStatus = (id: string, newStatus: 'accepted' | 'declined'): void => {
-    proposals = proposals.map((p) => (p.id === id ? { ...p, status: newStatus } : p));
+  const updateStatus = (
+    id: string,
+    newStatus: 'accepted' | 'declined',
+  ): void => {
+    proposals = proposals.map((p) =>
+      p.id === id ? { ...p, status: newStatus } : p,
+    );
   };
 
   // Create new proposal
@@ -117,7 +168,8 @@ test('Tier 5: Proposal Lifecycle State Invariants & Immutability', () => {
 
 test('Tier 5: Eco Metrics Goal Progress Boundary Conditions', () => {
   const targetCo2Goal = 20000;
-  const getProgress = (co2: number): number => Math.min(100, Math.round((co2 / targetCo2Goal) * 100));
+  const getProgress = (co2: number): number =>
+    Math.min(100, Math.round((co2 / targetCo2Goal) * 100));
 
   assert.strictEqual(getProgress(0), 0);
   assert.strictEqual(getProgress(10000), 50);

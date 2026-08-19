@@ -24,7 +24,10 @@ function expectPermissionDenied(operation, label) {
         typeof error === 'object' && error !== null && 'code' in error
           ? String(error.code)
           : '';
-      assert.ok(code.includes('permission-denied'), `${label}: received ${code}.`);
+      assert.ok(
+        code.includes('permission-denied'),
+        `${label}: received ${code}.`,
+      );
     },
   );
 }
@@ -43,7 +46,9 @@ async function run() {
   try {
     const auth = getAuth(app);
     const db = getFirestore(app);
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', {
+      disableWarnings: true,
+    });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
 
     await createUserWithEmailAndPassword(

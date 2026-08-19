@@ -38,7 +38,9 @@ function safeDefaults(): FeatureFlags {
 
 export function FeatureFlagProvider({ children }: { children: ReactNode }) {
   const { user, isBackendConfigured } = useAuth();
-  const [flags, setFlags] = useState<FeatureFlags>(() => getDefaultFeatureFlags());
+  const [flags, setFlags] = useState<FeatureFlags>(() =>
+    getDefaultFeatureFlags(),
+  );
   const [source, setSource] = useState<FeatureFlagSource>('defaults');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +69,9 @@ export function FeatureFlagProvider({ children }: { children: ReactNode }) {
       console.error('Failed to load remote feature flags', loadError);
       setFlags(safeDefaults());
       setSource('defaults');
-      setError('Remote-Konfiguration konnte nicht geladen werden. Sichere Standardwerte sind aktiv.');
+      setError(
+        'Remote-Konfiguration konnte nicht geladen werden. Sichere Standardwerte sind aktiv.',
+      );
     } finally {
       setIsLoading(false);
     }

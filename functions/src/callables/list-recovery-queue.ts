@@ -16,7 +16,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function optionalString(record: Record<string, unknown>, key: string): string | null {
+function optionalString(
+  record: Record<string, unknown>,
+  key: string,
+): string | null {
   const value = record[key];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }

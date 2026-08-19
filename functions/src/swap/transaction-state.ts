@@ -8,11 +8,7 @@ export type SwapTransactionStatus =
   | 'cancelled'
   | 'disputed';
 export type SwapFinalizationState =
-  | 'pending'
-  | 'ready'
-  | 'processing'
-  | 'completed'
-  | 'failed';
+  'pending' | 'ready' | 'processing' | 'completed' | 'failed';
 
 export type SwapProgressAction =
   | { type: 'confirm_mode'; mode: SwapFulfilmentMode }
@@ -44,7 +40,10 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
-function includesAll(participantIds: [string, string], values: string[]): boolean {
+function includesAll(
+  participantIds: [string, string],
+  values: string[],
+): boolean {
   return participantIds.every((id) => values.includes(id));
 }
 
@@ -103,10 +102,7 @@ export function applySwapProgressAction(
       );
     }
 
-    const modeConfirmedByIds = unique([
-      ...current.modeConfirmedByIds,
-      userId,
-    ]);
+    const modeConfirmedByIds = unique([...current.modeConfirmedByIds, userId]);
     const bothConfirmed = includesAll(
       current.participantIds,
       modeConfirmedByIds,

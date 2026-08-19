@@ -82,9 +82,7 @@ function readStringArray(
 }
 
 function readUnitNumber(value: unknown): number | null {
-  return typeof value === 'number' && value >= 0 && value <= 1
-    ? value
-    : null;
+  return typeof value === 'number' && value >= 0 && value <= 1 ? value : null;
 }
 
 function timestampToIso(value: unknown): string | null {
@@ -155,17 +153,9 @@ function parseWardrobeSignals(value: unknown): WardrobeStyleSignals | null {
     return null;
   }
 
-  const dominantCategories = readStringArray(
-    value.dominantCategories,
-    5,
-    40,
-  );
+  const dominantCategories = readStringArray(value.dominantCategories, 5, 40);
   const dominantColors = readStringArray(value.dominantColors, 5, 60);
-  const dominantStyleTags = readStringArray(
-    value.dominantStyleTags,
-    8,
-    50,
-  );
+  const dominantStyleTags = readStringArray(value.dominantStyleTags, 8, 50);
 
   if (
     !dominantCategories ||
@@ -205,7 +195,13 @@ function parseSummary(value: unknown): StyleProfileSummary | null {
     3,
   );
 
-  if (!title || !archetype || !description || !topStyles || topStyles.length === 0) {
+  if (
+    !title ||
+    !archetype ||
+    !description ||
+    !topStyles ||
+    topStyles.length === 0
+  ) {
     return null;
   }
 
@@ -275,7 +271,7 @@ export async function saveStyleProfile(
       wardrobeSignals: input.wardrobeSignals,
       summary: input.summary,
       createdAt: existing.exists()
-        ? existing.data().createdAt ?? serverTimestamp()
+        ? (existing.data().createdAt ?? serverTimestamp())
         : serverTimestamp(),
       updatedAt: serverTimestamp(),
       schemaVersion: STYLE_PROFILE_SCHEMA_VERSION,

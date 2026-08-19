@@ -14,7 +14,9 @@ export interface TradeStudioModalProps {
   targetItem: SwapItem | null;
   userItems: SwapItem[];
   onClose: () => void;
-  onProposeTrade: (proposal: Omit<SwapTradeProposal, 'id' | 'createdAt'>) => void;
+  onProposeTrade: (
+    proposal: Omit<SwapTradeProposal, 'id' | 'createdAt'>,
+  ) => void;
 }
 
 export const TradeStudioModal: React.FC<TradeStudioModalProps> = ({
@@ -24,14 +26,15 @@ export const TradeStudioModal: React.FC<TradeStudioModalProps> = ({
   onClose,
   onProposeTrade,
 }) => {
-  const [selectedOfferedItem, setSelectedOfferedItem] = useState<SwapItem | null>(
-    userItems.length > 0 ? userItems[0] : null
-  );
+  const [selectedOfferedItem, setSelectedOfferedItem] =
+    useState<SwapItem | null>(userItems.length > 0 ? userItems[0] : null);
 
   if (!targetItem) return null;
 
   const combinedCo2Kg = selectedOfferedItem
-    ? Number((targetItem.co2SavedKg + selectedOfferedItem.co2SavedKg).toFixed(1))
+    ? Number(
+        (targetItem.co2SavedKg + selectedOfferedItem.co2SavedKg).toFixed(1),
+      )
     : targetItem.co2SavedKg;
 
   const combinedWaterL = selectedOfferedItem
@@ -109,7 +112,10 @@ export const TradeStudioModal: React.FC<TradeStudioModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="space-y-4" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            className="space-y-4"
+            showsVerticalScrollIndicator={false}
+          >
             {/* Target Item Section */}
             <View className="bg-zinc-800/80 p-3.5 rounded-2xl border border-zinc-700">
               <Text className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">
@@ -231,9 +237,7 @@ export const TradeStudioModal: React.FC<TradeStudioModalProps> = ({
                   </Text>
                 </View>
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-xs text-sky-200">
-                    💧 Water Saved:
-                  </Text>
+                  <Text className="text-xs text-sky-200">💧 Water Saved:</Text>
                   <Text className="text-xs font-bold text-sky-300">
                     {combinedWaterL.toLocaleString()} Liters
                   </Text>

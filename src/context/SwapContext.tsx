@@ -120,24 +120,25 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
       });
     };
 
-    const onSubscriptionError = (scope: string) => (subscriptionError: Error) => {
-      console.error(`OmniSwap ${scope} subscription failed`, subscriptionError);
-      updateSnapshot(scope, (current) => ({
-        ...current,
-        error: 'OmniSwap-Daten konnten nicht vollständig geladen werden.',
-      }));
-    };
+    const onSubscriptionError =
+      (scope: string) => (subscriptionError: Error) => {
+        console.error(
+          `OmniSwap ${scope} subscription failed`,
+          subscriptionError,
+        );
+        updateSnapshot(scope, (current) => ({
+          ...current,
+          error: 'OmniSwap-Daten konnten nicht vollständig geladen werden.',
+        }));
+      };
 
     const unsubscribers = [
-      subscribeToActiveSwapListings(
-        (listings) => {
-          updateSnapshot('active', (current) => ({
-            ...current,
-            activeListings: listings,
-          }));
-        },
-        onSubscriptionError('active'),
-      ),
+      subscribeToActiveSwapListings((listings) => {
+        updateSnapshot('active', (current) => ({
+          ...current,
+          activeListings: listings,
+        }));
+      }, onSubscriptionError('active')),
       subscribeToOwnSwapListings(
         ownerId,
         (listings) => {

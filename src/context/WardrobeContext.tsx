@@ -57,7 +57,9 @@ const WardrobeContext = createContext<WardrobeContextType | undefined>(
   undefined,
 );
 
-async function hydrateImageUrls(items: WardrobeItem[]): Promise<WardrobeItem[]> {
+async function hydrateImageUrls(
+  items: WardrobeItem[],
+): Promise<WardrobeItem[]> {
   return Promise.all(
     items.map(async (item) => {
       if (!item.imagePath) {
@@ -288,9 +290,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
 
     const ownerId = user.id;
     if (updatedItem.ownerId !== ownerId) {
-      throw new Error(
-        'WARDROBE_OWNER_MISMATCH: Cannot edit another wardrobe.',
-      );
+      throw new Error('WARDROBE_OWNER_MISMATCH: Cannot edit another wardrobe.');
     }
 
     if (isCloudBacked) {
@@ -367,7 +367,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       );
     }
 
-    const item = currentItemsFor(user.id).find((candidate) => candidate.id === id);
+    const item = currentItemsFor(user.id).find(
+      (candidate) => candidate.id === id,
+    );
     if (item && item.ownerId !== user.id) {
       throw new Error(
         'WARDROBE_OWNER_MISMATCH: Cannot analyze another wardrobe.',

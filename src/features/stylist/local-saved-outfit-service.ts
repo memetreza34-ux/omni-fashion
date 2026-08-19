@@ -31,9 +31,7 @@ function readEnum<T extends string>(
 }
 
 function readScore(value: unknown): number | null {
-  return typeof value === 'number' && value >= 0 && value <= 100
-    ? value
-    : null;
+  return typeof value === 'number' && value >= 0 && value <= 100 ? value : null;
 }
 
 function readStringArray(
@@ -93,10 +91,7 @@ function parseLocalOutfit(value: unknown, ownerId: string): SavedOutfit | null {
 
   const id = typeof value.id === 'string' ? value.id : null;
   const itemIds = readStringArray(value.itemIds, 2, 5);
-  const occasion = readEnum<OutfitOccasion>(
-    value.occasion,
-    OUTFIT_OCCASIONS,
-  );
+  const occasion = readEnum<OutfitOccasion>(value.occasion, OUTFIT_OCCASIONS);
   const season = readEnum<WardrobeSeason>(value.season, WARDROBE_SEASONS);
   const score = readScore(value.score);
   const scoreBreakdown = readBreakdown(value.scoreBreakdown);
@@ -106,11 +101,13 @@ function parseLocalOutfit(value: unknown, ownerId: string): SavedOutfit | null {
     OUTFIT_FEEDBACK_VALUES,
   );
   const createdAt =
-    typeof value.createdAt === 'string' && !Number.isNaN(Date.parse(value.createdAt))
+    typeof value.createdAt === 'string' &&
+    !Number.isNaN(Date.parse(value.createdAt))
       ? value.createdAt
       : null;
   const updatedAt =
-    typeof value.updatedAt === 'string' && !Number.isNaN(Date.parse(value.updatedAt))
+    typeof value.updatedAt === 'string' &&
+    !Number.isNaN(Date.parse(value.updatedAt))
       ? value.updatedAt
       : null;
 

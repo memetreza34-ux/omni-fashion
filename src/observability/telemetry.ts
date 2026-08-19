@@ -15,7 +15,9 @@ export interface TelemetryProvider {
 
 let provider: TelemetryProvider | null = null;
 
-export function registerTelemetryProvider(nextProvider: TelemetryProvider): void {
+export function registerTelemetryProvider(
+  nextProvider: TelemetryProvider,
+): void {
   provider = nextProvider;
 }
 

@@ -14,7 +14,12 @@ interface Props {
 
 const ANGLES = [
   { id: 'front', label: 'Vorne (0°)', rotation: 0, tag: 'Front View' },
-  { id: 'threeQuarter', label: '3/4 Winkel (45°)', rotation: 45, tag: '3/4 Angle' },
+  {
+    id: 'threeQuarter',
+    label: '3/4 Winkel (45°)',
+    rotation: 45,
+    tag: '3/4 Angle',
+  },
   { id: 'side', label: 'Profil (90°)', rotation: 90, tag: 'Side Profile' },
   { id: 'back', label: 'Rücken (180°)', rotation: 180, tag: 'Back View' },
 ];

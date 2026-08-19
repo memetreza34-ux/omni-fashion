@@ -79,10 +79,7 @@ async function expireCompetingOffers(
   for (const doc of competing.slice(0, 400)) {
     const data = doc.data();
     const requesterId = requiredString(data, 'requesterId');
-    const offeredWardrobeItemId = requiredString(
-      data,
-      'offeredWardrobeItemId',
-    );
+    const offeredWardrobeItemId = requiredString(data, 'offeredWardrobeItemId');
 
     batch.update(doc.ref, {
       status: 'expired',
@@ -122,12 +119,18 @@ export const respondSwapOffer = onCall(
     await db.runTransaction(async (transaction) => {
       const offerSnapshot = await transaction.get(offerRef);
       if (!offerSnapshot.exists) {
-        throw new HttpsError('not-found', 'Tauschangebot wurde nicht gefunden.');
+        throw new HttpsError(
+          'not-found',
+          'Tauschangebot wurde nicht gefunden.',
+        );
       }
 
       const offer = offerSnapshot.data();
       if (!offer) {
-        throw new HttpsError('internal', 'Tauschangebot konnte nicht gelesen werden.');
+        throw new HttpsError(
+          'internal',
+          'Tauschangebot konnte nicht gelesen werden.',
+        );
       }
 
       const listingOwnerId = requiredString(offer, 'listingOwnerId');

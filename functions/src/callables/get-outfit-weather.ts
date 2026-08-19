@@ -1,12 +1,8 @@
 import { logger } from 'firebase-functions';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
-import {
-  WEATHER_CONTEXT_SCHEMA_VERSION,
-} from '../weather/contracts.js';
-import type {
-  OutfitWeatherResponse,
-} from '../weather/contracts.js';
+import { WEATHER_CONTEXT_SCHEMA_VERSION } from '../weather/contracts.js';
+import type { OutfitWeatherResponse } from '../weather/contracts.js';
 import {
   outerwearNeedFor,
   rainProtectionRecommended,
@@ -91,7 +87,11 @@ async function geocodeCity(city: string): Promise<GeocodingResult> {
   url.searchParams.set('format', 'json');
 
   const raw = await fetchJson(url);
-  if (!isRecord(raw) || !Array.isArray(raw.results) || raw.results.length === 0) {
+  if (
+    !isRecord(raw) ||
+    !Array.isArray(raw.results) ||
+    raw.results.length === 0
+  ) {
     throw new HttpsError(
       'not-found',
       'Diese Stadt konnte nicht eindeutig gefunden werden.',
@@ -124,10 +124,7 @@ async function geocodeCity(city: string): Promise<GeocodingResult> {
   };
 }
 
-function readNumber(
-  record: Record<string, unknown>,
-  key: string,
-): number {
+function readNumber(record: Record<string, unknown>, key: string): number {
   const value = record[key];
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new HttpsError('internal', `Ungültiges Wetterfeld: ${key}`);
@@ -141,9 +138,7 @@ function readNullableProbability(value: unknown): number | null {
   }
 
   const first: unknown = value[0];
-  return typeof first === 'number' && first >= 0 && first <= 100
-    ? first
-    : null;
+  return typeof first === 'number' && first >= 0 && first <= 100 ? first : null;
 }
 
 async function loadWeather(
@@ -173,10 +168,7 @@ async function loadWeather(
   }
 
   const temperatureC = readNumber(raw.current, 'temperature_2m');
-  const apparentTemperatureC = readNumber(
-    raw.current,
-    'apparent_temperature',
-  );
+  const apparentTemperatureC = readNumber(raw.current, 'apparent_temperature');
   const precipitationMm = readNumber(raw.current, 'precipitation');
   const rainMm = readNumber(raw.current, 'rain');
   const windSpeedKmh = readNumber(raw.current, 'wind_speed_10m');

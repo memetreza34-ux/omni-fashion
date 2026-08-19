@@ -71,24 +71,31 @@ Die Stärke entsteht aus der gemeinsamen Datenbasis.
 ## 4. Produktprinzipien
 
 ### 4.1 Wardrobe First
+
 Der digitale Kleiderschrank ist das Fundament der App.
 
 ### 4.2 Real before Fancy
+
 Echte Logik vor zusätzlichen Demo-Effekten.
 
 ### 4.3 Circular First
+
 Vor einem Neukauf kann OmniSwap eine passende Alternative anbieten.
 
 ### 4.4 Explainable Recommendations
+
 Empfehlungen sollen begründen können, warum sie passen.
 
 ### 4.5 User Control
+
 KI darf Vorschläge machen; Nutzer können korrigieren, ablehnen und Präferenzen steuern.
 
 ### 4.6 Premium but Clear
+
 Hochwertiges Design ohne unnötige visuelle Komplexität.
 
 ### 4.7 Privacy by Design
+
 Fotos, Standort, Körperdaten und Marketplace-Daten werden nur verarbeitet, wenn sie für einen klaren Zweck nötig sind.
 
 ---
@@ -96,18 +103,23 @@ Fotos, Standort, Körperdaten und Marketplace-Daten werden nur verarbeitet, wenn
 ## 5. Primäre Nutzerprobleme nach Priorität
 
 ### P1 – Outfit-Entscheidung
+
 Nutzer will schnell ein gutes Outfit aus bereits vorhandenen Teilen finden.
 
 ### P2 – Wardrobe Memory
+
 Nutzer will wissen, was er besitzt und welche Teile wenig genutzt werden.
 
 ### P3 – Ungenutzte Kleidung
+
 Nutzer will Kleidung sinnvoll weitergeben oder tauschen.
 
 ### P4 – Fehlkäufe
+
 Nutzer will erkennen, welches neue Kleidungsstück den vorhandenen Schrank wirklich verbessert.
 
 ### P5 – Stil verstehen
+
 Nutzer will sein eigenes Stilprofil besser verstehen und weiterentwickeln.
 
 ---
@@ -117,36 +129,44 @@ Nutzer will sein eigenes Stilprofil besser verstehen und weiterentwickeln.
 Die App wird zunächst nicht über starre Altersgruppen definiert, sondern über Probleme und Verhalten.
 
 ### Segment A – Outfit Seeker
+
 Besitzt viele Kleidungsstücke, hat aber regelmäßig Entscheidungsprobleme.
 
 Wichtigste Funktionen:
+
 - Wardrobe
 - Stylist
 - Wetter/Anlass
 - gespeicherte Outfits
 
 ### Segment B – Style Improver
+
 Will einen konsistenteren Stil aufbauen.
 
 Wichtigste Funktionen:
+
 - Style-Profil
 - Outfit Feedback
 - Smart Investment
 - Wardrobe Gaps
 
 ### Segment C – Circular Fashion User
+
 Will ungenutzte Kleidung tauschen statt wegwerfen oder neu kaufen.
 
 Wichtigste Funktionen:
+
 - OmniSwap
 - Reputation
 - Wunschkategorien
 - Circular Impact
 
 ### Segment D – Intentional Shopper
+
 Will weniger Fehlkäufe machen.
 
 Wichtigste Funktionen:
+
 - Gap Analysis
 - Outfit Unlock Score
 - Swap-before-Shop

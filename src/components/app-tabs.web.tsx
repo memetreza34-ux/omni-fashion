@@ -8,7 +8,14 @@ import {
   TabListProps,
 } from 'expo-router/ui';
 import { Link } from 'expo-router';
-import { Pressable, useColorScheme, View, StyleSheet, Text, Platform } from 'react-native';
+import {
+  Pressable,
+  useColorScheme,
+  View,
+  StyleSheet,
+  Text,
+  Platform,
+} from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -21,7 +28,11 @@ export interface LucideIconProps {
 
 export type LucideIcon = React.FC<LucideIconProps>;
 
-export const Shirt: LucideIcon = ({ size = 16, color = 'currentColor', style }) => {
+export const Shirt: LucideIcon = ({
+  size = 16,
+  color = 'currentColor',
+  style,
+}) => {
   if (Platform.OS === 'web') {
     return React.createElement(
       'svg',
@@ -44,7 +55,11 @@ export const Shirt: LucideIcon = ({ size = 16, color = 'currentColor', style }) 
   return <Text style={[{ fontSize: size * 0.85, color }, style]}>👕</Text>;
 };
 
-export const Sparkles: LucideIcon = ({ size = 16, color = 'currentColor', style }) => {
+export const Sparkles: LucideIcon = ({
+  size = 16,
+  color = 'currentColor',
+  style,
+}) => {
   if (Platform.OS === 'web') {
     return React.createElement(
       'svg',
@@ -70,7 +85,11 @@ export const Sparkles: LucideIcon = ({ size = 16, color = 'currentColor', style 
   return <Text style={[{ fontSize: size * 0.85, color }, style]}>✨</Text>;
 };
 
-export const ShoppingBag: LucideIcon = ({ size = 16, color = 'currentColor', style }) => {
+export const ShoppingBag: LucideIcon = ({
+  size = 16,
+  color = 'currentColor',
+  style,
+}) => {
   if (Platform.OS === 'web') {
     return React.createElement(
       'svg',
@@ -99,7 +118,11 @@ export const ShoppingBag: LucideIcon = ({ size = 16, color = 'currentColor', sty
   return <Text style={[{ fontSize: size * 0.85, color }, style]}>🛍️</Text>;
 };
 
-export const Repeat: LucideIcon = ({ size = 16, color = 'currentColor', style }) => {
+export const Repeat: LucideIcon = ({
+  size = 16,
+  color = 'currentColor',
+  style,
+}) => {
   if (Platform.OS === 'web') {
     return React.createElement(
       'svg',
@@ -131,7 +154,11 @@ export const Repeat: LucideIcon = ({ size = 16, color = 'currentColor', style })
   return <Text style={[{ fontSize: size * 0.85, color }, style]}>🔄</Text>;
 };
 
-export const User: LucideIcon = ({ size = 16, color = 'currentColor', style }) => {
+export const User: LucideIcon = ({
+  size = 16,
+  color = 'currentColor',
+  style,
+}) => {
   if (Platform.OS === 'web') {
     return React.createElement(
       'svg',
@@ -208,16 +235,14 @@ export function TabButton({
       {...props}
       style={({ pressed }: { pressed?: boolean }) => [
         styles.tabButton,
-        isFocused && (isDark ? styles.tabButtonActiveDark : styles.tabButtonActiveLight),
+        isFocused &&
+          (isDark ? styles.tabButtonActiveDark : styles.tabButtonActiveLight),
         pressed && styles.pressed,
       ]}
     >
       <View style={styles.tabInner}>
         {Icon && (
-          <Icon
-            size={16}
-            color={isFocused ? activeColor : inactiveColor}
-          />
+          <Icon size={16} color={isFocused ? activeColor : inactiveColor} />
         )}
         <Text
           style={[
@@ -232,10 +257,7 @@ export function TabButton({
 
       {isFocused && (
         <View
-          style={[
-            styles.activeIndicator,
-            { backgroundColor: activeColor },
-          ]}
+          style={[styles.activeIndicator, { backgroundColor: activeColor }]}
         />
       )}
     </Pressable>
@@ -268,7 +290,11 @@ export function CustomTabList(props: TabListProps): React.ReactElement {
         <Link href="/swap" asChild>
           <Pressable style={styles.ecoBadgePressable}>
             <View style={styles.ecoBadgeDot} />
-            <Text style={isDark ? styles.ecoBadgeTextDark : styles.ecoBadgeTextLight}>
+            <Text
+              style={
+                isDark ? styles.ecoBadgeTextDark : styles.ecoBadgeTextLight
+              }
+            >
               Circular Hub
             </Text>
           </Pressable>

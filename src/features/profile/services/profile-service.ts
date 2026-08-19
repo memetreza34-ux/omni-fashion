@@ -50,10 +50,7 @@ function timestampToIso(value: unknown): string | null {
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
 
-function mapProfileDocument(
-  id: string,
-  rawData: unknown,
-): UserProfile | null {
+function mapProfileDocument(id: string, rawData: unknown): UserProfile | null {
   if (!isRecord(rawData)) {
     return null;
   }
@@ -65,11 +62,7 @@ function mapProfileDocument(
     locale: readString(rawData, 'locale', 'de-DE'),
     country: readNullableString(rawData, 'country'),
     city: readNullableString(rawData, 'city'),
-    onboardingCompleted: readBoolean(
-      rawData,
-      'onboardingCompleted',
-      false,
-    ),
+    onboardingCompleted: readBoolean(rawData, 'onboardingCompleted', false),
     createdAt: timestampToIso(rawData.createdAt),
     updatedAt: timestampToIso(rawData.updatedAt),
     schemaVersion: USER_PROFILE_SCHEMA_VERSION,

@@ -135,11 +135,7 @@ function applyWeather(
       ...outfit.scoreBreakdown,
       seasonFit: adjustedSeasonFit,
     },
-    reasons: addWeatherReason(
-      outfit.reasons,
-      weather,
-      hasOuterwear(outfit),
-    ),
+    reasons: addWeatherReason(outfit.reasons, weather, hasOuterwear(outfit)),
   };
 }
 

@@ -166,8 +166,8 @@ export default function ProfileScreen() {
   } = useStyleProfile();
   const [editing, setEditing] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(() =>
-    profile?.questionnaire ?? defaultQuestionnaire(),
+  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(
+    () => profile?.questionnaire ?? defaultQuestionnaire(),
   );
 
   const handlePreferredColor = (color: StyleColorOption) => {
@@ -182,7 +182,9 @@ export default function ProfileScreen() {
     setQuestionnaire((current) => ({
       ...current,
       avoidedColors: toggleValue(current.avoidedColors, color, 8),
-      preferredColors: current.preferredColors.filter((entry) => entry !== color),
+      preferredColors: current.preferredColors.filter(
+        (entry) => entry !== color,
+      ),
     }));
   };
 
@@ -277,7 +279,9 @@ export default function ProfileScreen() {
         <View className="px-4 mb-4">
           <StatusBanner
             tone="neutral"
-            title={isCloudBacked ? 'Cloud StyleProfile' : 'Entwicklungsprofil lokal'}
+            title={
+              isCloudBacked ? 'Cloud StyleProfile' : 'Entwicklungsprofil lokal'
+            }
             message="Deine Style-DNA entsteht aus deinen Antworten und den erkannten Eigenschaften deiner echten Kleidungsstücke. Ein Foto-Scan wird nicht als fertige KI-Funktion vorgetäuscht."
           />
 
@@ -413,10 +417,7 @@ export default function ProfileScreen() {
             </View>
 
             <View className="mb-4">
-              <AppButton
-                label="Präferenzen bearbeiten"
-                onPress={openEditor}
-              />
+              <AppButton label="Präferenzen bearbeiten" onPress={openEditor} />
             </View>
 
             <View className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-4">

@@ -155,12 +155,15 @@ function RadioGroup({
 
 export function OnboardingScreen() {
   const { logout } = useAuth();
-  const { profile: styleProfile, saveQuestionnaire, isSaving: styleSaving } =
-    useStyleProfile();
+  const {
+    profile: styleProfile,
+    saveQuestionnaire,
+    isSaving: styleSaving,
+  } = useStyleProfile();
   const { completeOnboarding, isSaving: profileSaving } = useUserProfile();
   const [step, setStep] = useState<1 | 2>(1);
-  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(() =>
-    styleProfile?.questionnaire ?? createDefaultQuestionnaire(),
+  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(
+    () => styleProfile?.questionnaire ?? createDefaultQuestionnaire(),
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -212,7 +215,11 @@ export function OnboardingScreen() {
   return (
     <View className="flex-1 bg-white dark:bg-zinc-950">
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 64,
+          paddingBottom: 40,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="flex-row justify-between items-start mb-6">
@@ -224,7 +231,8 @@ export function OnboardingScreen() {
               Deine Style-DNA
             </Text>
             <Text className="text-zinc-500 text-sm mt-2 leading-6">
-              Zwei kurze Schritte. Deine Auswahl steuert echte Outfit-Rankings aus deinem eigenen Kleiderschrank.
+              Zwei kurze Schritte. Deine Auswahl steuert echte Outfit-Rankings
+              aus deinem eigenen Kleiderschrank.
             </Text>
           </View>
           <View className="w-28">
@@ -251,7 +259,9 @@ export function OnboardingScreen() {
               }`}
             />
           </View>
-          <Text className="text-zinc-500 text-xs mt-2">Schritt {step} von 2</Text>
+          <Text className="text-zinc-500 text-xs mt-2">
+            Schritt {step} von 2
+          </Text>
         </View>
 
         {error ? (
@@ -315,7 +325,8 @@ export function OnboardingScreen() {
               Feinschliff
             </Text>
             <Text className="text-zinc-500 text-sm mt-2 mb-4 leading-6">
-              Lieblingsfarben sind optional. Du kannst alles später im Profil ändern.
+              Lieblingsfarben sind optional. Du kannst alles später im Profil
+              ändern.
             </Text>
 
             <View className="flex-row flex-wrap mb-6">

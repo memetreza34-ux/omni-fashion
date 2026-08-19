@@ -43,10 +43,8 @@ export const SWAP_FINALIZATION_STATES = [
 
 export type SwapListingStatus = (typeof SWAP_LISTING_STATUSES)[number];
 export type SwapOfferStatus = (typeof SWAP_OFFER_STATUSES)[number];
-export type SwapTransactionStatus =
-  (typeof SWAP_TRANSACTION_STATUSES)[number];
-export type SwapFinalizationState =
-  (typeof SWAP_FINALIZATION_STATES)[number];
+export type SwapTransactionStatus = (typeof SWAP_TRANSACTION_STATUSES)[number];
+export type SwapFinalizationState = (typeof SWAP_FINALIZATION_STATES)[number];
 export type SwapFulfilmentMode = 'shipping' | 'meetup';
 
 export interface SwapListing {

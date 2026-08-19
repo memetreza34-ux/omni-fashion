@@ -4,8 +4,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Import modules from src
-import { mockSwapItems, mockTradeProposals, mockUserProfileStats, mockEcoImpactMetrics } from '../src/data/swap-data.ts';
-import type { SwapItem, SwapTradeProposal, UserSwapProfileStats, EcoImpactMetrics } from '../src/types/swap.ts';
+import {
+  mockSwapItems,
+  mockTradeProposals,
+  mockUserProfileStats,
+  mockEcoImpactMetrics,
+} from '../src/data/swap-data.ts';
+import type {
+  SwapItem,
+  SwapTradeProposal,
+  UserSwapProfileStats,
+  EcoImpactMetrics,
+} from '../src/types/swap.ts';
 
 describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
   const srcDir = path.resolve(process.cwd(), 'src');
@@ -25,7 +35,11 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
 
   it('Scan 1: Zero "any" compliance across all TypeScript files in src/', () => {
     const allTsFiles = getAllFiles(srcDir);
-    assert.strictEqual(allTsFiles.length, 28, `Expected exactly 28 TS/TSX files in src, found ${allTsFiles.length}`);
+    assert.strictEqual(
+      allTsFiles.length,
+      28,
+      `Expected exactly 28 TS/TSX files in src, found ${allTsFiles.length}`,
+    );
 
     const anyViolations: { file: string; line: number; content: string }[] = [];
 
@@ -52,18 +66,27 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
     assert.strictEqual(
       anyViolations.length,
       0,
-      `Found ${anyViolations.length} 'any' type violations: ${JSON.stringify(anyViolations, null, 2)}`
+      `Found ${anyViolations.length} 'any' type violations: ${JSON.stringify(anyViolations, null, 2)}`,
     );
   });
 
   it('Scan 2: Interface & Type contracts validation', () => {
-    assert.ok(mockSwapItems.length >= 7, 'Mock swap items should contain at least 7 items');
+    assert.ok(
+      mockSwapItems.length >= 7,
+      'Mock swap items should contain at least 7 items',
+    );
     mockSwapItems.forEach((item) => {
       assert.strictEqual(typeof item.id, 'string');
       assert.strictEqual(typeof item.title, 'string');
       assert.strictEqual(typeof item.brand, 'string');
-      assert.ok(['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'].includes(item.category));
-      assert.ok(['Like New', 'Excellent', 'Good', 'Upcycled'].includes(item.condition));
+      assert.ok(
+        ['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'].includes(
+          item.category,
+        ),
+      );
+      assert.ok(
+        ['Like New', 'Excellent', 'Good', 'Upcycled'].includes(item.condition),
+      );
       assert.ok(item.estimatedValue > 0, 'Estimated value must be positive');
       assert.ok(item.co2SavedKg >= 0, 'CO2 saved must be >= 0');
       assert.ok(item.waterSavedLiters >= 0, 'Water saved must be >= 0');
@@ -77,22 +100,33 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
   });
 
   it('Scan 3: Trade proposal state machine & status transitions', () => {
-    assert.ok(mockTradeProposals.length >= 3, 'Mock trade proposals should contain items');
+    assert.ok(
+      mockTradeProposals.length >= 3,
+      'Mock trade proposals should contain items',
+    );
     mockTradeProposals.forEach((prop) => {
       assert.strictEqual(typeof prop.id, 'string');
       assert.strictEqual(typeof prop.offeredItemId, 'string');
       assert.strictEqual(typeof prop.requestedItemId, 'string');
       assert.ok(['pending', 'accepted', 'declined'].includes(prop.status));
-      assert.ok(!isNaN(Date.parse(prop.createdAt)), 'createdAt must be valid ISO date');
+      assert.ok(
+        !isNaN(Date.parse(prop.createdAt)),
+        'createdAt must be valid ISO date',
+      );
     });
 
     // Test transition simulation
     let proposals: SwapTradeProposal[] = [...mockTradeProposals];
     const targetProp = proposals.find((p) => p.status === 'pending');
-    assert.ok(targetProp, 'Should find pending proposal for testing status transition');
+    assert.ok(
+      targetProp,
+      'Should find pending proposal for testing status transition',
+    );
 
     // Simulate Accept
-    proposals = proposals.map((p) => (p.id === targetProp.id ? { ...p, status: 'accepted' } : p));
+    proposals = proposals.map((p) =>
+      p.id === targetProp.id ? { ...p, status: 'accepted' } : p,
+    );
     const updatedProp = proposals.find((p) => p.id === targetProp.id);
     assert.strictEqual(updatedProp?.status, 'accepted');
   });
@@ -117,12 +151,18 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
 
     // Goal progress calculation: Math.min(100, Math.round((co2 / 20000) * 100))
     const targetGoal = 20000;
-    const communityProgress = Math.min(100, Math.round((communityMetrics.totalCo2SavedKg / targetGoal) * 100));
+    const communityProgress = Math.min(
+      100,
+      Math.round((communityMetrics.totalCo2SavedKg / targetGoal) * 100),
+    );
     assert.strictEqual(communityProgress, 92);
 
     // Overflow protection test
     const overflowCo2 = 25000;
-    const overflowProgress = Math.min(100, Math.round((overflowCo2 / targetGoal) * 100));
+    const overflowProgress = Math.min(
+      100,
+      Math.round((overflowCo2 / targetGoal) * 100),
+    );
     assert.strictEqual(overflowProgress, 100);
   });
 
@@ -132,16 +172,26 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
     const offeredHigher = { ...mockSwapItems[1], estimatedValue: 1000 }; // $1000 (delta +$150)
     const offeredLower = { ...mockSwapItems[1], estimatedValue: 500 }; // $500 (delta -$350)
 
-    const calcDelta = (offered: SwapItem, target: SwapItem) => offered.estimatedValue - target.estimatedValue;
+    const calcDelta = (offered: SwapItem, target: SwapItem) =>
+      offered.estimatedValue - target.estimatedValue;
 
     assert.strictEqual(calcDelta(offeredFair, targetItem), -20);
-    assert.ok(Math.abs(calcDelta(offeredFair, targetItem)) <= 50, 'Fair value match condition');
+    assert.ok(
+      Math.abs(calcDelta(offeredFair, targetItem)) <= 50,
+      'Fair value match condition',
+    );
 
     assert.strictEqual(calcDelta(offeredHigher, targetItem), 150);
-    assert.ok(calcDelta(offeredHigher, targetItem) > 50, 'Higher value offered condition');
+    assert.ok(
+      calcDelta(offeredHigher, targetItem) > 50,
+      'Higher value offered condition',
+    );
 
     assert.strictEqual(calcDelta(offeredLower, targetItem), -350);
-    assert.ok(calcDelta(offeredLower, targetItem) < -50, 'Lower value offered condition');
+    assert.ok(
+      calcDelta(offeredLower, targetItem) < -50,
+      'Lower value offered condition',
+    );
   });
 
   it('Scan 6: Search & Filter predicate robustness in ClosetHubView', () => {
@@ -150,7 +200,8 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
     // Filter by query "margiela"
     const margielaItems = items.filter((item) => {
       const q = 'margiela';
-      const matchText = `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
+      const matchText =
+        `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
       return matchText.includes(q);
     });
     assert.strictEqual(margielaItems.length, 1);
@@ -158,16 +209,20 @@ describe('MFinal Challenger 2 — Deep Scan & Zero Any Verification', () => {
 
     // Filter by Archetype "Streetwear"
     const streetwearItems = items.filter(
-      (item) => item.aestheticTag.toLowerCase() === 'streetwear'.toLowerCase()
+      (item) => item.aestheticTag.toLowerCase() === 'streetwear'.toLowerCase(),
     );
     assert.strictEqual(streetwearItems.length, 1);
 
     // Filter by Size "EU 41"
-    const eu41Items = items.filter((item) => item.size.toLowerCase() === 'eu 41'.toLowerCase());
+    const eu41Items = items.filter(
+      (item) => item.size.toLowerCase() === 'eu 41'.toLowerCase(),
+    );
     assert.strictEqual(eu41Items.length, 1);
 
     // Corner case: Non-existent filter returns empty list without error
-    const nonExistent = items.filter((item) => item.title.includes('NONEXISTENT_ITEM_XYZ'));
+    const nonExistent = items.filter((item) =>
+      item.title.includes('NONEXISTENT_ITEM_XYZ'),
+    );
     assert.strictEqual(nonExistent.length, 0);
   });
 });

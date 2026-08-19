@@ -35,12 +35,16 @@ const entries = Object.values(vulnerabilities).filter(
 );
 
 const severityOrder = ['critical', 'high', 'moderate', 'low', 'info'];
-const counts = Object.fromEntries(severityOrder.map((severity) => [severity, 0]));
+const counts = Object.fromEntries(
+  severityOrder.map((severity) => [severity, 0]),
+);
 const direct = [];
 
 for (const entry of entries) {
   const severity =
-    typeof entry.severity === 'string' ? entry.severity.toLowerCase() : 'unknown';
+    typeof entry.severity === 'string'
+      ? entry.severity.toLowerCase()
+      : 'unknown';
   if (severity in counts) {
     counts[severity] += 1;
   }

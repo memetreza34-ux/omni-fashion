@@ -63,9 +63,7 @@ function analysisDescription(item: WardrobeItem): string {
       return 'Das Bild wird gerade sicher im Backend analysiert.';
     case 'completed': {
       const confidence =
-        item.aiConfidence === null
-          ? null
-          : Math.round(item.aiConfidence * 100);
+        item.aiConfidence === null ? null : Math.round(item.aiConfidence * 100);
       return confidence === null
         ? 'Die KI-Metadaten wurden übernommen. Bitte prüfe sie.'
         : `Analyse abgeschlossen · ${confidence}% Gesamt-Confidence. Bitte prüfe die erkannten Daten.`;
@@ -170,11 +168,7 @@ function ItemDetailsForm({
         >
           <View className="flex-row justify-between items-center p-4 border-b border-zinc-200 dark:border-zinc-800">
             <View className="flex-1">
-              <AppButton
-                label="Abbrechen"
-                variant="ghost"
-                onPress={onClose}
-              />
+              <AppButton label="Abbrechen" variant="ghost" onPress={onClose} />
             </View>
             <Text className="font-bold text-lg dark:text-white px-3">
               Kleidungsstück
@@ -204,7 +198,11 @@ function ItemDetailsForm({
 
             <View className="mb-6">
               <StatusBanner
-                tone={item.aiStatus === 'failed' || analysisError ? 'danger' : 'neutral'}
+                tone={
+                  item.aiStatus === 'failed' || analysisError
+                    ? 'danger'
+                    : 'neutral'
+                }
                 title="KI-Kleidungsanalyse"
                 message={
                   analysisError ??
@@ -317,13 +315,18 @@ function ItemDetailsForm({
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Kategorie
             </Text>
-            <View accessibilityRole="radiogroup" className="flex-row flex-wrap mb-6">
+            <View
+              accessibilityRole="radiogroup"
+              className="flex-row flex-wrap mb-6"
+            >
               {CATEGORIES.map((currentCategory) => (
                 <Pressable
                   key={currentCategory}
                   accessibilityRole="radio"
                   accessibilityLabel={`Kategorie ${currentCategory}`}
-                  accessibilityState={{ selected: category === currentCategory }}
+                  accessibilityState={{
+                    selected: category === currentCategory,
+                  }}
                   onPress={() => setCategory(currentCategory)}
                   className={`min-h-12 px-4 rounded-full mr-2 mb-2 items-center justify-center ${
                     category === currentCategory
@@ -347,7 +350,10 @@ function ItemDetailsForm({
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Saison
             </Text>
-            <View accessibilityRole="radiogroup" className="flex-row flex-wrap mb-6">
+            <View
+              accessibilityRole="radiogroup"
+              className="flex-row flex-wrap mb-6"
+            >
               {SEASONS.map((currentSeason) => (
                 <Pressable
                   key={currentSeason}
@@ -377,7 +383,10 @@ function ItemDetailsForm({
             <Text className="text-zinc-500 mb-2 uppercase text-xs font-bold">
               Zustand
             </Text>
-            <View accessibilityRole="radiogroup" className="flex-row flex-wrap mb-8">
+            <View
+              accessibilityRole="radiogroup"
+              className="flex-row flex-wrap mb-8"
+            >
               {CONDITIONS.map((entry) => (
                 <Pressable
                   key={entry.value}

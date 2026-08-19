@@ -25,29 +25,42 @@ function isReverseDnsIdentifier(value) {
 }
 
 const expo = appJson.expo ?? {};
-const androidPackage = requireString(expo.android?.package, 'expo.android.package');
+const androidPackage = requireString(
+  expo.android?.package,
+  'expo.android.package',
+);
 const iosBundleIdentifier = requireString(
   expo.ios?.bundleIdentifier,
   'expo.ios.bundleIdentifier',
 );
 
 if (androidPackage && !isReverseDnsIdentifier(androidPackage)) {
-  errors.push('expo.android.package ist kein plausibler permanenter Reverse-DNS-Identifier.');
+  errors.push(
+    'expo.android.package ist kein plausibler permanenter Reverse-DNS-Identifier.',
+  );
 }
 if (iosBundleIdentifier && !isReverseDnsIdentifier(iosBundleIdentifier)) {
-  errors.push('expo.ios.bundleIdentifier ist kein plausibler permanenter Reverse-DNS-Identifier.');
+  errors.push(
+    'expo.ios.bundleIdentifier ist kein plausibler permanenter Reverse-DNS-Identifier.',
+  );
 }
 
 const easProjectId = expo.extra?.eas?.projectId;
 if (typeof easProjectId !== 'string' || !easProjectId.trim()) {
-  errors.push('expo.extra.eas.projectId fehlt. Führe zuerst EAS init/linking mit dem echten Projekt aus.');
+  errors.push(
+    'expo.extra.eas.projectId fehlt. Führe zuerst EAS init/linking mit dem echten Projekt aus.',
+  );
 }
 
 if (easJson.build?.preview?.environment !== 'preview') {
-  errors.push('eas.json build.preview.environment muss explizit "preview" sein.');
+  errors.push(
+    'eas.json build.preview.environment muss explizit "preview" sein.',
+  );
 }
 if (easJson.build?.production?.environment !== 'production') {
-  errors.push('eas.json build.production.environment muss explizit "production" sein.');
+  errors.push(
+    'eas.json build.production.environment muss explizit "production" sein.',
+  );
 }
 
 const requiredPublicEnvironment = [
@@ -67,11 +80,16 @@ for (const name of requiredPublicEnvironment) {
 }
 
 if (process.env.EXPO_PUBLIC_APP_ENV !== 'production') {
-  errors.push('EXPO_PUBLIC_APP_ENV muss für diesen Release-Validator exakt "production" sein.');
+  errors.push(
+    'EXPO_PUBLIC_APP_ENV muss für diesen Release-Validator exakt "production" sein.',
+  );
 }
 
 const firebaseProjectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID?.trim();
-if (firebaseProjectId && /(^|[-_.])(dev|test|preview|staging|ci)([-_.]|$)/i.test(firebaseProjectId)) {
+if (
+  firebaseProjectId &&
+  /(^|[-_.])(dev|test|preview|staging|ci)([-_.]|$)/i.test(firebaseProjectId)
+) {
   warnings.push(
     `EXPO_PUBLIC_FIREBASE_PROJECT_ID (${firebaseProjectId}) wirkt wie ein Nicht-Production-Projekt. Manuell prüfen.`,
   );
@@ -80,10 +98,13 @@ if (firebaseProjectId && /(^|[-_.])(dev|test|preview|staging|ci)([-_.]|$)/i.test
 const publicValues = Object.entries(process.env).filter(([key]) =>
   key.startsWith('EXPO_PUBLIC_'),
 );
-const suspiciousSecretName = /(secret|private|admin|service_account|serviceaccount|token|password|gemini_api_key)/i;
+const suspiciousSecretName =
+  /(secret|private|admin|service_account|serviceaccount|token|password|gemini_api_key)/i;
 for (const [key] of publicValues) {
   if (suspiciousSecretName.test(key)) {
-    errors.push(`${key} sieht nach einem Secret aus und darf nicht als EXPO_PUBLIC_* in den Client gelangen.`);
+    errors.push(
+      `${key} sieht nach einem Secret aus und darf nicht als EXPO_PUBLIC_* in den Client gelangen.`,
+    );
   }
 }
 
@@ -103,7 +124,9 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log('Release-Konfiguration ist vollständig genug für den nächsten Production-Build-Schritt.');
+console.log(
+  'Release-Konfiguration ist vollständig genug für den nächsten Production-Build-Schritt.',
+);
 console.log(`Android package: ${androidPackage}`);
 console.log(`iOS bundle id: ${iosBundleIdentifier}`);
 console.log(`EAS project id: ${easProjectId}`);

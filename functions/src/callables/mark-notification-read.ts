@@ -27,7 +27,8 @@ export const markNotificationRead = onCall(
   { region: FUNCTIONS_REGION, timeoutSeconds: 30, memory: '256MiB' },
   async (request) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
+    if (!uid)
+      throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
 
     const notificationId = parseNotificationId(request.data);
     ensureAdminInitialized();
@@ -40,7 +41,10 @@ export const markNotificationRead = onCall(
       }
       const data = snapshot.data();
       if (!data || data.userId !== uid) {
-        throw new HttpsError('permission-denied', 'Diese Notification gehört dir nicht.');
+        throw new HttpsError(
+          'permission-denied',
+          'Diese Notification gehört dir nicht.',
+        );
       }
       if (data.readAt !== null && data.readAt !== undefined) {
         return;

@@ -107,13 +107,13 @@ export function StyleProfileProvider({
 
   const wardrobeNeedsRefresh = Boolean(
     profile &&
-      (profile.wardrobeSignals.totalItemCount !== currentSignals.totalItemCount ||
-        profile.wardrobeSignals.analyzedItemCount !==
-          currentSignals.analyzedItemCount ||
-        profile.wardrobeSignals.dominantColors.join('|') !==
-          currentSignals.dominantColors.join('|') ||
-        profile.wardrobeSignals.dominantStyleTags.join('|') !==
-          currentSignals.dominantStyleTags.join('|')),
+    (profile.wardrobeSignals.totalItemCount !== currentSignals.totalItemCount ||
+      profile.wardrobeSignals.analyzedItemCount !==
+        currentSignals.analyzedItemCount ||
+      profile.wardrobeSignals.dominantColors.join('|') !==
+        currentSignals.dominantColors.join('|') ||
+      profile.wardrobeSignals.dominantStyleTags.join('|') !==
+        currentSignals.dominantStyleTags.join('|')),
   );
 
   const persistProfile = async (
@@ -196,7 +196,9 @@ export function StyleProfileProvider({
       await persistProfile(profile.questionnaire);
     } catch (refreshError: unknown) {
       console.error('Failed to refresh StyleProfile', refreshError);
-      setCurrentError('Dein Kleiderschrank konnte nicht neu ausgewertet werden.');
+      setCurrentError(
+        'Dein Kleiderschrank konnte nicht neu ausgewertet werden.',
+      );
       throw refreshError;
     } finally {
       setIsSaving(false);

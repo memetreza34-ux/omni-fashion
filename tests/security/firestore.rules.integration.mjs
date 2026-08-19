@@ -58,7 +58,9 @@ async function register(client, email) {
 async function expectPermissionDenied(operation, label) {
   try {
     await operation;
-    assert.fail(`${label}: expected permission-denied, but operation succeeded.`);
+    assert.fail(
+      `${label}: expected permission-denied, but operation succeeded.`,
+    );
   } catch (error) {
     if (error instanceof assert.AssertionError) {
       throw error;

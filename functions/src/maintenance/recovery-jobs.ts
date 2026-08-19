@@ -18,7 +18,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function stringValue(record: Record<string, unknown>, field: string): string | null {
+function stringValue(
+  record: Record<string, unknown>,
+  field: string,
+): string | null {
   const value = record[field];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }

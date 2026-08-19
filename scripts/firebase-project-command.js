@@ -35,15 +35,10 @@ function validateProjectContext() {
   }
 
   if (environment !== 'development' && environment !== 'production') {
-    fail(
-      'OMNI_FIREBASE_ENV muss explizit development oder production sein.',
-    );
+    fail('OMNI_FIREBASE_ENV muss explizit development oder production sein.');
   }
 
-  if (
-    environment === 'production' &&
-    productionConfirmation !== projectId
-  ) {
+  if (environment === 'production' && productionConfirmation !== projectId) {
     fail(
       'Production-Deploy blockiert. Setze OMNI_CONFIRM_PRODUCTION_PROJECT exakt auf dieselbe Production Project ID.',
     );
@@ -52,15 +47,11 @@ function validateProjectContext() {
 
 function runFirebase(args) {
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const result = spawnSync(
-    npx,
-    ['--yes', 'firebase-tools', ...args],
-    {
-      cwd: ROOT,
-      stdio: 'inherit',
-      env: process.env,
-    },
-  );
+  const result = spawnSync(npx, ['--yes', 'firebase-tools', ...args], {
+    cwd: ROOT,
+    stdio: 'inherit',
+    env: process.env,
+  });
 
   if (result.error) {
     fail(`Firebase CLI konnte nicht gestartet werden: ${result.error.message}`);

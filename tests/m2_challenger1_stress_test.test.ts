@@ -34,14 +34,19 @@ test('Challenger 1 M2 Stress Test: File existence & zero-any code quality audit'
     const content = fs.readFileSync(fullPath, 'utf8');
     assert.ok(
       !content.includes(': any') && !content.includes('as any'),
-      `File ${relPath} must not contain any explicit 'any' type assertions`
+      `File ${relPath} must not contain any explicit 'any' type assertions`,
     );
   }
 });
 
 test('Challenger 1 M2 Stress Test: Data model & condition badge color logic', () => {
-  const conditions: SwapItem['condition'][] = ['Like New', 'Excellent', 'Good', 'Upcycled'];
-  
+  const conditions: SwapItem['condition'][] = [
+    'Like New',
+    'Excellent',
+    'Good',
+    'Upcycled',
+  ];
+
   for (const cond of conditions) {
     const item: SwapItem = {
       ...mockSwapItems[0],
@@ -101,21 +106,28 @@ test('Challenger 1 M2 Stress Test: TradeStudioModal eco calculation & value delt
   };
 
   // Check Combined CO2 Calculation
-  const combinedCo2 = Number((targetItem.co2SavedKg + offeredItemEqual.co2SavedKg).toFixed(1));
+  const combinedCo2 = Number(
+    (targetItem.co2SavedKg + offeredItemEqual.co2SavedKg).toFixed(1),
+  );
   assert.equal(combinedCo2, 24.7);
 
   // Check Combined Water Calculation
-  const combinedWater = targetItem.waterSavedLiters + offeredItemEqual.waterSavedLiters;
+  const combinedWater =
+    targetItem.waterSavedLiters + offeredItemEqual.waterSavedLiters;
   assert.equal(combinedWater, 5700);
 
   // Check Value Delta Calculations
-  const deltaFair = Math.abs(offeredItemEqual.estimatedValue - targetItem.estimatedValue);
+  const deltaFair = Math.abs(
+    offeredItemEqual.estimatedValue - targetItem.estimatedValue,
+  );
   assert.ok(deltaFair <= 50, 'Delta <= 50 is Fair Value Match');
 
-  const deltaHigher = offeredItemHigher.estimatedValue - targetItem.estimatedValue;
+  const deltaHigher =
+    offeredItemHigher.estimatedValue - targetItem.estimatedValue;
   assert.ok(deltaHigher > 50, 'Delta > 50 is Higher Value Offered');
 
-  const deltaLower = offeredItemLower.estimatedValue - targetItem.estimatedValue;
+  const deltaLower =
+    offeredItemLower.estimatedValue - targetItem.estimatedValue;
   assert.ok(deltaLower < -50, 'Delta < -50 is Target Higher Value');
 });
 
@@ -125,14 +137,19 @@ test('Challenger 1 M2 Stress Test: ClosetHubView multi-filter edge cases', () =>
   // 1. Search Query filter test
   const searchResults = items.filter((item) => {
     const q = 'berlin';
-    const matchText = `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
+    const matchText =
+      `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
     return matchText.includes(q);
   });
   assert.ok(searchResults.length > 0, 'Berlin search query should match items');
 
   // 2. Archetype filter test
-  const streetwearItems = items.filter((item) => item.aestheticTag.toLowerCase() === 'streetwear');
-  assert.ok(streetwearItems.every((i) => i.aestheticTag.toLowerCase() === 'streetwear'));
+  const streetwearItems = items.filter(
+    (item) => item.aestheticTag.toLowerCase() === 'streetwear',
+  );
+  assert.ok(
+    streetwearItems.every((i) => i.aestheticTag.toLowerCase() === 'streetwear'),
+  );
 
   // 3. Size filter test
   const mSizeItems = items.filter((item) => item.size.toLowerCase() === 'm');
@@ -143,12 +160,16 @@ test('Challenger 1 M2 Stress Test: ClosetHubView multi-filter edge cases', () =>
     const q = 'nonexistentquery123';
     return item.title.toLowerCase().includes(q);
   });
-  assert.equal(noMatchItems.length, 0, 'Nonexistent query should return 0 results');
+  assert.equal(
+    noMatchItems.length,
+    0,
+    'Nonexistent query should return 0 results',
+  );
 });
 
 test('Challenger 1 M2 Stress Test: EcoImpactBanner trees equivalent & user stats fallback', () => {
   const metrics = mockEcoImpactMetrics;
-  
+
   // Test community trees equivalent calculation in metrics
   assert.equal(typeof metrics.treesEquivalentSaved, 'number');
 
@@ -164,7 +185,10 @@ test('Challenger 1 M2 Stress Test: EcoImpactBanner trees equivalent & user stats
   assert.equal(Math.round(fallbackCo2 / 21), 0);
 
   // Test progress bar percentage calculation: Math.min(100, Math.round((co2 / 20000) * 100))
-  const progressPercent = Math.min(100, Math.round((metrics.totalCo2SavedKg / 20000) * 100));
+  const progressPercent = Math.min(
+    100,
+    Math.round((metrics.totalCo2SavedKg / 20000) * 100),
+  );
   assert.ok(progressPercent >= 0 && progressPercent <= 100);
 });
 
@@ -185,7 +209,9 @@ test('Challenger 1 M2 Stress Test: Trade Proposal state lifecycle & filtering', 
   assert.equal(proposals[0].status, 'pending');
 
   // 2. Accept Proposal
-  proposals = proposals.map((p) => (p.id === newProp.id ? { ...p, status: 'accepted' } : p));
+  proposals = proposals.map((p) =>
+    p.id === newProp.id ? { ...p, status: 'accepted' } : p,
+  );
   assert.equal(proposals[0].status, 'accepted');
 
   // 3. Filter Proposals by Status

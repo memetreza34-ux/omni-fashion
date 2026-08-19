@@ -1,7 +1,4 @@
-import type {
-  OuterwearNeed,
-  TemperatureBand,
-} from './contracts.js';
+import type { OuterwearNeed, TemperatureBand } from './contracts.js';
 
 export function temperatureBandFor(
   apparentTemperatureC: number,

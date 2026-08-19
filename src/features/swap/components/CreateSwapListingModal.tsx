@@ -56,8 +56,7 @@ export function CreateSwapListingModal({
     items.some((item) => item.id === selectedItemOverrideId)
       ? selectedItemOverrideId
       : (items[0]?.id ?? null);
-  const selectedItem =
-    items.find((item) => item.id === selectedItemId) ?? null;
+  const selectedItem = items.find((item) => item.id === selectedItemId) ?? null;
 
   const close = () => {
     if (isSubmitting) {
@@ -75,7 +74,10 @@ export function CreateSwapListingModal({
 
     const normalizedCity = city.trim();
     if (normalizedCity.length < 2) {
-      Alert.alert('Stadt fehlt', 'Gib mindestens deine Stadt für das Listing an.');
+      Alert.alert(
+        'Stadt fehlt',
+        'Gib mindestens deine Stadt für das Listing an.',
+      );
       return;
     }
     if (!shippingEnabled && !meetupEnabled) {
@@ -198,7 +200,9 @@ export function CreateSwapListingModal({
                               resizeMode="contain"
                             />
                           ) : (
-                            <Text className="text-zinc-400 text-xs">Kein Bild</Text>
+                            <Text className="text-zinc-400 text-xs">
+                              Kein Bild
+                            </Text>
                           )}
                         </View>
                         <View className="p-2">

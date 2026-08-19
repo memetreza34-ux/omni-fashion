@@ -15,7 +15,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isRating(value: unknown): value is 1 | 2 | 3 | 4 | 5 {
-  return value === 1 || value === 2 || value === 3 || value === 4 || value === 5;
+  return (
+    value === 1 || value === 2 || value === 3 || value === 4 || value === 5
+  );
 }
 
 function mapReview(id: string, raw: unknown): SwapReview | null {
@@ -90,10 +92,10 @@ export async function submitSwapReview(
   input: SubmitSwapReviewInput,
 ): Promise<SubmitSwapReviewResponse> {
   const { functions } = getFirebaseServices();
-  const callable = httpsCallable<SubmitSwapReviewInput, SubmitSwapReviewResponse>(
-    functions,
-    'submitSwapReview',
-  );
+  const callable = httpsCallable<
+    SubmitSwapReviewInput,
+    SubmitSwapReviewResponse
+  >(functions, 'submitSwapReview');
   const response = await callable(input);
 
   if (

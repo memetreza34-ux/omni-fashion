@@ -148,7 +148,10 @@ export function SwapReviewAction({
             key={value}
             accessibilityRole="radio"
             accessibilityLabel={`${value} von 5 Punkten`}
-            accessibilityState={{ selected: rating === value, disabled: submitting }}
+            accessibilityState={{
+              selected: rating === value,
+              disabled: submitting,
+            }}
             onPress={() => setRating(value)}
             disabled={submitting}
             className={`flex-1 min-h-12 rounded-xl items-center justify-center ${

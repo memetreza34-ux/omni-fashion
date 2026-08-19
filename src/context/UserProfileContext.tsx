@@ -109,7 +109,8 @@ export function UserProfileProvider({
           setSnapshot({
             ownerId,
             profile: null,
-            error: 'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
+            error:
+              'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
           });
         }
       });
@@ -138,7 +139,8 @@ export function UserProfileProvider({
       setSnapshot({
         ownerId,
         profile: null,
-        error: 'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
+        error:
+          'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
       });
       throw loadError;
     }
@@ -173,7 +175,10 @@ export function UserProfileProvider({
         console.error('Failed to update UserProfile', saveError);
         setSnapshot((current) =>
           current?.ownerId === ownerId
-            ? { ...current, error: 'Dein Profil konnte nicht gespeichert werden.' }
+            ? {
+                ...current,
+                error: 'Dein Profil konnte nicht gespeichert werden.',
+              }
             : current,
         );
         throw saveError;

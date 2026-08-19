@@ -8,13 +8,13 @@ Rate Limits sind **kein Ersatz** für Autorisierung, Ownership-Prüfungen, App C
 
 ## Aktuelle serverseitige Limits
 
-| Aktion | Scope | Grenze | Fenster |
-|---|---|---:|---:|
-| Kleidungsanalyse | `analyze_wardrobe_item` | 20 | 1 Stunde |
-| OmniSwap Listing erstellen | `create_swap_listing` | 30 | 1 Stunde |
-| OmniSwap Angebot senden | `send_swap_offer` | 60 | 1 Stunde |
-| Trust-&-Safety-Meldung | `submit_report` | 8 | 1 Stunde |
-| Push-Gerät registrieren | `register_push_device` | 20 | 1 Stunde |
+| Aktion                     | Scope                   | Grenze |  Fenster |
+| -------------------------- | ----------------------- | -----: | -------: |
+| Kleidungsanalyse           | `analyze_wardrobe_item` |     20 | 1 Stunde |
+| OmniSwap Listing erstellen | `create_swap_listing`   |     30 | 1 Stunde |
+| OmniSwap Angebot senden    | `send_swap_offer`       |     60 | 1 Stunde |
+| Trust-&-Safety-Meldung     | `submit_report`         |      8 | 1 Stunde |
+| Push-Gerät registrieren    | `register_push_device`  |     20 | 1 Stunde |
 
 Die Werte sind Startwerte. Sie müssen nach echten Dev-/Beta-Daten anhand normaler Nutzung, Abuse-Mustern und Kosten angepasst werden.
 

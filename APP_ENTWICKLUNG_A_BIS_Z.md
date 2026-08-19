@@ -449,12 +449,12 @@ Detail: [`docs/14-operations/FEATURE_FLAGS.md`](./docs/14-operations/FEATURE_FLA
 
 Aktuelle Startlimits:
 
-| Aktion | Grenze |
-|---|---:|
-| Kleidungsanalyse | 20 / Nutzer / Stunde |
-| Listing erstellen | 30 / Nutzer / Stunde |
-| Offer senden | 60 / Nutzer / Stunde |
-| Report senden | 8 / Nutzer / Stunde |
+| Aktion                  |               Grenze |
+| ----------------------- | -------------------: |
+| Kleidungsanalyse        | 20 / Nutzer / Stunde |
+| Listing erstellen       | 30 / Nutzer / Stunde |
+| Offer senden            | 60 / Nutzer / Stunde |
+| Report senden           |  8 / Nutzer / Stunde |
 | Push-Gerät registrieren | 20 / Nutzer / Stunde |
 
 Rate-Limit-State ist server-only und wird bei Account-Löschung entfernt.

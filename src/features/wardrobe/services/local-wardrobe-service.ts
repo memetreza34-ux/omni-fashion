@@ -43,7 +43,9 @@ function readStringArray(value: unknown): string[] {
     : [];
 }
 
-function readAiFieldConfidence(value: unknown): WardrobeAiFieldConfidence | null {
+function readAiFieldConfidence(
+  value: unknown,
+): WardrobeAiFieldConfidence | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -60,11 +62,7 @@ function readAiFieldConfidence(value: unknown): WardrobeAiFieldConfidence | null
 
   for (const key of keys) {
     const confidence = value[key];
-    if (
-      typeof confidence !== 'number' ||
-      confidence < 0 ||
-      confidence > 1
-    ) {
+    if (typeof confidence !== 'number' || confidence < 0 || confidence > 1) {
       return null;
     }
   }
@@ -80,7 +78,10 @@ function readAiFieldConfidence(value: unknown): WardrobeAiFieldConfidence | null
   };
 }
 
-function normalizeLocalItem(raw: unknown, ownerId: string): WardrobeItem | null {
+function normalizeLocalItem(
+  raw: unknown,
+  ownerId: string,
+): WardrobeItem | null {
   if (!isRecord(raw)) {
     return null;
   }
@@ -98,11 +99,7 @@ function normalizeLocalItem(raw: unknown, ownerId: string): WardrobeItem | null 
     WARDROBE_CATEGORIES,
     'Other',
   );
-  const season = readEnum<WardrobeSeason>(
-    raw.season,
-    WARDROBE_SEASONS,
-    'All',
-  );
+  const season = readEnum<WardrobeSeason>(raw.season, WARDROBE_SEASONS, 'All');
 
   return {
     id,
@@ -166,7 +163,9 @@ async function readStoredArray(key: string): Promise<unknown[]> {
   return Array.isArray(parsed) ? parsed : [];
 }
 
-export async function loadLocalWardrobe(ownerId: string): Promise<WardrobeItem[]> {
+export async function loadLocalWardrobe(
+  ownerId: string,
+): Promise<WardrobeItem[]> {
   const currentItems = await readStoredArray(STORAGE_KEY);
 
   if (currentItems.length > 0) {

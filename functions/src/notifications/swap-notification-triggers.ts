@@ -8,7 +8,10 @@ import { createUserNotification } from './create-notification.js';
 
 const FUNCTIONS_REGION = 'europe-west1';
 
-function stringValue(record: Record<string, unknown>, field: string): string | null {
+function stringValue(
+  record: Record<string, unknown>,
+  field: string,
+): string | null {
   const value = record[field];
   return typeof value === 'string' && value ? value : null;
 }
@@ -19,7 +22,9 @@ function stringArray(value: unknown): string[] {
     : [];
 }
 
-async function safelyCreate(input: Parameters<typeof createUserNotification>[0]) {
+async function safelyCreate(
+  input: Parameters<typeof createUserNotification>[0],
+) {
   try {
     await createUserNotification(input);
   } catch (error: unknown) {
@@ -176,7 +181,11 @@ export const onSwapTransactionUpdated = onDocumentUpdated(
       'mode',
     );
     await eventForNewActor(before.shippedByIds, after.shippedByIds, 'shipped');
-    await eventForNewActor(before.receivedByIds, after.receivedByIds, 'received');
+    await eventForNewActor(
+      before.receivedByIds,
+      after.receivedByIds,
+      'received',
+    );
 
     if (before.status !== 'completed' && after.status === 'completed') {
       await Promise.all(

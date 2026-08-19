@@ -52,7 +52,9 @@ function NotificationCard({
         <Text className="text-indigo-700 dark:text-indigo-300 text-[10px] font-bold uppercase flex-1 pr-3">
           {typeLabel(notification.type)}
         </Text>
-        {unread ? <View className="w-2.5 h-2.5 rounded-full bg-indigo-600" /> : null}
+        {unread ? (
+          <View className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+        ) : null}
       </View>
       <Text className="text-black dark:text-white font-extrabold text-base mt-1">
         {notification.title}
@@ -88,7 +90,8 @@ export default function NotificationsScreen() {
             Aktivität benötigt das echte Cloud-Backend
           </Text>
           <Text className="text-zinc-600 dark:text-zinc-400 text-sm mt-2 leading-6">
-            Im Development-Demo-Modus werden keine erfundenen Benachrichtigungen angezeigt.
+            Im Development-Demo-Modus werden keine erfundenen Benachrichtigungen
+            angezeigt.
           </Text>
         </View>
       </View>

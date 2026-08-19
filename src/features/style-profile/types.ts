@@ -14,11 +14,7 @@ export const STYLE_PREFERENCES = [
   'edgy',
 ] as const;
 
-export const FIT_PREFERENCES = [
-  'slim',
-  'regular',
-  'oversized',
-] as const;
+export const FIT_PREFERENCES = ['slim', 'regular', 'oversized'] as const;
 
 export const STYLE_COLOR_OPTIONS = [
   'Schwarz',

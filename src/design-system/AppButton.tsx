@@ -50,7 +50,11 @@ export function AppButton({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'secondary' || variant === 'ghost' ? '#71717a' : '#ffffff'}
+          color={
+            variant === 'secondary' || variant === 'ghost'
+              ? '#71717a'
+              : '#ffffff'
+          }
         />
       ) : (
         <Text className={`${TEXT_CLASSES[variant]} font-extrabold text-sm`}>

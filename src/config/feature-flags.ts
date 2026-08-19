@@ -36,7 +36,9 @@ export function getFeatureFlags(): FeatureFlags {
  * Runtime overrides are process-local. The React FeatureFlagProvider feeds this
  * boundary from the trusted backend while preserving safe local defaults.
  */
-export function setFeatureFlagOverrides(overrides: Partial<FeatureFlags>): void {
+export function setFeatureFlagOverrides(
+  overrides: Partial<FeatureFlags>,
+): void {
   runtimeOverrides = { ...overrides };
 }
 

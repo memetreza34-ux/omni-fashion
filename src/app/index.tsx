@@ -243,7 +243,8 @@ export default function WardrobeScreen() {
           Dein Schrank ist die Basis des Stylists
         </Text>
         <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-1 leading-5">
-          Je vollständiger Kategorie, Farbe und Stil gepflegt sind, desto besser kann Omni Fashion echte Outfits aus deinen eigenen Teilen bilden.
+          Je vollständiger Kategorie, Farbe und Stil gepflegt sind, desto besser
+          kann Omni Fashion echte Outfits aus deinen eigenen Teilen bilden.
         </Text>
       </View>
 

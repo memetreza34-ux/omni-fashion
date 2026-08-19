@@ -22,7 +22,9 @@ function readJson(relativePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (error) {
-    fail(`${relativePath} ist kein gültiges JSON: ${error instanceof Error ? error.message : String(error)}`);
+    fail(
+      `${relativePath} ist kein gültiges JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return null;
   }
 }
@@ -85,19 +87,25 @@ function main() {
   const firebase = readJson('firebase.json');
   if (firebase) {
     if (firebase.firestore?.rules !== 'firestore.rules') {
-      fail('firebase.json muss firestore.rules als Firestore Rules Source verwenden.');
+      fail(
+        'firebase.json muss firestore.rules als Firestore Rules Source verwenden.',
+      );
     } else {
       pass('Firestore Rules Source korrekt.');
     }
 
     if (firebase.firestore?.indexes !== 'firestore.indexes.json') {
-      fail('firebase.json muss firestore.indexes.json als Index Source verwenden.');
+      fail(
+        'firebase.json muss firestore.indexes.json als Index Source verwenden.',
+      );
     } else {
       pass('Firestore Index Source korrekt.');
     }
 
     if (firebase.storage?.rules !== 'storage.rules') {
-      fail('firebase.json muss storage.rules als Storage Rules Source verwenden.');
+      fail(
+        'firebase.json muss storage.rules als Storage Rules Source verwenden.',
+      );
     } else {
       pass('Storage Rules Source korrekt.');
     }
@@ -155,19 +163,25 @@ function main() {
     const reactVersion = packageJson.dependencies?.react;
 
     if (!isExpoSdk57Version(expoVersion)) {
-      fail(`Unerwartete Expo-Version ${String(expoVersion)}; erwartet Expo SDK 57.x.`);
+      fail(
+        `Unerwartete Expo-Version ${String(expoVersion)}; erwartet Expo SDK 57.x.`,
+      );
     } else {
       pass(`Expo SDK 57 Familie bestätigt (${expoVersion}).`);
     }
 
     if (reactNativeVersion !== '0.86.2') {
-      fail(`Unerwartete React-Native-Version ${String(reactNativeVersion)}; erwartet 0.86.2.`);
+      fail(
+        `Unerwartete React-Native-Version ${String(reactNativeVersion)}; erwartet 0.86.2.`,
+      );
     } else {
       pass('React Native 0.86.2 bestätigt.');
     }
 
     if (reactVersion !== '19.2.3') {
-      fail(`Unerwartete React-Version ${String(reactVersion)}; erwartet 19.2.3.`);
+      fail(
+        `Unerwartete React-Version ${String(reactVersion)}; erwartet 19.2.3.`,
+      );
     } else {
       pass('React 19.2.3 bestätigt.');
     }

@@ -52,7 +52,8 @@ export class ErrorBoundary extends Component<Props, State> {
             Ein unerwarteter Fehler ist aufgetreten
           </Text>
           <Text className="text-zinc-500 text-center mb-8 leading-6">
-            Diese Ansicht konnte nicht korrekt dargestellt werden. Es wird kein erfolgreicher Vorgang vorgetäuscht.
+            Diese Ansicht konnte nicht korrekt dargestellt werden. Es wird kein
+            erfolgreicher Vorgang vorgetäuscht.
           </Text>
 
           {__DEV__ ? (

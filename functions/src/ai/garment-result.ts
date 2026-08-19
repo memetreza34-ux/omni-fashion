@@ -110,10 +110,7 @@ function readStringArray(
   });
 }
 
-function readConfidence(
-  record: Record<string, unknown>,
-  key: string,
-): number {
+function readConfidence(record: Record<string, unknown>, key: string): number {
   const value = record[key];
   if (typeof value !== 'number' || value < 0 || value > 1) {
     throw new GarmentAnalysisError(
@@ -158,7 +155,9 @@ function parseFieldConfidence(value: unknown): GarmentFieldConfidence {
   };
 }
 
-export function parseGarmentProviderResult(value: unknown): GarmentAnalysisResult {
+export function parseGarmentProviderResult(
+  value: unknown,
+): GarmentAnalysisResult {
   if (!isRecord(value)) {
     throw new GarmentAnalysisError(
       'INVALID_PROVIDER_OUTPUT',

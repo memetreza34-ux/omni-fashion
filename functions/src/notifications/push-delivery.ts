@@ -33,7 +33,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function stringValue(record: Record<string, unknown>, field: string): string | null {
+function stringValue(
+  record: Record<string, unknown>,
+  field: string,
+): string | null {
   const value = record[field];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
@@ -60,7 +63,9 @@ function ticketFromUnknown(value: unknown): PushTicket | null {
   const details = isRecord(value.details)
     ? {
         error:
-          typeof value.details.error === 'string' ? value.details.error : undefined,
+          typeof value.details.error === 'string'
+            ? value.details.error
+            : undefined,
       }
     : undefined;
 
@@ -173,7 +178,10 @@ export const onNotificationCreatedPushDelivery = onDocumentCreated(
 
     const claims: { device: PushDevice; deliveryId: string }[] = [];
     for (const device of devices) {
-      const deliveryId = await claimDelivery(event.params.notificationId, device);
+      const deliveryId = await claimDelivery(
+        event.params.notificationId,
+        device,
+      );
       if (deliveryId) {
         claims.push({ device, deliveryId });
       }

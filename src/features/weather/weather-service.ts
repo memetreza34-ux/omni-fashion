@@ -136,10 +136,10 @@ export async function getOutfitWeather(
   }
 
   const { functions } = getFirebaseServices();
-  const callable = httpsCallable<
-    { city: string },
-    OutfitWeatherResponse
-  >(functions, 'getOutfitWeather');
+  const callable = httpsCallable<{ city: string }, OutfitWeatherResponse>(
+    functions,
+    'getOutfitWeather',
+  );
   const response = await callable({ city: normalizedCity });
 
   if (!isRecord(response.data)) {

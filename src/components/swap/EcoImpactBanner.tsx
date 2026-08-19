@@ -16,17 +16,17 @@ export const EcoImpactBanner: React.FC<EcoImpactBannerProps> = ({
   const activeSwaps =
     viewMode === 'community'
       ? metrics.totalCommunitySwaps
-      : userStats?.totalSwaps ?? 0;
+      : (userStats?.totalSwaps ?? 0);
 
   const activeCo2 =
     viewMode === 'community'
       ? metrics.totalCo2SavedKg
-      : userStats?.totalCo2SavedKg ?? 0;
+      : (userStats?.totalCo2SavedKg ?? 0);
 
   const activeWater =
     viewMode === 'community'
       ? metrics.totalWaterSavedLiters
-      : userStats?.totalWaterSavedLiters ?? 0;
+      : (userStats?.totalWaterSavedLiters ?? 0);
 
   const activeTrees =
     viewMode === 'community'
@@ -37,7 +37,7 @@ export const EcoImpactBanner: React.FC<EcoImpactBannerProps> = ({
   const targetCo2Goal = 20000;
   const progressPercent = Math.min(
     100,
-    Math.round((activeCo2 / targetCo2Goal) * 100)
+    Math.round((activeCo2 / targetCo2Goal) * 100),
   );
 
   return (
@@ -99,7 +99,9 @@ export const EcoImpactBanner: React.FC<EcoImpactBannerProps> = ({
         <View className="w-1/2 p-1">
           <View className="bg-black/30 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
             <View className="flex-row items-center justify-between">
-              <Text className="text-xs text-white/80 font-medium">Swaps Completed</Text>
+              <Text className="text-xs text-white/80 font-medium">
+                Swaps Completed
+              </Text>
               <Text className="text-base">🔄</Text>
             </View>
             <Text className="text-xl font-black text-white mt-1">
@@ -112,11 +114,14 @@ export const EcoImpactBanner: React.FC<EcoImpactBannerProps> = ({
         <View className="w-1/2 p-1">
           <View className="bg-black/30 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
             <View className="flex-row items-center justify-between">
-              <Text className="text-xs text-white/80 font-medium">CO₂ Saved</Text>
+              <Text className="text-xs text-white/80 font-medium">
+                CO₂ Saved
+              </Text>
               <Text className="text-base">🌿</Text>
             </View>
             <Text className="text-xl font-black text-emerald-300 mt-1">
-              {activeCo2.toLocaleString()} <Text className="text-xs font-normal">kg</Text>
+              {activeCo2.toLocaleString()}{' '}
+              <Text className="text-xs font-normal">kg</Text>
             </Text>
           </View>
         </View>
@@ -125,11 +130,14 @@ export const EcoImpactBanner: React.FC<EcoImpactBannerProps> = ({
         <View className="w-1/2 p-1">
           <View className="bg-black/30 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
             <View className="flex-row items-center justify-between">
-              <Text className="text-xs text-white/80 font-medium">H₂O Saved</Text>
+              <Text className="text-xs text-white/80 font-medium">
+                H₂O Saved
+              </Text>
               <Text className="text-base">💧</Text>
             </View>
             <Text className="text-xl font-black text-sky-300 mt-1">
-              {activeWater.toLocaleString()} <Text className="text-xs font-normal">L</Text>
+              {activeWater.toLocaleString()}{' '}
+              <Text className="text-xs font-normal">L</Text>
             </Text>
           </View>
         </View>
@@ -138,7 +146,9 @@ export const EcoImpactBanner: React.FC<EcoImpactBannerProps> = ({
         <View className="w-1/2 p-1">
           <View className="bg-black/30 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
             <View className="flex-row items-center justify-between">
-              <Text className="text-xs text-white/80 font-medium">Trees Equivalent</Text>
+              <Text className="text-xs text-white/80 font-medium">
+                Trees Equivalent
+              </Text>
               <Text className="text-base">🌳</Text>
             </View>
             <Text className="text-xl font-black text-amber-300 mt-1">

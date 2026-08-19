@@ -22,7 +22,10 @@ function requiredString(
 
 function stringArray(record: Record<string, unknown>, field: string): string[] {
   const value = record[field];
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+  if (
+    !Array.isArray(value) ||
+    value.some((entry) => typeof entry !== 'string')
+  ) {
     throw new Error(`INVALID_${field.toUpperCase()}`);
   }
   return value;
@@ -128,10 +131,7 @@ export async function finalizeSwapTransaction(
       swap,
       'requestedWardrobeItemId',
     );
-    const offeredWardrobeItemId = requiredString(
-      swap,
-      'offeredWardrobeItemId',
-    );
+    const offeredWardrobeItemId = requiredString(swap, 'offeredWardrobeItemId');
     const participantIds = stringArray(swap, 'participantIds');
     const receivedByIds = stringArray(swap, 'receivedByIds');
 
@@ -288,9 +288,7 @@ export async function finalizeSwapTransaction(
         completedAt: now,
         updatedAt: now,
       });
-      transaction.delete(
-        db.collection('swapLocks').doc(offeredWardrobeItemId),
-      );
+      transaction.delete(db.collection('swapLocks').doc(offeredWardrobeItemId));
       transaction.delete(
         db.collection('swapOfferKeys').doc(`${listingId}_${requesterId}`),
       );
@@ -304,7 +302,10 @@ export async function finalizeSwapTransaction(
     ]);
     for (const result of cleanupResults) {
       if (result.status === 'rejected') {
-        logger.error('OmniSwap post-finalization media cleanup failed', result.reason);
+        logger.error(
+          'OmniSwap post-finalization media cleanup failed',
+          result.reason,
+        );
       }
     }
 
@@ -318,7 +319,10 @@ export async function finalizeSwapTransaction(
         return 'completed';
       }
     } catch (statusError: unknown) {
-      logger.error('Could not verify finalization status after failure', statusError);
+      logger.error(
+        'Could not verify finalization status after failure',
+        statusError,
+      );
     }
 
     const cleanupTargets = [requestedTargetPath, offeredTargetPath].filter(

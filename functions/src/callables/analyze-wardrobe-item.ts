@@ -1,9 +1,5 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
-import {
-  FieldValue,
-  getFirestore,
-  Timestamp,
-} from 'firebase-admin/firestore';
+import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { logger } from 'firebase-functions';
 import { defineSecret } from 'firebase-functions/params';
@@ -77,10 +73,7 @@ function parseRequest(data: unknown): AnalyzeWardrobeItemInput {
     wardrobeItemId.length > 160 ||
     wardrobeItemId.includes('/')
   ) {
-    throw new HttpsError(
-      'invalid-argument',
-      'Ungültige Kleidungsstück-ID.',
-    );
+    throw new HttpsError('invalid-argument', 'Ungültige Kleidungsstück-ID.');
   }
 
   if (schemaVersion !== GARMENT_ANALYSIS_SCHEMA_VERSION) {
@@ -326,11 +319,7 @@ async function prepareAnalysis(
       }
     }
 
-    const imagePath = validateImagePath(
-      raw.imagePath,
-      userId,
-      wardrobeItemId,
-    );
+    const imagePath = validateImagePath(raw.imagePath, userId, wardrobeItemId);
 
     transaction.update(itemRef, {
       aiStatus: 'pending',

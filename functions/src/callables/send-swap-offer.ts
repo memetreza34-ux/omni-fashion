@@ -70,10 +70,7 @@ function nullableString(
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-function snapshotFromWardrobe(
-  itemId: string,
-  item: Record<string, unknown>,
-) {
+function snapshotFromWardrobe(itemId: string, item: Record<string, unknown>) {
   return {
     wardrobeItemId: itemId,
     title: requiredString(item, 'name'),
@@ -126,7 +123,9 @@ export const sendSwapOffer = onCall(
 
     const db = getFirestore();
     const offerRef = db.collection('swapOffers').doc();
-    const listingRef = db.collection('swapListings').doc(input.requestedListingId);
+    const listingRef = db
+      .collection('swapListings')
+      .doc(input.requestedListingId);
     const offeredItemRef = db
       .collection('wardrobeItems')
       .doc(input.offeredWardrobeItemId);
@@ -171,7 +170,10 @@ export const sendSwapOffer = onCall(
       const listing = listingSnapshot.data();
       const offeredItem = offeredSnapshot.data();
       if (!listing || !offeredItem) {
-        throw new HttpsError('internal', 'Tauschdaten konnten nicht gelesen werden.');
+        throw new HttpsError(
+          'internal',
+          'Tauschdaten konnten nicht gelesen werden.',
+        );
       }
 
       const listingOwnerId = requiredString(listing, 'ownerId');
@@ -216,10 +218,7 @@ export const sendSwapOffer = onCall(
         );
       }
 
-      const requestedWardrobeItemId = requiredString(
-        listing,
-        'wardrobeItemId',
-      );
+      const requestedWardrobeItemId = requiredString(listing, 'wardrobeItemId');
       if (requestedWardrobeItemId === input.offeredWardrobeItemId) {
         throw new HttpsError('failed-precondition', 'Ungültiger Eigentausch.');
       }

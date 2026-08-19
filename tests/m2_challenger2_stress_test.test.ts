@@ -21,11 +21,31 @@ const rootDir = process.cwd();
 
 test('Challenger 2 Empirical Test 1: M2 React Component Function Exports & Interface Declarations', () => {
   const m2Components = [
-    { file: 'src/components/swap/SwapDeckCard.tsx', exportName: 'export const SwapDeckCard', interfaceName: 'SwapDeckCardProps' },
-    { file: 'src/components/swap/TradeStudioModal.tsx', exportName: 'export const TradeStudioModal', interfaceName: 'TradeStudioModalProps' },
-    { file: 'src/components/swap/ClosetHubView.tsx', exportName: 'export const ClosetHubView', interfaceName: 'ClosetHubViewProps' },
-    { file: 'src/components/swap/EcoImpactBanner.tsx', exportName: 'export const EcoImpactBanner', interfaceName: 'EcoImpactBannerProps' },
-    { file: 'src/app/swap.tsx', exportName: 'export default function SwapScreen', interfaceName: 'SwapScreen' },
+    {
+      file: 'src/components/swap/SwapDeckCard.tsx',
+      exportName: 'export const SwapDeckCard',
+      interfaceName: 'SwapDeckCardProps',
+    },
+    {
+      file: 'src/components/swap/TradeStudioModal.tsx',
+      exportName: 'export const TradeStudioModal',
+      interfaceName: 'TradeStudioModalProps',
+    },
+    {
+      file: 'src/components/swap/ClosetHubView.tsx',
+      exportName: 'export const ClosetHubView',
+      interfaceName: 'ClosetHubViewProps',
+    },
+    {
+      file: 'src/components/swap/EcoImpactBanner.tsx',
+      exportName: 'export const EcoImpactBanner',
+      interfaceName: 'EcoImpactBannerProps',
+    },
+    {
+      file: 'src/app/swap.tsx',
+      exportName: 'export default function SwapScreen',
+      interfaceName: 'SwapScreen',
+    },
   ];
 
   for (const { file, exportName, interfaceName } of m2Components) {
@@ -34,14 +54,26 @@ test('Challenger 2 Empirical Test 1: M2 React Component Function Exports & Inter
     const content = fs.readFileSync(fullPath, 'utf8');
 
     // Verify valid component function export statement
-    assert.ok(content.includes(exportName), `File ${file} must contain export: ${exportName}`);
+    assert.ok(
+      content.includes(exportName),
+      `File ${file} must contain export: ${exportName}`,
+    );
 
     // Verify props interface or function signature
     if (interfaceName !== 'SwapScreen') {
-      assert.ok(content.includes(`interface ${interfaceName}`), `File ${file} must declare interface ${interfaceName}`);
-      assert.ok(content.includes(`React.FC<${interfaceName}>`), `File ${file} must type component as React.FC<${interfaceName}>`);
+      assert.ok(
+        content.includes(`interface ${interfaceName}`),
+        `File ${file} must declare interface ${interfaceName}`,
+      );
+      assert.ok(
+        content.includes(`React.FC<${interfaceName}>`),
+        `File ${file} must type component as React.FC<${interfaceName}>`,
+      );
     } else {
-      assert.ok(content.includes('React.ReactElement'), `File ${file} must declare return type React.ReactElement`);
+      assert.ok(
+        content.includes('React.ReactElement'),
+        `File ${file} must declare return type React.ReactElement`,
+      );
     }
   }
 });
@@ -70,13 +102,24 @@ test('Challenger 2 Empirical Test 2: Eco Calculation Math Correctness & Precisio
   // 5. Trees Equivalent calculation formula
   const userCo2 = 184.5;
   const treesEquivalent = Math.round(userCo2 / 21);
-  assert.equal(treesEquivalent, 9, '184.5 kg CO2 / 21 = 8.785 -> rounded to 9 trees');
+  assert.equal(
+    treesEquivalent,
+    9,
+    '184.5 kg CO2 / 21 = 8.785 -> rounded to 9 trees',
+  );
 
   // 6. Community Goal Progress Bar calculation
   const targetGoal = 20000;
   const currentCo2 = 18420;
-  const progressPercent = Math.min(100, Math.round((currentCo2 / targetGoal) * 100));
-  assert.equal(progressPercent, 92, '18420 / 20000 * 100 = 92.1% -> rounded to 92%');
+  const progressPercent = Math.min(
+    100,
+    Math.round((currentCo2 / targetGoal) * 100),
+  );
+  assert.equal(
+    progressPercent,
+    92,
+    '18420 / 20000 * 100 = 92.1% -> rounded to 92%',
+  );
 });
 
 test('Challenger 2 Empirical Test 3: Modal Open/Close & Trade Proposal State Mechanics', () => {
@@ -95,7 +138,9 @@ test('Challenger 2 Empirical Test 3: Modal Open/Close & Trade Proposal State Mec
   let proposals: SwapTradeProposal[] = [];
   let isModalOpen = true;
 
-  const handleProposeTrade = (proposalData: Omit<SwapTradeProposal, 'id' | 'createdAt'>) => {
+  const handleProposeTrade = (
+    proposalData: Omit<SwapTradeProposal, 'id' | 'createdAt'>,
+  ) => {
     const newProp: SwapTradeProposal = {
       ...proposalData,
       id: `tp-test-${Date.now()}`,
@@ -120,14 +165,34 @@ test('Challenger 2 Empirical Test 3: Modal Open/Close & Trade Proposal State Mec
 
 test('Challenger 2 Empirical Test 4: Trade Proposal Lifecycle & Filter State Transitions', () => {
   let proposals: SwapTradeProposal[] = [
-    { id: 'tp-1', offeredItemId: 'item-1', requestedItemId: 'item-2', status: 'pending', createdAt: '2026-08-07T12:00:00Z' },
-    { id: 'tp-2', offeredItemId: 'item-3', requestedItemId: 'item-4', status: 'accepted', createdAt: '2026-08-06T12:00:00Z' },
-    { id: 'tp-3', offeredItemId: 'item-5', requestedItemId: 'item-6', status: 'declined', createdAt: '2026-08-05T12:00:00Z' },
+    {
+      id: 'tp-1',
+      offeredItemId: 'item-1',
+      requestedItemId: 'item-2',
+      status: 'pending',
+      createdAt: '2026-08-07T12:00:00Z',
+    },
+    {
+      id: 'tp-2',
+      offeredItemId: 'item-3',
+      requestedItemId: 'item-4',
+      status: 'accepted',
+      createdAt: '2026-08-06T12:00:00Z',
+    },
+    {
+      id: 'tp-3',
+      offeredItemId: 'item-5',
+      requestedItemId: 'item-6',
+      status: 'declined',
+      createdAt: '2026-08-05T12:00:00Z',
+    },
   ];
 
   // Accept pending proposal
   const updateStatus = (id: string, newStatus: 'accepted' | 'declined') => {
-    proposals = proposals.map((p) => (p.id === id ? { ...p, status: newStatus } : p));
+    proposals = proposals.map((p) =>
+      p.id === id ? { ...p, status: newStatus } : p,
+    );
   };
 
   updateStatus('tp-1', 'accepted');
@@ -162,7 +227,10 @@ test('Challenger 2 Empirical Test 5: Zero-Any Quality Audit across All M2 Files'
 
     const content = fs.readFileSync(fullPath, 'utf8');
     for (const pattern of anyPatterns) {
-      assert.ok(!pattern.test(content), `File ${relPath} contains forbidden 'any' pattern`);
+      assert.ok(
+        !pattern.test(content),
+        `File ${relPath} contains forbidden 'any' pattern`,
+      );
     }
   }
 });

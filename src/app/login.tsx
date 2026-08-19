@@ -196,20 +196,30 @@ export default function LoginScreen() {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
-            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+            autoComplete={
+              mode === 'register' ? 'new-password' : 'current-password'
+            }
             editable={!isLoading}
           />
         ) : null}
 
         {errorMessage ? (
           <View className="mt-3">
-            <StatusBanner tone="danger" title="Aktion nicht möglich" message={errorMessage} />
+            <StatusBanner
+              tone="danger"
+              title="Aktion nicht möglich"
+              message={errorMessage}
+            />
           </View>
         ) : null}
 
         {successMessage ? (
           <View className="mt-3">
-            <StatusBanner tone="success" title="E-Mail angefordert" message={successMessage} />
+            <StatusBanner
+              tone="success"
+              title="E-Mail angefordert"
+              message={successMessage}
+            />
           </View>
         ) : null}
 

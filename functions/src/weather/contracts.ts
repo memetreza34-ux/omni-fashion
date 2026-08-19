@@ -1,12 +1,7 @@
 export const WEATHER_CONTEXT_SCHEMA_VERSION = 1 as const;
 
 export type TemperatureBand =
-  | 'very-cold'
-  | 'cold'
-  | 'cool'
-  | 'mild'
-  | 'warm'
-  | 'hot';
+  'very-cold' | 'cold' | 'cool' | 'mild' | 'warm' | 'hot';
 
 export type OuterwearNeed = 'required' | 'recommended' | 'optional' | 'avoid';
 

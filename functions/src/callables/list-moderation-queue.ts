@@ -16,7 +16,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function optionalString(record: Record<string, unknown>, field: string): string | null {
+function optionalString(
+  record: Record<string, unknown>,
+  field: string,
+): string | null {
   const value = record[field];
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
@@ -34,7 +37,11 @@ export const listModerationQueue = onCall(
     const db = getFirestore();
     const [reportsSnapshot, disputesSnapshot] = await Promise.all([
       db.collection('reports').where('status', '==', 'open').limit(50).get(),
-      db.collection('swapDisputes').where('status', '==', 'open').limit(50).get(),
+      db
+        .collection('swapDisputes')
+        .where('status', '==', 'open')
+        .limit(50)
+        .get(),
     ]);
 
     const reports = reportsSnapshot.docs

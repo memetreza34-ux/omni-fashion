@@ -84,10 +84,7 @@ function readStringArray(
   });
 }
 
-function readConfidence(
-  record: Record<string, unknown>,
-  key: string,
-): number {
+function readConfidence(record: Record<string, unknown>, key: string): number {
   const value = record[key];
 
   if (typeof value !== 'number' || value < 0 || value > 1) {

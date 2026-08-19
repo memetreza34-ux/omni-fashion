@@ -37,7 +37,8 @@ export function SwapTransactionCard({
   const bothModeConfirmed = transaction.participantIds.every((id) =>
     transaction.modeConfirmedByIds.includes(id),
   );
-  const userConfirmedMode = transaction.modeConfirmedByIds.includes(currentUserId);
+  const userConfirmedMode =
+    transaction.modeConfirmedByIds.includes(currentUserId);
   const userShipped = transaction.shippedByIds.includes(currentUserId);
   const userReceived = transaction.receivedByIds.includes(currentUserId);
   const counterpartId = transaction.participantIds.find(
@@ -127,7 +128,8 @@ export function SwapTransactionCard({
           >
             <ActivityIndicator size="small" color="#4f46e5" />
             <Text className="text-zinc-600 dark:text-zinc-300 text-xs ml-3 flex-1 leading-5">
-              Beide Empfänge sind bestätigt. Die private Zwei-Wege-Eigentumsübertragung wird sicher abgeschlossen.
+              Beide Empfänge sind bestätigt. Die private
+              Zwei-Wege-Eigentumsübertragung wird sicher abgeschlossen.
             </Text>
           </View>
         ) : null}
@@ -194,7 +196,8 @@ export function SwapTransactionCard({
         userConfirmedMode &&
         !bothModeConfirmed ? (
           <Text className="text-zinc-600 dark:text-zinc-400 text-xs leading-5">
-            Du hast {modeLabel(transaction.fulfilmentMode)} bestätigt. OmniSwap wartet auf die Bestätigung der anderen Person.
+            Du hast {modeLabel(transaction.fulfilmentMode)} bestätigt. OmniSwap
+            wartet auf die Bestätigung der anderen Person.
           </Text>
         ) : null}
 
@@ -226,11 +229,13 @@ export function SwapTransactionCard({
               />
             ) : !userReceived ? (
               <Text className="text-zinc-500 text-xs leading-5">
-                Die Empfangsbestätigung wird freigeschaltet, sobald die andere Person ihren Versand bestätigt hat.
+                Die Empfangsbestätigung wird freigeschaltet, sobald die andere
+                Person ihren Versand bestätigt hat.
               </Text>
             ) : (
               <Text className="text-zinc-600 dark:text-zinc-400 text-xs">
-                Dein Empfang ist bestätigt. OmniSwap wartet gegebenenfalls noch auf die andere Seite.
+                Dein Empfang ist bestätigt. OmniSwap wartet gegebenenfalls noch
+                auf die andere Seite.
               </Text>
             )}
           </View>
@@ -249,7 +254,8 @@ export function SwapTransactionCard({
               />
             ) : (
               <Text className="text-zinc-600 dark:text-zinc-400 text-xs leading-5">
-                Deine Übergabe ist bestätigt. OmniSwap wartet auf die Bestätigung der anderen Person.
+                Deine Übergabe ist bestätigt. OmniSwap wartet auf die
+                Bestätigung der anderen Person.
               </Text>
             )}
           </View>

@@ -21,10 +21,7 @@ import type {
   WardrobeCondition,
 } from '@/features/wardrobe/types';
 
-import {
-  SWAP_LISTING_SCHEMA_VERSION,
-  SWAP_LISTING_STATUSES,
-} from './types';
+import { SWAP_LISTING_SCHEMA_VERSION, SWAP_LISTING_STATUSES } from './types';
 import type {
   CreateSwapListingInput,
   CreateSwapListingResponse,
@@ -93,7 +90,9 @@ function timestampToIso(value: unknown): string | null {
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
 
-function mapListing(snapshot: QueryDocumentSnapshot<unknown>): SwapListing | null {
+function mapListing(
+  snapshot: QueryDocumentSnapshot<unknown>,
+): SwapListing | null {
   const raw = snapshot.data();
   if (!isRecord(raw)) {
     return null;
@@ -102,7 +101,8 @@ function mapListing(snapshot: QueryDocumentSnapshot<unknown>): SwapListing | nul
   const ownerId = readString(raw, 'ownerId');
   const wardrobeItemId = readString(raw, 'wardrobeItemId');
   const title = readString(raw, 'title');
-  const description = typeof raw.description === 'string' ? raw.description : null;
+  const description =
+    typeof raw.description === 'string' ? raw.description : null;
   const category = readEnum<WardrobeCategory>(
     raw,
     'category',
@@ -198,7 +198,9 @@ async function hydrateListingImage(listing: SwapListing): Promise<SwapListing> {
   }
 }
 
-async function hydrateListings(listings: SwapListing[]): Promise<SwapListing[]> {
+async function hydrateListings(
+  listings: SwapListing[],
+): Promise<SwapListing[]> {
   return Promise.all(listings.map(hydrateListingImage));
 }
 

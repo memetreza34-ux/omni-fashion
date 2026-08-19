@@ -291,9 +291,15 @@ export default function SwapScreen() {
   const [tab, setTab] = useState<'market' | 'mine' | 'trades'>('market');
   const [listingModalVisible, setListingModalVisible] = useState(false);
   const [offerTarget, setOfferTarget] = useState<SwapListing | null>(null);
-  const [respondingOfferId, setRespondingOfferId] = useState<string | null>(null);
-  const [changingListingId, setChangingListingId] = useState<string | null>(null);
-  const [cancellingOfferId, setCancellingOfferId] = useState<string | null>(null);
+  const [respondingOfferId, setRespondingOfferId] = useState<string | null>(
+    null,
+  );
+  const [changingListingId, setChangingListingId] = useState<string | null>(
+    null,
+  );
+  const [cancellingOfferId, setCancellingOfferId] = useState<string | null>(
+    null,
+  );
   const [advancingTransactionId, setAdvancingTransactionId] = useState<
     string | null
   >(null);
@@ -302,7 +308,9 @@ export default function SwapScreen() {
     () =>
       new Set(
         outgoingOffers
-          .filter((offer) => offer.status === 'sent' || offer.status === 'accepted')
+          .filter(
+            (offer) => offer.status === 'sent' || offer.status === 'accepted',
+          )
           .map((offer) => offer.offeredWardrobeItemId),
       ),
     [outgoingOffers],
@@ -311,16 +319,17 @@ export default function SwapScreen() {
   const offersById = useMemo(
     () =>
       new Map(
-        [...incomingOffers, ...outgoingOffers].map((offer) => [offer.id, offer]),
+        [...incomingOffers, ...outgoingOffers].map((offer) => [
+          offer.id,
+          offer,
+        ]),
       ),
     [incomingOffers, outgoingOffers],
   );
 
   const eligibleListingItems = items.filter(
     (item) =>
-      item.imagePath &&
-      !item.isListedForSwap &&
-      !lockedOfferedIds.has(item.id),
+      item.imagePath && !item.isListedForSwap && !lockedOfferedIds.has(item.id),
   );
   const eligibleOfferItems = eligibleListingItems;
 
@@ -334,7 +343,10 @@ export default function SwapScreen() {
 
     setRespondingOfferId(offer.id);
     try {
-      const transactionId = await respondToOffer({ offerId: offer.id, decision });
+      const transactionId = await respondToOffer({
+        offerId: offer.id,
+        decision,
+      });
       if (decision === 'accept') {
         Alert.alert(
           'Tausch reserviert',
@@ -468,11 +480,16 @@ export default function SwapScreen() {
             accessibilityRole="tablist"
             className="flex-row bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-1 mb-4"
           >
-            {([
-              ['market', 'Marktplatz'],
-              ['mine', `Meine Listings (${ownListings.length})`],
-              ['trades', `Trades (${incomingOffers.length + outgoingOffers.length})`],
-            ] as const).map(([value, label]) => (
+            {(
+              [
+                ['market', 'Marktplatz'],
+                ['mine', `Meine Listings (${ownListings.length})`],
+                [
+                  'trades',
+                  `Trades (${incomingOffers.length + outgoingOffers.length})`,
+                ],
+              ] as const
+            ).map(([value, label]) => (
               <Pressable
                 key={value}
                 accessibilityRole="tab"
@@ -536,7 +553,8 @@ export default function SwapScreen() {
                       Noch keine fremden aktiven Listings
                     </Text>
                     <Text className="text-zinc-500 text-sm text-center mt-2 leading-6">
-                      Der Feed bleibt leer, bis echte Nutzer Kleidungsstücke veröffentlichen.
+                      Der Feed bleibt leer, bis echte Nutzer Kleidungsstücke
+                      veröffentlichen.
                     </Text>
                   </View>
                 )
@@ -550,7 +568,8 @@ export default function SwapScreen() {
                         Noch nichts gelistet
                       </Text>
                       <Text className="text-zinc-500 text-sm text-center mt-2 leading-6 mb-4">
-                        Wähle ein noch verfügbares Kleidungsstück aus deinem Schrank.
+                        Wähle ein noch verfügbares Kleidungsstück aus deinem
+                        Schrank.
                       </Text>
                       <AppButton
                         label="Erstes Listing"

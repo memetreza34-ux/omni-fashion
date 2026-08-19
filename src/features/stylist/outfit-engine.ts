@@ -21,7 +21,13 @@ const MAX_ITEMS_PER_CATEGORY = 10;
 const STYLE_KEYWORDS: Record<StylePreference, readonly string[]> = {
   minimal: ['minimal', 'minimalistisch', 'clean', 'zeitlos', 'monochrom'],
   classic: ['klassisch', 'classic', 'elegant', 'timeless', 'preppy'],
-  'smart-casual': ['smart casual', 'business casual', 'tailoring', 'business', 'smart'],
+  'smart-casual': [
+    'smart casual',
+    'business casual',
+    'tailoring',
+    'business',
+    'smart',
+  ],
   streetwear: ['streetwear', 'street', 'urban', 'oversized', 'skater'],
   sporty: ['sportlich', 'sporty', 'athleisure', 'active', 'performance'],
   vintage: ['vintage', 'retro', 'heritage'],
@@ -33,9 +39,24 @@ const STYLE_KEYWORDS: Record<StylePreference, readonly string[]> = {
 
 const OCCASION_KEYWORDS: Record<OutfitOccasion, readonly string[]> = {
   everyday: ['casual', 'alltag', 'basic', 'minimal', 'streetwear', 'classic'],
-  office: ['business', 'smart', 'classic', 'klassisch', 'elegant', 'tailoring', 'formal'],
+  office: [
+    'business',
+    'smart',
+    'classic',
+    'klassisch',
+    'elegant',
+    'tailoring',
+    'formal',
+  ],
   date: ['romantic', 'romantisch', 'elegant', 'smart', 'minimal', 'soft'],
-  sport: ['sporty', 'sportlich', 'athleisure', 'active', 'performance', 'training'],
+  sport: [
+    'sporty',
+    'sportlich',
+    'athleisure',
+    'active',
+    'performance',
+    'training',
+  ],
   party: ['party', 'bold', 'edgy', 'y2k', 'glam', 'statement', 'streetwear'],
 };
 
@@ -139,7 +160,11 @@ function occasionScore(item: WardrobeItem, occasion: OutfitOccasion): number {
   if (occasion === 'sport' && item.category === 'Dress') {
     score -= 20;
   }
-  if (occasion === 'office' && item.category === 'Shoes' && text.includes('sneaker')) {
+  if (
+    occasion === 'office' &&
+    item.category === 'Shoes' &&
+    text.includes('sneaker')
+  ) {
     score -= 5;
   }
 
@@ -217,7 +242,9 @@ function buildBreakdown(
   input: OutfitGenerationInput,
 ): OutfitScoreBreakdown {
   return {
-    styleMatch: clampScore(average(items.map((item) => styleScore(item, profile)))),
+    styleMatch: clampScore(
+      average(items.map((item) => styleScore(item, profile))),
+    ),
     colorHarmony: outfitColorHarmony(items),
     occasionFit: clampScore(
       average(items.map((item) => occasionScore(item, input.occasion))),
@@ -339,12 +366,7 @@ function buildRecommendation(
   usesDress: boolean,
 ): OutfitRecommendation {
   const items = [...baseItems];
-  const optionalOuterwear = bestOptionalItem(
-    outerwear,
-    items,
-    profile,
-    input,
-  );
+  const optionalOuterwear = bestOptionalItem(outerwear, items, profile, input);
   if (optionalOuterwear && input.occasion !== 'sport') {
     items.push(optionalOuterwear);
   }

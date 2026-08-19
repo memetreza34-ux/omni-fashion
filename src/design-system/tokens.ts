@@ -32,8 +32,4 @@ export const designTokens = {
   },
 } as const;
 
-export type AppButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'danger'
-  | 'ghost';
+export type AppButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';

@@ -12,10 +12,7 @@ import { httpsCallable } from 'firebase/functions';
 
 import { getFirebaseServices } from '@/services/firebase/app';
 
-import {
-  NOTIFICATION_SCHEMA_VERSION,
-  NOTIFICATION_TYPES,
-} from './types';
+import { NOTIFICATION_SCHEMA_VERSION, NOTIFICATION_TYPES } from './types';
 import type { AppNotification, NotificationType } from './types';
 
 const NOTIFICATION_FEED_LIMIT = 100;

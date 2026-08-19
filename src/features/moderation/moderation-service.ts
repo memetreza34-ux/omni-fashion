@@ -118,7 +118,11 @@ export async function resolveModerationReport(input: {
   const { functions } = getFirebaseServices();
   const callable = httpsCallable<
     typeof input,
-    { reportId: string; status: 'resolved'; resolution: ModerationReportResolution }
+    {
+      reportId: string;
+      status: 'resolved';
+      resolution: ModerationReportResolution;
+    }
   >(functions, 'resolveModerationReport');
   const response = await callable(input);
 

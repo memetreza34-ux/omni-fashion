@@ -77,7 +77,10 @@ function readStringArray(
   key: string,
 ): string[] | null {
   const value = record[key];
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+  if (
+    !Array.isArray(value) ||
+    value.some((entry) => typeof entry !== 'string')
+  ) {
     return null;
   }
   return [...new Set(value)];
@@ -219,7 +222,10 @@ function mapTransaction(
     'finalizationState',
     SWAP_FINALIZATION_STATES,
   );
-  const finalizationErrorCode = readNullableString(raw, 'finalizationErrorCode');
+  const finalizationErrorCode = readNullableString(
+    raw,
+    'finalizationErrorCode',
+  );
   const createdAt = timestampToIso(raw.createdAt);
   const updatedAt = timestampToIso(raw.updatedAt);
   const completedAt =
@@ -292,9 +298,7 @@ function subscribeMapped<T>(
     queryValue,
     (snapshot) => {
       onChange(
-        snapshot.docs
-          .map(mapper)
-          .filter((value): value is T => value !== null),
+        snapshot.docs.map(mapper).filter((value): value is T => value !== null),
       );
     },
     (error) => onError(error),
@@ -393,7 +397,8 @@ export async function respondSwapOffer(
   if (
     !isRecord(response.data) ||
     response.data.offerId !== input.offerId ||
-    (response.data.status !== 'accepted' && response.data.status !== 'declined') ||
+    (response.data.status !== 'accepted' &&
+      response.data.status !== 'declined') ||
     !(
       response.data.transactionId === null ||
       typeof response.data.transactionId === 'string'
@@ -437,7 +442,6 @@ export async function advanceSwapTransaction(
   return {
     transactionId: response.data.transactionId,
     status: response.data.status as SwapTransactionStatus,
-    finalizationState:
-      response.data.finalizationState as SwapFinalizationState,
+    finalizationState: response.data.finalizationState as SwapFinalizationState,
   };
 }

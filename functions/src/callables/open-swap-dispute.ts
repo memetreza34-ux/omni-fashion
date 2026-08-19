@@ -78,7 +78,8 @@ export const openSwapDispute = onCall(
   { region: FUNCTIONS_REGION, timeoutSeconds: 30, memory: '256MiB' },
   async (request) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
+    if (!uid)
+      throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();

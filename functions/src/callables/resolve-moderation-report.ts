@@ -25,7 +25,10 @@ function parseRequest(data: unknown): {
   note: string;
 } {
   if (!isRecord(data)) {
-    throw new HttpsError('invalid-argument', 'Ungültige Moderationsentscheidung.');
+    throw new HttpsError(
+      'invalid-argument',
+      'Ungültige Moderationsentscheidung.',
+    );
   }
 
   const reportId = data.reportId;
@@ -40,7 +43,10 @@ function parseRequest(data: unknown): {
     typeof note !== 'string' ||
     note.trim().length > 1500
   ) {
-    throw new HttpsError('invalid-argument', 'Ungültige Moderationsentscheidung.');
+    throw new HttpsError(
+      'invalid-argument',
+      'Ungültige Moderationsentscheidung.',
+    );
   }
 
   return {

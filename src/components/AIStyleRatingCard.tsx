@@ -109,7 +109,9 @@ export function AIStyleRatingCard({ mood, weatherTemp }: Props) {
         </View>
 
         <View className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 items-center justify-center shadow-lg shadow-blue-500/30">
-          <Text className="text-white font-extrabold text-xl">{rating.score}</Text>
+          <Text className="text-white font-extrabold text-xl">
+            {rating.score}
+          </Text>
           <Text className="text-blue-200 text-[10px] font-semibold">/ 10</Text>
         </View>
       </View>

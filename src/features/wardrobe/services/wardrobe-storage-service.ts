@@ -75,9 +75,7 @@ export async function uploadWardrobeImage(
   };
 }
 
-export async function getWardrobeImageUrl(
-  imagePath: string,
-): Promise<string> {
+export async function getWardrobeImageUrl(imagePath: string): Promise<string> {
   const { storage } = getFirebaseServices();
   return getDownloadURL(ref(storage, imagePath));
 }

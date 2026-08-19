@@ -60,7 +60,9 @@ function participantIds(value: unknown): string[] {
     : [];
 }
 
-function uniqueDocuments(documents: QueryDocumentSnapshot[]): QueryDocumentSnapshot[] {
+function uniqueDocuments(
+  documents: QueryDocumentSnapshot[],
+): QueryDocumentSnapshot[] {
   const values = new Map<string, QueryDocumentSnapshot>();
   for (const document of documents) {
     values.set(document.ref.path, document);
@@ -68,7 +70,9 @@ function uniqueDocuments(documents: QueryDocumentSnapshot[]): QueryDocumentSnaps
   return [...values.values()];
 }
 
-function uniqueReferences(references: DocumentReference[]): DocumentReference[] {
+function uniqueReferences(
+  references: DocumentReference[],
+): DocumentReference[] {
   const values = new Map<string, DocumentReference>();
   for (const reference of references) {
     values.set(reference.path, reference);
@@ -304,9 +308,11 @@ export const deleteMyAccount = onCall(
     // Delete every private user-owned object only. Public listing media is
     // handled by the inactive-listing cleanup worker after its listing is no
     // longer active.
-    await getStorage().bucket().deleteFiles({
-      prefix: `users/${uid}/`,
-    });
+    await getStorage()
+      .bucket()
+      .deleteFiles({
+        prefix: `users/${uid}/`,
+      });
 
     await Promise.all([
       db.collection('users').doc(uid).delete(),

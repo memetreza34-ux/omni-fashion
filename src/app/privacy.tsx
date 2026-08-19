@@ -32,7 +32,9 @@ const BLOCKER_LABELS: Record<string, string> = {
 
 export function PrivacyScreenContent({ onBack }: { onBack?: () => void }) {
   const { user, isBackendConfigured, logout } = useAuth();
-  const [readiness, setReadiness] = useState<AccountDeletionReadiness | null>(null);
+  const [readiness, setReadiness] = useState<AccountDeletionReadiness | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [reauthenticating, setReauthenticating] = useState(false);
@@ -258,7 +260,8 @@ export function PrivacyScreenContent({ onBack }: { onBack?: () => void }) {
         Datenschutz & Konto
       </Text>
       <Text className="text-zinc-500 text-sm mt-2 mb-6 leading-6">
-        Exportiere deine Daten oder verwalte die endgültige Kontolöschung über den Trusted Backend Workflow.
+        Exportiere deine Daten oder verwalte die endgültige Kontolöschung über
+        den Trusted Backend Workflow.
       </Text>
 
       <AppCard>
@@ -266,7 +269,8 @@ export function PrivacyScreenContent({ onBack }: { onBack?: () => void }) {
           Deine Daten exportieren
         </Text>
         <Text className="text-zinc-500 text-sm mt-2 mb-4 leading-6">
-          Sicherheits-Credentials wie Push-Tokens oder Firebase-Zugangsdaten werden nicht exportiert.
+          Sicherheits-Credentials wie Push-Tokens oder Firebase-Zugangsdaten
+          werden nicht exportiert.
         </Text>
         <AppButton
           label="Datenexport öffnen"

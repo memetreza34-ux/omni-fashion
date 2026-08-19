@@ -110,10 +110,7 @@ function normalize(value: string): string {
   return value.trim().toLocaleLowerCase('de-DE');
 }
 
-function topEntries(
-  counts: Map<string, number>,
-  maxItems: number,
-): string[] {
+function topEntries(counts: Map<string, number>, maxItems: number): string[] {
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'de'))
     .slice(0, maxItems)
@@ -216,7 +213,8 @@ export function deriveStyleProfileSummary(
     .map(([style]) => style);
 
   const preferredFallback = questionnaire.preferredStyles[0] ?? 'minimal';
-  const primary = ranked.find((style) => (scores.get(style) ?? 0) > 0) ?? preferredFallback;
+  const primary =
+    ranked.find((style) => (scores.get(style) ?? 0) > 0) ?? preferredFallback;
   const summary = SUMMARY_BY_STYLE[primary];
 
   return {

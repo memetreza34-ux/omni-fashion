@@ -4,10 +4,7 @@ import { getFirebaseServices } from '@/services/firebase/app';
 
 import { parseGarmentAnalysisResponse } from './parse-response';
 import { GARMENT_ANALYSIS_SCHEMA_VERSION } from './types';
-import type {
-  GarmentAnalysisRequest,
-  GarmentAnalysisResponse,
-} from './types';
+import type { GarmentAnalysisRequest, GarmentAnalysisResponse } from './types';
 
 const ANALYZE_WARDROBE_ITEM_FUNCTION = 'analyzeWardrobeItem';
 

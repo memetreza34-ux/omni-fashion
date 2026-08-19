@@ -8,7 +8,8 @@ const FUNCTIONS_REGION = 'europe-west1';
 const AUDIT_SCHEMA_VERSION = 1;
 
 type DisputeResolution = 'resume_trade' | 'manual_recovery';
-type ResumableStatus = 'accepted' | 'address_or_meetup' | 'shipped' | 'received';
+type ResumableStatus =
+  'accepted' | 'address_or_meetup' | 'shipped' | 'received';
 
 function ensureAdminInitialized(): void {
   if (getApps().length === 0) {
@@ -26,7 +27,10 @@ function parseRequest(data: unknown): {
   note: string;
 } {
   if (!isRecord(data)) {
-    throw new HttpsError('invalid-argument', 'Ungültige Streitfallentscheidung.');
+    throw new HttpsError(
+      'invalid-argument',
+      'Ungültige Streitfallentscheidung.',
+    );
   }
 
   const transactionId = data.transactionId;
@@ -41,7 +45,10 @@ function parseRequest(data: unknown): {
     typeof note !== 'string' ||
     note.trim().length > 1500
   ) {
-    throw new HttpsError('invalid-argument', 'Ungültige Streitfallentscheidung.');
+    throw new HttpsError(
+      'invalid-argument',
+      'Ungültige Streitfallentscheidung.',
+    );
   }
 
   return {
@@ -98,7 +105,10 @@ export const resolveSwapDispute = onCall(
       const dispute = disputeSnapshot.data();
       const swap = swapSnapshot.data();
       if (!dispute || !swap) {
-        throw new HttpsError('internal', 'Streitfalldaten konnten nicht gelesen werden.');
+        throw new HttpsError(
+          'internal',
+          'Streitfalldaten konnten nicht gelesen werden.',
+        );
       }
       if (dispute.status !== 'open' || swap.status !== 'disputed') {
         throw new HttpsError(

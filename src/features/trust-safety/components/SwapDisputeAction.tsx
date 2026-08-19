@@ -73,7 +73,11 @@ export function SwapDisputeAction({
   return (
     <View className="mb-4">
       <AppButton
-        label={showReasons ? 'Klärungsfall-Auswahl schließen' : 'Problem melden / Klärungsfall öffnen'}
+        label={
+          showReasons
+            ? 'Klärungsfall-Auswahl schließen'
+            : 'Problem melden / Klärungsfall öffnen'
+        }
         accessibilityLabel={
           showReasons
             ? 'Auswahl für Klärungsgrund schließen'

@@ -32,7 +32,10 @@ function isExpoPushToken(value: string): boolean {
 
 function parseRequest(data: unknown): RegisterPushDeviceInput {
   if (!isRecord(data)) {
-    throw new HttpsError('invalid-argument', 'Ungültige Push-Geräteregistrierung.');
+    throw new HttpsError(
+      'invalid-argument',
+      'Ungültige Push-Geräteregistrierung.',
+    );
   }
 
   const expoPushToken = data.expoPushToken;
@@ -43,7 +46,10 @@ function parseRequest(data: unknown): RegisterPushDeviceInput {
     !isExpoPushToken(expoPushToken.trim()) ||
     (platform !== 'ios' && platform !== 'android')
   ) {
-    throw new HttpsError('invalid-argument', 'Ungültige Push-Geräteregistrierung.');
+    throw new HttpsError(
+      'invalid-argument',
+      'Ungültige Push-Geräteregistrierung.',
+    );
   }
 
   return {

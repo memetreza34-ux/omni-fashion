@@ -28,7 +28,17 @@ const ARCHETYPES = [
   'Modern Future',
 ];
 
-const SIZES = ['All Sizes', 'XS', 'S', 'M', 'L', 'XL', 'EU 41', 'EU 42', 'One Size'];
+const SIZES = [
+  'All Sizes',
+  'XS',
+  'S',
+  'M',
+  'L',
+  'XL',
+  'EU 41',
+  'EU 42',
+  'One Size',
+];
 
 export const ClosetHubView: React.FC<ClosetHubViewProps> = ({
   items,
@@ -45,7 +55,8 @@ export const ClosetHubView: React.FC<ClosetHubViewProps> = ({
     // Search query match
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchText = `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
+      const matchText =
+        `${item.title} ${item.brand} ${item.description} ${item.ownerName} ${item.ownerLocation}`.toLowerCase();
       if (!matchText.includes(q)) return false;
     }
 
@@ -186,13 +197,16 @@ export const ClosetHubView: React.FC<ClosetHubViewProps> = ({
             No Wardrobe Items Found
           </Text>
           <Text className="text-xs text-zinc-400 text-center mb-4 max-w-xs">
-            No items matched your current filter criteria. Try adjusting or clearing your filters.
+            No items matched your current filter criteria. Try adjusting or
+            clearing your filters.
           </Text>
           <TouchableOpacity
             onPress={clearFilters}
             className="px-4 py-2 bg-indigo-600 rounded-full"
           >
-            <Text className="text-xs font-bold text-white">Reset All Filters</Text>
+            <Text className="text-xs font-bold text-white">
+              Reset All Filters
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -218,7 +232,7 @@ export const ClosetHubView: React.FC<ClosetHubViewProps> = ({
                     <View className="absolute top-2 left-2">
                       <View
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getConditionBadgeStyle(
-                          item.condition
+                          item.condition,
                         )}`}
                       >
                         <Text className="text-[10px] font-bold text-white">

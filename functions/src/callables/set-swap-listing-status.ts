@@ -81,7 +81,9 @@ async function expireOpenOffers(listingId: string): Promise<void> {
     .collection('swapOffers')
     .where('requestedListingId', '==', listingId)
     .get();
-  const sentOffers = snapshot.docs.filter((doc) => doc.data().status === 'sent');
+  const sentOffers = snapshot.docs.filter(
+    (doc) => doc.data().status === 'sent',
+  );
   if (sentOffers.length === 0) {
     return;
   }
@@ -128,7 +130,10 @@ export const setSwapListingStatus = onCall(
 
     const initialListing = initialSnapshot.data();
     if (!initialListing || initialListing.ownerId !== uid) {
-      throw new HttpsError('permission-denied', 'Dieses Listing gehört dir nicht.');
+      throw new HttpsError(
+        'permission-denied',
+        'Dieses Listing gehört dir nicht.',
+      );
     }
 
     const targetStatus = nextStatus(initialListing.status, input.action);
@@ -167,8 +172,16 @@ export const setSwapListingStatus = onCall(
 
         const listing = listingSnapshot.data();
         const item = itemSnapshot.data();
-        if (!listing || !item || listing.ownerId !== uid || item.ownerId !== uid) {
-          throw new HttpsError('permission-denied', 'Eigentümerprüfung fehlgeschlagen.');
+        if (
+          !listing ||
+          !item ||
+          listing.ownerId !== uid ||
+          item.ownerId !== uid
+        ) {
+          throw new HttpsError(
+            'permission-denied',
+            'Eigentümerprüfung fehlgeschlagen.',
+          );
         }
 
         const verifiedTargetStatus = nextStatus(listing.status, input.action);
@@ -208,14 +221,20 @@ export const setSwapListingStatus = onCall(
             await getStorage().bucket().file(imagePath).copy(publicFile);
           }
         } catch (restoreError: unknown) {
-          logger.error('Failed to restore public listing image after rollback', restoreError);
+          logger.error(
+            'Failed to restore public listing image after rollback',
+            restoreError,
+          );
         }
       }
       if (error instanceof HttpsError) {
         throw error;
       }
       logger.error('Failed to change OmniSwap listing status', error);
-      throw new HttpsError('internal', 'Listing-Status konnte nicht geändert werden.');
+      throw new HttpsError(
+        'internal',
+        'Listing-Status konnte nicht geändert werden.',
+      );
     }
 
     if (targetStatus === 'removed') {

@@ -83,6 +83,9 @@ export async function updateLocalUserProfile(
     schemaVersion: USER_PROFILE_SCHEMA_VERSION,
   };
 
-  await AsyncStorage.setItem(storageKey(profile.id), JSON.stringify(nextProfile));
+  await AsyncStorage.setItem(
+    storageKey(profile.id),
+    JSON.stringify(nextProfile),
+  );
   return nextProfile;
 }

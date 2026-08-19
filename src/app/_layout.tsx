@@ -9,7 +9,10 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { FeatureFlagProvider } from '@/context/FeatureFlagContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { SavedOutfitsProvider } from '@/context/SavedOutfitsContext';
-import { StyleProfileProvider, useStyleProfile } from '@/context/StyleProfileContext';
+import {
+  StyleProfileProvider,
+  useStyleProfile,
+} from '@/context/StyleProfileContext';
 import { SwapProvider } from '@/context/SwapContext';
 import { TrustSafetyProvider } from '@/context/TrustSafetyContext';
 import {

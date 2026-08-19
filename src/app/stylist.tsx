@@ -16,8 +16,14 @@ import { AppButton } from '@/design-system/AppButton';
 import { StatusBanner } from '@/design-system/StatusBanner';
 import { SavedOutfitsPanel } from '@/features/stylist/components/SavedOutfitsPanel';
 import { generateOutfitRecommendations } from '@/features/stylist/outfit-engine';
-import { generateWeatherAwareOutfits, seasonFromWeather } from '@/features/stylist/weather-outfit-engine';
-import type { OutfitOccasion, OutfitRecommendation } from '@/features/stylist/types';
+import {
+  generateWeatherAwareOutfits,
+  seasonFromWeather,
+} from '@/features/stylist/weather-outfit-engine';
+import type {
+  OutfitOccasion,
+  OutfitRecommendation,
+} from '@/features/stylist/types';
 import { StylistWeatherPanel } from '@/features/weather/components/StylistWeatherPanel';
 import { getOutfitWeather } from '@/features/weather/weather-service';
 import type { OutfitWeatherContext } from '@/features/weather/types';
@@ -309,7 +315,8 @@ export default function StylistScreen() {
               Für ein vollständiges Outfit fehlen noch Teile
             </Text>
             <Text className="text-zinc-500 text-sm leading-6 mb-4">
-              Omni Fashion erfindet keine Produkte. Ergänze mindestens die fehlenden Kategorien in deinem Schrank.
+              Omni Fashion erfindet keine Produkte. Ergänze mindestens die
+              fehlenden Kategorien in deinem Schrank.
             </Text>
             <View className="flex-row flex-wrap">
               {result.missingCategories.map((category) => (
@@ -330,7 +337,8 @@ export default function StylistScreen() {
               <View className="flex-row justify-between items-start mb-5">
                 <View className="flex-1 pr-3">
                   <Text className="text-zinc-500 text-xs font-bold uppercase">
-                    Empfehlung {recommendationIndex + 1} von {result.recommendations.length}
+                    Empfehlung {recommendationIndex + 1} von{' '}
+                    {result.recommendations.length}
                   </Text>
                   <Text
                     accessibilityLabel={`${recommendation.score} Prozent Outfit Match`}
@@ -384,7 +392,8 @@ export default function StylistScreen() {
                           {item.name}
                         </Text>
                         <Text className="text-zinc-500 text-[11px] mt-1">
-                          {CATEGORY_LABELS[item.category] ?? item.category} · {item.color}
+                          {CATEGORY_LABELS[item.category] ?? item.category} ·{' '}
+                          {item.color}
                         </Text>
                       </View>
                     </View>
@@ -428,7 +437,8 @@ export default function StylistScreen() {
                   accessibilityLabel="Nächste Outfit-Empfehlung anzeigen"
                   onPress={() =>
                     setRecommendationIndex(
-                      (current) => (current + 1) % result.recommendations.length,
+                      (current) =>
+                        (current + 1) % result.recommendations.length,
                     )
                   }
                 />
@@ -441,7 +451,8 @@ export default function StylistScreen() {
               Noch keine passende Kombination
             </Text>
             <Text className="text-zinc-500 text-sm mt-2 leading-6">
-              Prüfe Kategorie- und Saisondaten deiner Kleidungsstücke oder wähle einen anderen Anlass.
+              Prüfe Kategorie- und Saisondaten deiner Kleidungsstücke oder wähle
+              einen anderen Anlass.
             </Text>
           </View>
         )}

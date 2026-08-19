@@ -3,7 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { SwapItem, SwapTradeProposal, UserSwapProfileStats, EcoImpactMetrics } from './tier1_feature_coverage.test.ts';
+import type {
+  SwapItem,
+  SwapTradeProposal,
+  UserSwapProfileStats,
+  EcoImpactMetrics,
+} from './tier1_feature_coverage.test.ts';
 
 // Helper function to compute total eco savings safely
 export function calculateEcoImpact(items: SwapItem[]): EcoImpactMetrics {
@@ -13,9 +18,11 @@ export function calculateEcoImpact(items: SwapItem[]): EcoImpactMetrics {
   return items.reduce<EcoImpactMetrics>(
     (acc, item) => ({
       co2SavedKg: Number((acc.co2SavedKg + (item.co2SavedKg || 0)).toFixed(2)),
-      waterSavedLiters: Math.round(acc.waterSavedLiters + (item.waterSavedLiters || 0))
+      waterSavedLiters: Math.round(
+        acc.waterSavedLiters + (item.waterSavedLiters || 0),
+      ),
     }),
-    { co2SavedKg: 0, waterSavedLiters: 0 }
+    { co2SavedKg: 0, waterSavedLiters: 0 },
   );
 }
 
@@ -26,7 +33,10 @@ export function isValidCondition(condition: string): boolean {
 }
 
 // Helper function to create trade proposal safely
-export function createTradeProposal(offeredItemId: string, requestedItemId: string): SwapTradeProposal {
+export function createTradeProposal(
+  offeredItemId: string,
+  requestedItemId: string,
+): SwapTradeProposal {
   if (!offeredItemId.trim() || !requestedItemId.trim()) {
     throw new Error('Item IDs cannot be empty');
   }
@@ -38,7 +48,7 @@ export function createTradeProposal(offeredItemId: string, requestedItemId: stri
     offeredItemId,
     requestedItemId,
     status: 'pending',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 }
 
@@ -58,7 +68,7 @@ test('Tier 2: Boundary Value — Zero Eco Savings Items', () => {
     ownerAvatar: 'https://example.com/avatar.png',
     ownerLocation: 'Munich, DE',
     aestheticTag: 'Minimalist',
-    description: 'Digital gift item with zero physical manufacturing cost.'
+    description: 'Digital gift item with zero physical manufacturing cost.',
   };
 
   const impact = calculateEcoImpact([zeroEcoItem]);
@@ -85,7 +95,7 @@ test('Tier 2: Boundary Value — Extreme Value & Eco Metric Boundaries', () => {
     ownerAvatar: 'https://example.com/avatar.png',
     ownerLocation: 'Paris, FR',
     aestheticTag: 'Avant-Garde',
-    description: 'High-end designer piece.'
+    description: 'High-end designer piece.',
   };
 
   const zeroValItem: SwapItem = {
@@ -103,7 +113,7 @@ test('Tier 2: Boundary Value — Extreme Value & Eco Metric Boundaries', () => {
     ownerAvatar: 'https://example.com/avatar.png',
     ownerLocation: 'Berlin, DE',
     aestheticTag: 'Casual',
-    description: 'Free community swap item.'
+    description: 'Free community swap item.',
   };
 
   const combinedImpact = calculateEcoImpact([extremeItem, zeroValItem]);
@@ -133,17 +143,21 @@ test('Tier 2: Corner Case — Empty Arrays & Nullish Items List', () => {
       ownerAvatar: 'https://example.com/s.png',
       ownerLocation: 'Hamburg, DE',
       aestheticTag: 'Boho',
-      description: 'Elegant silk blouse.'
-    }
+      description: 'Elegant silk blouse.',
+    },
   ];
 
-  const matchedCategory = items.filter(i => i.category === 'Tops');
+  const matchedCategory = items.filter((i) => i.category === 'Tops');
   assert.strictEqual(matchedCategory.length, 1);
 
-  const unmatchedCategory = items.filter(i => i.category === ('Formalwear' as any));
+  const unmatchedCategory = items.filter(
+    (i) => i.category === ('Formalwear' as any),
+  );
   assert.strictEqual(unmatchedCategory.length, 0);
 
-  const unmatchedAesthetic = items.filter(i => i.aestheticTag === 'Cyberpunk');
+  const unmatchedAesthetic = items.filter(
+    (i) => i.aestheticTag === 'Cyberpunk',
+  );
   assert.strictEqual(unmatchedAesthetic.length, 0);
 });
 
@@ -171,5 +185,8 @@ test('Tier 2: Corner Case — Invalid & Self Trade Proposals', () => {
 
   const validProposal = createTradeProposal('item-1', 'item-2');
   assert.strictEqual(validProposal.status, 'pending');
-  assert.notStrictEqual(validProposal.offeredItemId, validProposal.requestedItemId);
+  assert.notStrictEqual(
+    validProposal.offeredItemId,
+    validProposal.requestedItemId,
+  );
 });

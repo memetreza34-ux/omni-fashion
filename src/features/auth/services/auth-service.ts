@@ -12,11 +12,7 @@ import type { User } from 'firebase/auth';
 
 import { getFirebaseServices } from '@/services/firebase/app';
 
-import type {
-  AuthUser,
-  LoginCredentials,
-  RegisterCredentials,
-} from '../types';
+import type { AuthUser, LoginCredentials, RegisterCredentials } from '../types';
 
 function mapFirebaseUser(user: User): AuthUser {
   return {

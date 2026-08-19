@@ -13,12 +13,7 @@ test('rate limit starts a new window', () => {
 
 test('rate limit increments inside an active window', () => {
   assert.deepEqual(
-    evaluateRateLimitWindow(
-      { startedAtMs: 1_000, count: 1 },
-      2_000,
-      3,
-      10_000,
-    ),
+    evaluateRateLimitWindow({ startedAtMs: 1_000, count: 1 }, 2_000, 3, 10_000),
     {
       allowed: true,
       nextState: { startedAtMs: 1_000, count: 2 },

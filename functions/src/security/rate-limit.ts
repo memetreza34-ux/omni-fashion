@@ -79,7 +79,9 @@ export function evaluateRateLimitWindow(
   };
 }
 
-export async function enforceUserRateLimit(options: RateLimitOptions): Promise<void> {
+export async function enforceUserRateLimit(
+  options: RateLimitOptions,
+): Promise<void> {
   if (!validOptions(options)) {
     throw new Error('Invalid rate-limit configuration.');
   }
@@ -103,9 +105,7 @@ export async function enforceUserRateLimit(options: RateLimitOptions): Promise<v
         : null;
 
     const currentState =
-      startedAtMs !== null && count !== null
-        ? { startedAtMs, count }
-        : null;
+      startedAtMs !== null && count !== null ? { startedAtMs, count } : null;
     const evaluation = evaluateRateLimitWindow(
       currentState,
       nowMs,

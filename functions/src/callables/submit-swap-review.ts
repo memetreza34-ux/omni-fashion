@@ -57,7 +57,10 @@ function participants(value: unknown): [string, string] {
     !value[1] ||
     value[0] === value[1]
   ) {
-    throw new HttpsError('failed-precondition', 'Trade-Teilnehmer sind ungültig.');
+    throw new HttpsError(
+      'failed-precondition',
+      'Trade-Teilnehmer sind ungültig.',
+    );
   }
   return [value[0], value[1]];
 }
@@ -66,7 +69,8 @@ export const submitSwapReview = onCall(
   { region: FUNCTIONS_REGION, timeoutSeconds: 30, memory: '256MiB' },
   async (request) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
+    if (!uid)
+      throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();

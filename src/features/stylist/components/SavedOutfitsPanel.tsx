@@ -116,7 +116,9 @@ export function SavedOutfitsPanel({
                 return (
                   <View
                     key={itemId}
-                    accessibilityLabel={item?.name ?? 'Kleidungsstück nicht mehr im Schrank'}
+                    accessibilityLabel={
+                      item?.name ?? 'Kleidungsstück nicht mehr im Schrank'
+                    }
                     className="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 mr-2 overflow-hidden items-center justify-center"
                   >
                     {item?.imageUrl ? (
@@ -138,7 +140,8 @@ export function SavedOutfitsPanel({
 
             {resolvedItems.length < outfit.itemIds.length ? (
               <Text className="text-amber-600 dark:text-amber-400 text-xs mb-3">
-                Mindestens ein Kleidungsstück dieses Outfits ist nicht mehr im Schrank.
+                Mindestens ein Kleidungsstück dieses Outfits ist nicht mehr im
+                Schrank.
               </Text>
             ) : null}
 
@@ -157,7 +160,10 @@ export function SavedOutfitsPanel({
                         outfit.id,
                         selected ? 'none' : action.value,
                       ).catch((error: unknown) => {
-                        console.error('Failed to update outfit feedback', error);
+                        console.error(
+                          'Failed to update outfit feedback',
+                          error,
+                        );
                         Alert.alert(
                           'Feedback nicht gespeichert',
                           'Bitte versuche es erneut.',

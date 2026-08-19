@@ -40,7 +40,9 @@ function parseRequest(data: unknown): SubmitReportInput {
   }
   const { targetType, targetId, reason, details } = data;
   if (
-    (targetType !== 'listing' && targetType !== 'user' && targetType !== 'transaction') ||
+    (targetType !== 'listing' &&
+      targetType !== 'user' &&
+      targetType !== 'transaction') ||
     typeof targetId !== 'string' ||
     !targetId.trim() ||
     targetId.length > 180 ||
@@ -70,7 +72,8 @@ export const submitReport = onCall(
   { region: FUNCTIONS_REGION, timeoutSeconds: 30, memory: '256MiB' },
   async (request) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
+    if (!uid)
+      throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
 
     const input = parseRequest(request.data);
     ensureAdminInitialized();
@@ -85,18 +88,27 @@ export const submitReport = onCall(
     let targetOwnerId: string | null = null;
 
     if (input.targetType === 'listing') {
-      const snapshot = await db.collection('swapListings').doc(input.targetId).get();
+      const snapshot = await db
+        .collection('swapListings')
+        .doc(input.targetId)
+        .get();
       const data = snapshot.data();
       if (!snapshot.exists || !data) {
         throw new HttpsError('not-found', 'Listing wurde nicht gefunden.');
       }
       if (data.ownerId === uid) {
-        throw new HttpsError('failed-precondition', 'Du kannst dein eigenes Listing nicht melden.');
+        throw new HttpsError(
+          'failed-precondition',
+          'Du kannst dein eigenes Listing nicht melden.',
+        );
       }
       targetOwnerId = typeof data.ownerId === 'string' ? data.ownerId : null;
     } else if (input.targetType === 'user') {
       if (input.targetId === uid) {
-        throw new HttpsError('failed-precondition', 'Du kannst dich nicht selbst melden.');
+        throw new HttpsError(
+          'failed-precondition',
+          'Du kannst dich nicht selbst melden.',
+        );
       }
       const snapshot = await db.collection('users').doc(input.targetId).get();
       if (!snapshot.exists) {
@@ -109,7 +121,11 @@ export const submitReport = onCall(
         .doc(input.targetId)
         .get();
       const data = snapshot.data();
-      if (!snapshot.exists || !data || !participantIds(data.participantIds).includes(uid)) {
+      if (
+        !snapshot.exists ||
+        !data ||
+        !participantIds(data.participantIds).includes(uid)
+      ) {
         throw new HttpsError(
           'permission-denied',
           'Du bist kein Teilnehmer dieses Trades.',

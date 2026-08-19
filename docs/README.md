@@ -16,25 +16,25 @@ Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Tr
 
 ## Dokumentationsstruktur
 
-| Bereich | Pfad | Aktueller Stand |
-|---|---|---|
-| Governance / Roadmap | [`00-governance/`](./00-governance/) | ✅ aktiv |
-| Produkt / MVP / Journeys | [`01-product/`](./01-product/) | ✅ definiert |
-| Architektur | [`02-architecture/`](./02-architecture/) | ✅ Kern definiert |
-| Design / Accessibility | [`03-design/`](./03-design/) | 🟡 Kernflows migriert, Device-Audit offen |
-| Auth | [`04-auth/`](./04-auth/) | 🟡 technischer Kern, Device-/Firebase-Validierung offen |
-| Firebase Backend | [`05-backend/`](./05-backend/) | 🟡 Security-/Functions-Basis, reales Deployment offen |
-| Cloud Wardrobe | [`06-wardrobe/`](./06-wardrobe/) | 🟡 Kern implementiert, Device-E2E offen |
-| AI Kleidungsanalyse | [`07-ai/`](./07-ai/) | 🟡 Trusted Backend implementiert, reales Secret/Evals offen |
-| Stylist | [`08-stylist/`](./08-stylist/) | ✅ technischer Kern |
-| OmniSwap | [`09-omniswap/`](./09-omniswap/) | 🟡 End-to-End-Kern, reale Zwei-Nutzer-Tests offen |
-| Notifications / Push | [`10-notifications/`](./10-notifications/) | 🟡 In-App fertig, native Push-Registrierung offen |
-| Moderation | [`11-moderation/`](./11-moderation/) | 🟡 Backend + interne UI-Basis |
-| Support / Recovery | [`12-support/`](./12-support/) | 🟡 Backend + read-only interne UI |
-| Privacy / Account Lifecycle | [`13-privacy/`](./13-privacy/) | 🟡 technischer Lifecycle, Recht/E2E offen |
-| Operations | [`14-operations/`](./14-operations/) | 🟡 Remote Flags + Rate Limits |
-| Qualität | [`14-quality/`](./14-quality/) | 🟡 permanente CI-Gates, Device-E2E offen |
-| Release / EAS | [`15-release/`](./15-release/) | 🟡 vorbereitet, echte Cloud-/Store-Konfiguration offen |
+| Bereich                     | Pfad                                       | Aktueller Stand                                             |
+| --------------------------- | ------------------------------------------ | ----------------------------------------------------------- |
+| Governance / Roadmap        | [`00-governance/`](./00-governance/)       | ✅ aktiv                                                    |
+| Produkt / MVP / Journeys    | [`01-product/`](./01-product/)             | ✅ definiert                                                |
+| Architektur                 | [`02-architecture/`](./02-architecture/)   | ✅ Kern definiert                                           |
+| Design / Accessibility      | [`03-design/`](./03-design/)               | 🟡 Kernflows migriert, Device-Audit offen                   |
+| Auth                        | [`04-auth/`](./04-auth/)                   | 🟡 technischer Kern, Device-/Firebase-Validierung offen     |
+| Firebase Backend            | [`05-backend/`](./05-backend/)             | 🟡 Security-/Functions-Basis, reales Deployment offen       |
+| Cloud Wardrobe              | [`06-wardrobe/`](./06-wardrobe/)           | 🟡 Kern implementiert, Device-E2E offen                     |
+| AI Kleidungsanalyse         | [`07-ai/`](./07-ai/)                       | 🟡 Trusted Backend implementiert, reales Secret/Evals offen |
+| Stylist                     | [`08-stylist/`](./08-stylist/)             | ✅ technischer Kern                                         |
+| OmniSwap                    | [`09-omniswap/`](./09-omniswap/)           | 🟡 End-to-End-Kern, reale Zwei-Nutzer-Tests offen           |
+| Notifications / Push        | [`10-notifications/`](./10-notifications/) | 🟡 In-App fertig, native Push-Registrierung offen           |
+| Moderation                  | [`11-moderation/`](./11-moderation/)       | 🟡 Backend + interne UI-Basis                               |
+| Support / Recovery          | [`12-support/`](./12-support/)             | 🟡 Backend + read-only interne UI                           |
+| Privacy / Account Lifecycle | [`13-privacy/`](./13-privacy/)             | 🟡 technischer Lifecycle, Recht/E2E offen                   |
+| Operations                  | [`14-operations/`](./14-operations/)       | 🟡 Remote Flags + Rate Limits                               |
+| Qualität                    | [`14-quality/`](./14-quality/)             | 🟡 permanente CI-Gates, Device-E2E offen                    |
+| Release / EAS               | [`15-release/`](./15-release/)             | 🟡 vorbereitet, echte Cloud-/Store-Konfiguration offen      |
 
 ## Kern-Dokumente
 

@@ -187,7 +187,9 @@ export function SendSwapOfferModal({
                             resizeMode="contain"
                           />
                         ) : (
-                          <Text className="text-zinc-400 text-xs">Kein Bild</Text>
+                          <Text className="text-zinc-400 text-xs">
+                            Kein Bild
+                          </Text>
                         )}
                       </View>
                       <View className="p-3">

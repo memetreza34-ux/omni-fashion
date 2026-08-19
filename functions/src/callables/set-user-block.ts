@@ -13,7 +13,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function parseRequest(data: unknown): { targetUserId: string; action: 'block' | 'unblock' } {
+function parseRequest(data: unknown): {
+  targetUserId: string;
+  action: 'block' | 'unblock';
+} {
   if (!isRecord(data)) {
     throw new HttpsError('invalid-argument', 'Ungültige Block-Aktion.');
   }
@@ -35,17 +38,23 @@ export const setUserBlock = onCall(
   { region: FUNCTIONS_REGION, timeoutSeconds: 30, memory: '256MiB' },
   async (request) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
+    if (!uid)
+      throw new HttpsError('unauthenticated', 'Anmeldung erforderlich.');
 
     const input = parseRequest(request.data);
     if (input.targetUserId === uid) {
-      throw new HttpsError('failed-precondition', 'Du kannst dich nicht selbst blockieren.');
+      throw new HttpsError(
+        'failed-precondition',
+        'Du kannst dich nicht selbst blockieren.',
+      );
     }
 
     ensureAdminInitialized();
     const db = getFirestore();
     const targetRef = db.collection('users').doc(input.targetUserId);
-    const blockRef = db.collection('blocks').doc(`${uid}_${input.targetUserId}`);
+    const blockRef = db
+      .collection('blocks')
+      .doc(`${uid}_${input.targetUserId}`);
 
     if (input.action === 'unblock') {
       await blockRef.delete();
