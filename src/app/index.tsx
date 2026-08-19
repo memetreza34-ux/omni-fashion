@@ -21,7 +21,9 @@ interface UploadFailureCopy {
   message: string;
 }
 
-function uploadFailureCopy(kind: WardrobeImageUploadFailureKind): UploadFailureCopy {
+function uploadFailureCopy(
+  kind: WardrobeImageUploadFailureKind,
+): UploadFailureCopy {
   switch (kind) {
     case 'too_large':
       return {
