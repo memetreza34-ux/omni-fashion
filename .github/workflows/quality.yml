@@ -32,12 +32,16 @@ jobs:
       - name: TypeScript, foundation and zero-any checks
         run: npm run verify:quality
 
-  expo-dependency-plan:
+  expo-dependency-apply:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v6
+        with:
+          ref: docs/app-development-a-z
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -54,15 +58,17 @@ jobs:
       - name: Verify aligned dependency set
         run: npx expo install --check
 
-      - name: Upload aligned package files
-        uses: actions/upload-artifact@v7
-        with:
-          name: expo-sdk-57-aligned-dependencies
-          path: |
-            package.json
-            package-lock.json
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit only aligned dependency files
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "Dependency files are already aligned."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "deps: align packages with Expo SDK 57"
+          git push origin HEAD:docs/app-development-a-z
 
   expo-bundle-smoke:
     runs-on: ubuntu-latest
