@@ -42,6 +42,7 @@ function errorMessage(error: unknown): string {
 
 export type WardrobeImageUploadFailureKind =
   | 'canceled'
+  | 'preparation_failed'
   | 'too_large'
   | 'empty'
   | 'read_failed'
@@ -76,6 +77,9 @@ export function classifyWardrobeImageUploadFailure(
   }
 
   const message = errorMessage(error);
+  if (message.includes('WARDROBE_IMAGE_PREPARATION_FAILED')) {
+    return { kind: 'preparation_failed', retryable: false };
+  }
   if (message.includes('WARDROBE_IMAGE_TOO_LARGE')) {
     return { kind: 'too_large', retryable: false };
   }
