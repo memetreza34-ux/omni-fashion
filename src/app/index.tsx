@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
@@ -62,18 +62,11 @@ export default function WardrobeScreen() {
     analyzeItem,
   } = useWardrobe();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!selectedItem) {
-      return;
-    }
-
-    const refreshedItem = items.find((item) => item.id === selectedItem.id);
-    if (refreshedItem) {
-      setSelectedItem(refreshedItem);
-    }
-  }, [items, selectedItem?.id]);
+  const selectedItem = selectedItemId
+    ? (items.find((item) => item.id === selectedItemId) ?? null)
+    : null;
 
   const handleAddPress = () => {
     Alert.alert('Neues Item hinzufügen', 'Wähle eine Option:', [
@@ -136,7 +129,7 @@ export default function WardrobeScreen() {
         source,
       });
 
-      setSelectedItem(newItem);
+      setSelectedItemId(newItem.id);
 
       if (isCloudBacked) {
         void analyzeItem(newItem.id).catch((analysisError: unknown) => {
@@ -159,7 +152,7 @@ export default function WardrobeScreen() {
   const handleSaveItem = async (updatedItem: WardrobeItem) => {
     try {
       await updateItem(updatedItem);
-      setSelectedItem(null);
+      setSelectedItemId(null);
     } catch (saveError: unknown) {
       console.error('Failed to update wardrobe item', saveError);
       Alert.alert(
@@ -172,7 +165,7 @@ export default function WardrobeScreen() {
   const handleDeleteItem = async (id: string) => {
     try {
       await deleteItem(id);
-      setSelectedItem(null);
+      setSelectedItemId(null);
     } catch (deleteError: unknown) {
       console.error('Failed to delete wardrobe item', deleteError);
       Alert.alert(
@@ -189,7 +182,7 @@ export default function WardrobeScreen() {
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={`${item.name} öffnen`}
-        onPress={() => setSelectedItem(item)}
+        onPress={() => setSelectedItemId(item.id)}
         className="w-[48%] aspect-square bg-white dark:bg-zinc-900 rounded-2xl mb-4 items-center justify-center overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm"
       >
         {item.imageUrl ? (
@@ -300,7 +293,7 @@ export default function WardrobeScreen() {
         visible={Boolean(selectedItem)}
         item={selectedItem}
         canAnalyze={isCloudBacked}
-        onClose={() => setSelectedItem(null)}
+        onClose={() => setSelectedItemId(null)}
         onSave={(item) => void handleSaveItem(item)}
         onDelete={(id) => void handleDeleteItem(id)}
         onAnalyze={analyzeItem}
