@@ -38,6 +38,25 @@ jobs:
       - name: TypeScript, foundation and zero-any checks
         run: npm run verify:quality
 
+  dependency-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+
+      - name: Classify app runtime dependencies
+        run: npm run audit:runtime
+
+      - name: Classify Functions runtime dependencies
+        run: npm run audit:functions-runtime
+
   expo-bundle-smoke:
     runs-on: ubuntu-latest
     env:
