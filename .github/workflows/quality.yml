@@ -29,6 +29,9 @@ jobs:
       - name: Expo SDK dependency compatibility
         run: npm run verify:expo
 
+      - name: Expo ESLint
+        run: npm run lint
+
       - name: TypeScript, foundation and zero-any checks
         run: npm run verify:quality
 
