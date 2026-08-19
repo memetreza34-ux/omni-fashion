@@ -32,6 +32,38 @@ jobs:
       - name: TypeScript, foundation and zero-any checks
         run: npm run verify:quality
 
+  expo-dependency-plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+
+      - name: Install current dependencies
+        run: npm ci
+
+      - name: Align dependencies to Expo SDK 57
+        run: npx expo install --fix
+
+      - name: Verify aligned dependency set
+        run: npx expo install --check
+
+      - name: Upload aligned package files
+        uses: actions/upload-artifact@v7
+        with:
+          name: expo-sdk-57-aligned-dependencies
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 1
+
   expo-bundle-smoke:
     runs-on: ubuntu-latest
     env:
