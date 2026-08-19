@@ -41,6 +41,17 @@ interface WardrobeContextType {
   analyzeItem: (id: string) => Promise<void>;
 }
 
+interface WardrobeSnapshot {
+  ownerId: string;
+  items: WardrobeItem[];
+  error: string | null;
+}
+
+interface WardrobeRefState {
+  ownerId: string | null;
+  items: WardrobeItem[];
+}
+
 const WardrobeContext = createContext<WardrobeContextType | undefined>(
   undefined,
 );
@@ -70,75 +81,85 @@ async function hydrateImageUrls(items: WardrobeItem[]): Promise<WardrobeItem[]> 
 
 export function WardrobeProvider({ children }: { children: React.ReactNode }) {
   const { user, isBackendConfigured } = useAuth();
-  const [items, setItems] = useState<WardrobeItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const itemsRef = useRef<WardrobeItem[]>([]);
-  const subscriptionVersionRef = useRef(0);
+  const [snapshot, setSnapshot] = useState<WardrobeSnapshot | null>(null);
+  const itemsRef = useRef<WardrobeRefState>({ ownerId: null, items: [] });
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const items = currentSnapshot?.items ?? [];
+  const isLoading = Boolean(activeOwnerId && !currentSnapshot);
+  const error = currentSnapshot?.error ?? null;
 
-  const replaceItems = (nextItems: WardrobeItem[]) => {
-    itemsRef.current = nextItems;
-    setItems(nextItems);
+  const replaceItems = (
+    ownerId: string,
+    nextItems: WardrobeItem[],
+    nextError: string | null = null,
+  ) => {
+    itemsRef.current = { ownerId, items: nextItems };
+    setSnapshot({ ownerId, items: nextItems, error: nextError });
   };
 
-  useEffect(() => {
-    const subscriptionVersion = subscriptionVersionRef.current + 1;
-    subscriptionVersionRef.current = subscriptionVersion;
-    setError(null);
-    setIsLoading(true);
+  const currentItemsFor = (ownerId: string): WardrobeItem[] =>
+    itemsRef.current.ownerId === ownerId ? itemsRef.current.items : [];
 
+  useEffect(() => {
     if (!user) {
-      replaceItems([]);
-      setIsLoading(false);
       return undefined;
     }
 
+    const ownerId = user.id;
+    let active = true;
+
     if (!isCloudBacked) {
-      void loadLocalWardrobe(user.id)
+      void loadLocalWardrobe(ownerId)
         .then((localItems) => {
-          if (subscriptionVersionRef.current === subscriptionVersion) {
-            replaceItems(localItems);
+          if (active) {
+            replaceItems(ownerId, localItems);
           }
         })
         .catch((loadError: unknown) => {
           console.error('Failed to load local wardrobe', loadError);
-          if (subscriptionVersionRef.current === subscriptionVersion) {
-            setError('Der lokale Kleiderschrank konnte nicht geladen werden.');
-          }
-        })
-        .finally(() => {
-          if (subscriptionVersionRef.current === subscriptionVersion) {
-            setIsLoading(false);
+          if (active) {
+            replaceItems(
+              ownerId,
+              [],
+              'Der lokale Kleiderschrank konnte nicht geladen werden.',
+            );
           }
         });
 
-      return undefined;
+      return () => {
+        active = false;
+      };
     }
 
     const unsubscribe = subscribeToWardrobe(
-      user.id,
+      ownerId,
       (cloudItems) => {
         void hydrateImageUrls(cloudItems).then((hydratedItems) => {
-          if (subscriptionVersionRef.current === subscriptionVersion) {
-            replaceItems(hydratedItems);
-            setIsLoading(false);
+          if (active) {
+            replaceItems(ownerId, hydratedItems);
           }
         });
       },
       (subscriptionError) => {
         console.error('Wardrobe subscription failed', subscriptionError);
-        if (subscriptionVersionRef.current === subscriptionVersion) {
-          setError('Der Cloud-Kleiderschrank konnte nicht geladen werden.');
-          setIsLoading(false);
+        if (active) {
+          replaceItems(
+            ownerId,
+            [],
+            'Der Cloud-Kleiderschrank konnte nicht geladen werden.',
+          );
         }
       },
     );
 
     return () => {
+      active = false;
       unsubscribe();
     };
   }, [isCloudBacked, user]);
@@ -150,12 +171,13 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       throw new Error('WARDROBE_AUTH_REQUIRED: No authenticated user.');
     }
 
+    const ownerId = user.id;
     const now = new Date().toISOString();
 
     if (isCloudBacked) {
       const id = createWardrobeItemId();
       const uploadedImage = await uploadWardrobeImage(
-        user.id,
+        ownerId,
         id,
         input.localImageUri,
       );
@@ -163,7 +185,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       try {
         await createCloudWardrobeItem({
           id,
-          ownerId: user.id,
+          ownerId,
           imagePath: uploadedImage.path,
           name: input.name ?? 'Neues Kleidungsstück',
           category: input.category ?? 'Other',
@@ -180,9 +202,9 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         throw createError;
       }
 
-      return {
+      const createdItem: WardrobeItem = {
         id,
-        ownerId: user.id,
+        ownerId,
         imageUrl: uploadedImage.downloadUrl,
         imagePath: uploadedImage.path,
         name: input.name ?? 'Neues Kleidungsstück',
@@ -210,11 +232,14 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         updatedAt: now,
         schemaVersion: WARDROBE_SCHEMA_VERSION,
       };
+
+      replaceItems(ownerId, [...currentItemsFor(ownerId), createdItem]);
+      return createdItem;
     }
 
     const localItem: WardrobeItem = {
       id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      ownerId: user.id,
+      ownerId,
       imageUrl: input.localImageUri,
       imagePath: null,
       name: input.name ?? 'Neues Kleidungsstück',
@@ -243,8 +268,8 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       schemaVersion: WARDROBE_SCHEMA_VERSION,
     };
 
-    const nextItems = [...itemsRef.current, localItem];
-    replaceItems(nextItems);
+    const nextItems = [...currentItemsFor(ownerId), localItem];
+    replaceItems(ownerId, nextItems);
     await saveLocalWardrobe(nextItems);
     return localItem;
   };
@@ -254,14 +279,15 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       throw new Error('WARDROBE_AUTH_REQUIRED: No authenticated user.');
     }
 
-    if (updatedItem.ownerId !== user.id) {
+    const ownerId = user.id;
+    if (updatedItem.ownerId !== ownerId) {
       throw new Error(
         'WARDROBE_OWNER_MISMATCH: Cannot edit another wardrobe.',
       );
     }
 
     if (isCloudBacked) {
-      await updateCloudWardrobeItem(user.id, updatedItem.id, {
+      await updateCloudWardrobeItem(ownerId, updatedItem.id, {
         name: updatedItem.name,
         category: updatedItem.category,
         subcategory: updatedItem.subcategory,
@@ -277,12 +303,12 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const nextItems = itemsRef.current.map((item) =>
+    const nextItems = currentItemsFor(ownerId).map((item) =>
       item.id === updatedItem.id
         ? { ...updatedItem, updatedAt: new Date().toISOString() }
         : item,
     );
-    replaceItems(nextItems);
+    replaceItems(ownerId, nextItems);
     await saveLocalWardrobe(nextItems);
   };
 
@@ -291,12 +317,14 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       throw new Error('WARDROBE_AUTH_REQUIRED: No authenticated user.');
     }
 
-    const item = itemsRef.current.find((candidate) => candidate.id === id);
+    const ownerId = user.id;
+    const currentItems = currentItemsFor(ownerId);
+    const item = currentItems.find((candidate) => candidate.id === id);
     if (!item) {
       return;
     }
 
-    if (item.ownerId !== user.id) {
+    if (item.ownerId !== ownerId) {
       throw new Error(
         'WARDROBE_OWNER_MISMATCH: Cannot delete another wardrobe.',
       );
@@ -316,10 +344,8 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const nextItems = itemsRef.current.filter(
-      (candidate) => candidate.id !== id,
-    );
-    replaceItems(nextItems);
+    const nextItems = currentItems.filter((candidate) => candidate.id !== id);
+    replaceItems(ownerId, nextItems);
     await saveLocalWardrobe(nextItems);
   };
 
@@ -334,7 +360,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       );
     }
 
-    const item = itemsRef.current.find((candidate) => candidate.id === id);
+    const item = currentItemsFor(user.id).find((candidate) => candidate.id === id);
     if (item && item.ownerId !== user.id) {
       throw new Error(
         'WARDROBE_OWNER_MISMATCH: Cannot analyze another wardrobe.',
