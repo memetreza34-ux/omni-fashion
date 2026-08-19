@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -44,7 +44,7 @@ export function PrivacyScreenContent({ onBack }: { onBack?: () => void }) {
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
 
-  const refreshReadiness = async () => {
+  const refreshReadiness = useCallback(async () => {
     if (!isCloudBacked) {
       setReadiness(null);
       setLoading(false);
@@ -62,11 +62,22 @@ export function PrivacyScreenContent({ onBack }: { onBack?: () => void }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isCloudBacked]);
 
   useEffect(() => {
-    void refreshReadiness();
-  }, [isCloudBacked]);
+    let active = true;
+
+    void Promise.resolve().then(() => {
+      if (active) {
+        return refreshReadiness();
+      }
+      return undefined;
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [refreshReadiness]);
 
   const handleExport = async () => {
     if (exporting || !isCloudBacked) return;
