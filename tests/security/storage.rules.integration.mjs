@@ -20,6 +20,7 @@ const PROJECT_ID = 'demo-omni-fashion-rules';
 const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
 const STORAGE_EMULATOR_HOST = '127.0.0.1';
 const STORAGE_EMULATOR_PORT = 9199;
+const MAX_WARDROBE_IMAGE_BYTES = 10 * 1024 * 1024;
 
 const baseFirebaseConfig = {
   apiKey: 'demo-api-key',
@@ -118,6 +119,17 @@ async function run() {
         { contentType: 'text/plain' },
       ),
       'owner uploads non-image wardrobe file',
+    );
+
+    // Storage rules mirror the client-side 10 MB boundary. Exactly 10 MB is
+    // rejected because the rule intentionally requires request.resource.size < 10 MB.
+    await expectStorageDenied(
+      uploadBytes(
+        ref(owner.storage, `users/${ownerId}/wardrobe/item-3/too-large.jpg`),
+        new Uint8Array(MAX_WARDROBE_IMAGE_BYTES),
+        { contentType: 'image/jpeg' },
+      ),
+      'owner uploads wardrobe image at 10 MB boundary',
     );
 
     // Profile avatars are readable by authenticated marketplace users, but not
