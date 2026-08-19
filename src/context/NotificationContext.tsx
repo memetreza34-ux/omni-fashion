@@ -22,6 +22,13 @@ interface NotificationContextType {
   markRead: (notificationId: string) => Promise<void>;
 }
 
+interface NotificationSnapshot {
+  ownerId: string;
+  notifications: AppNotification[];
+  isLoading: boolean;
+  error: string | null;
+}
+
 const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined,
 );
@@ -32,34 +39,44 @@ export function NotificationProvider({
   children: React.ReactNode;
 }) {
   const { user, isBackendConfigured } = useAuth();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<NotificationSnapshot | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const notifications = currentSnapshot?.notifications ?? [];
+  const isLoading = Boolean(activeOwnerId && isCloudBacked && !currentSnapshot)
+    ? true
+    : (currentSnapshot?.isLoading ?? false);
+  const error = currentSnapshot?.error ?? null;
 
   useEffect(() => {
-    setNotifications([]);
-    setError(null);
-    setIsLoading(true);
-
     if (!user || !isCloudBacked) {
-      setIsLoading(false);
       return undefined;
     }
 
+    const ownerId = user.id;
     return subscribeToNotifications(
-      user.id,
+      ownerId,
       (nextNotifications) => {
-        setNotifications(nextNotifications);
-        setIsLoading(false);
+        setSnapshot({
+          ownerId,
+          notifications: nextNotifications,
+          isLoading: false,
+          error: null,
+        });
       },
       (subscriptionError) => {
         console.error('Notification subscription failed', subscriptionError);
-        setError('Aktivität konnte nicht vollständig geladen werden.');
-        setIsLoading(false);
+        setSnapshot({
+          ownerId,
+          notifications: [],
+          isLoading: false,
+          error: 'Aktivität konnte nicht vollständig geladen werden.',
+        });
       },
     );
   }, [isCloudBacked, user]);
