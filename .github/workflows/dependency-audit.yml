@@ -1,0 +1,98 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  root-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Capture root npm audit
+        run: npm audit --json > root-audit.json || true
+
+      - name: Summarize root vulnerabilities
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync('root-audit.json', 'utf8'));
+          const vulnerabilities = audit.vulnerabilities ?? {};
+          console.log('ROOT AUDIT METADATA');
+          console.log(JSON.stringify(audit.metadata?.vulnerabilities ?? {}, null, 2));
+          for (const [name, item] of Object.entries(vulnerabilities)) {
+            const via = (item.via ?? []).map((entry) =>
+              typeof entry === 'string'
+                ? entry
+                : `${entry.source ?? 'advisory'}:${entry.title ?? entry.name ?? 'unknown'}`,
+            );
+            console.log('\nPACKAGE', name);
+            console.log('severity=', item.severity);
+            console.log('direct=', Boolean(item.isDirect));
+            console.log('range=', item.range ?? '');
+            console.log('via=', via.join(' | '));
+            console.log('effects=', (item.effects ?? []).join(','));
+            console.log('nodes=', (item.nodes ?? []).slice(0, 12).join(','));
+            console.log('fixAvailable=', JSON.stringify(item.fixAvailable ?? false));
+          }
+          NODE
+
+  functions-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Capture Functions npm audit
+        run: npm audit --json > functions-audit.json || true
+
+      - name: Summarize Functions vulnerabilities
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync('functions-audit.json', 'utf8'));
+          const vulnerabilities = audit.vulnerabilities ?? {};
+          console.log('FUNCTIONS AUDIT METADATA');
+          console.log(JSON.stringify(audit.metadata?.vulnerabilities ?? {}, null, 2));
+          for (const [name, item] of Object.entries(vulnerabilities)) {
+            const via = (item.via ?? []).map((entry) =>
+              typeof entry === 'string'
+                ? entry
+                : `${entry.source ?? 'advisory'}:${entry.title ?? entry.name ?? 'unknown'}`,
+            );
+            console.log('\nPACKAGE', name);
+            console.log('severity=', item.severity);
+            console.log('direct=', Boolean(item.isDirect));
+            console.log('range=', item.range ?? '');
+            console.log('via=', via.join(' | '));
+            console.log('effects=', (item.effects ?? []).join(','));
+            console.log('nodes=', (item.nodes ?? []).slice(0, 12).join(','));
+            console.log('fixAvailable=', JSON.stringify(item.fixAvailable ?? false));
+          }
+          NODE
