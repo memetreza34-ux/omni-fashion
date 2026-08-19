@@ -30,6 +30,12 @@ function canceledUploadError(): Error {
   return new Error(`${UPLOAD_CANCELED_CODE}: Image upload was canceled.`);
 }
 
+function errorCode(error: unknown): string {
+  return typeof error === 'object' && error !== null && 'code' in error
+    ? String(error.code)
+    : '';
+}
+
 export function isWardrobeImageUploadCanceled(error: unknown): boolean {
   if (error instanceof Error) {
     return (
@@ -38,11 +44,7 @@ export function isWardrobeImageUploadCanceled(error: unknown): boolean {
     );
   }
 
-  if (typeof error === 'object' && error !== null && 'code' in error) {
-    return String(error.code).includes('storage/canceled');
-  }
-
-  return false;
+  return errorCode(error).includes('storage/canceled');
 }
 
 export interface WardrobeImageUploadProgress {
@@ -110,21 +112,18 @@ export async function uploadWardrobeImage(
 
   await new Promise<void>((resolve, reject) => {
     const subscribe = uploadTask.on('state_changed');
-    let unsubscribe: (() => void) | null = null;
 
     const handleAbort = () => {
       uploadTask.cancel();
     };
 
     const cleanup = () => {
-      unsubscribe?.();
-      unsubscribe = null;
       options.signal?.removeEventListener('abort', handleAbort);
     };
 
     options.signal?.addEventListener('abort', handleAbort, { once: true });
 
-    unsubscribe = subscribe(
+    subscribe(
       (snapshot) => {
         const fraction =
           snapshot.totalBytes > 0
@@ -140,7 +139,7 @@ export async function uploadWardrobeImage(
       (error) => {
         cleanup();
         reject(
-          String(error.code).includes('storage/canceled')
+          errorCode(error).includes('storage/canceled')
             ? canceledUploadError()
             : error,
         );
@@ -160,11 +159,7 @@ export async function uploadWardrobeImage(
     try {
       await deleteObject(storageRef);
     } catch (error: unknown) {
-      const code =
-        typeof error === 'object' && error !== null && 'code' in error
-          ? String(error.code)
-          : '';
-      if (!code.includes('object-not-found')) {
+      if (!errorCode(error).includes('object-not-found')) {
         throw error;
       }
     }
@@ -200,13 +195,7 @@ export async function deleteWardrobeImage(
   try {
     await deleteObject(ref(storage, imagePath));
   } catch (error: unknown) {
-    const code =
-      typeof error === 'object' && error !== null && 'code' in error
-        ? String(error.code)
-        : '';
-
-    // Deleting an already missing file is idempotent from the app's perspective.
-    if (!code.includes('object-not-found')) {
+    if (!errorCode(error).includes('object-not-found')) {
       throw error;
     }
   }
