@@ -44,12 +44,14 @@ export function AnimatedSplashOverlay() {
   if (animateOut) {
     return (
       <Animated.View
-        entering={exitKeyframe.duration(DURATION_MS).withCallback((finished) => {
-          'worklet';
-          if (finished) {
-            scheduleOnRN(setVisible, false);
-          }
-        })}
+        entering={exitKeyframe
+          .duration(DURATION_MS)
+          .withCallback((finished) => {
+            'worklet';
+            if (finished) {
+              scheduleOnRN(setVisible, false);
+            }
+          })}
         style={styles.overlay}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
