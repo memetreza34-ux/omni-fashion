@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -66,7 +65,9 @@ export function SavedOutfitsProvider({
   const currentSnapshot =
     activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
   const outfits = currentSnapshot?.outfits ?? [];
-  const isLoading = activeOwnerId ? !currentSnapshot || currentSnapshot.isLoading : false;
+  const isLoading = activeOwnerId
+    ? !currentSnapshot || currentSnapshot.isLoading
+    : false;
   const error = currentSnapshot?.error ?? null;
 
   useEffect(() => {
@@ -128,9 +129,8 @@ export function SavedOutfitsProvider({
     );
   }, [isCloudBacked, user]);
 
-  const savedKeys = useMemo(
-    () => new Set(outfits.map((outfit) => combinationKey(outfit.itemIds))),
-    [outfits],
+  const savedKeys = new Set(
+    outfits.map((outfit) => combinationKey(outfit.itemIds)),
   );
 
   const saveOutfit = async (input: SaveOutfitInput): Promise<string> => {
