@@ -13,6 +13,7 @@ import {
   loadLocalWardrobe,
   saveLocalWardrobe,
 } from '@/features/wardrobe/services/local-wardrobe-service';
+import { prepareWardrobeImageForUpload } from '@/features/wardrobe/services/wardrobe-image-preparation-service';
 import {
   createCloudWardrobeItem,
   createWardrobeItemId,
@@ -210,12 +211,19 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       activeUploadControllerRef.current = uploadController;
       setUploadProgress(0);
 
-      let uploadedImage;
+      let uploadedImage: Awaited<ReturnType<typeof uploadWardrobeImage>>;
       try {
+        const preparedImage = await prepareWardrobeImageForUpload(
+          input.localImageUri,
+          input.imageWidth,
+          input.imageHeight,
+          uploadController.signal,
+        );
+
         uploadedImage = await uploadWardrobeImage(
           ownerId,
           id,
-          input.localImageUri,
+          preparedImage.uri,
           {
             signal: uploadController.signal,
             onProgress: ({ fraction }) => {
