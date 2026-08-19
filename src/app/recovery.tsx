@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import { useFeatureFlag } from '@/context/FeatureFlagContext';
@@ -18,7 +18,7 @@ export default function RecoveryScreen() {
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!enabled) return;
 
     setLoading(true);
@@ -33,11 +33,22 @@ export default function RecoveryScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [enabled]);
 
   useEffect(() => {
-    void refresh();
-  }, [enabled]);
+    let active = true;
+
+    void Promise.resolve().then(() => {
+      if (active) {
+        return refresh();
+      }
+      return undefined;
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [refresh]);
 
   if (!enabled) {
     return (
