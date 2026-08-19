@@ -74,7 +74,18 @@ export function FeatureFlagProvider({ children }: { children: ReactNode }) {
   }, [developmentDemo, isBackendConfigured, userId]);
 
   useEffect(() => {
-    void refresh();
+    let active = true;
+
+    void Promise.resolve().then(() => {
+      if (active) {
+        return refresh();
+      }
+      return undefined;
+    });
+
+    return () => {
+      active = false;
+    };
   }, [refresh]);
 
   useEffect(() => {
