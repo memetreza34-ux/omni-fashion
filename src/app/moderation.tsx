@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -178,7 +178,7 @@ export default function ModerationScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!enabled) return;
     setLoading(true);
     setError(null);
@@ -192,11 +192,22 @@ export default function ModerationScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [enabled]);
 
   useEffect(() => {
-    void refresh();
-  }, [enabled]);
+    let active = true;
+
+    void Promise.resolve().then(() => {
+      if (active) {
+        return refresh();
+      }
+      return undefined;
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [refresh]);
 
   const handleResolved = async () => {
     setBusy(true);
