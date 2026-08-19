@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   Image,
@@ -29,21 +29,31 @@ export function SendSwapOfferModal({
   onClose: () => void;
   onSend: (listingId: string, wardrobeItemId: string) => Promise<string>;
 }) {
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemOverrideId, setSelectedItemOverrideId] = useState<
+    string | null
+  >(null);
   const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    if (visible) {
-      setSelectedItemId(eligibleItems[0]?.id ?? null);
-    }
-  }, [eligibleItems, visible]);
 
   if (!listing) {
     return null;
   }
 
+  const selectedItemId =
+    selectedItemOverrideId &&
+    eligibleItems.some((item) => item.id === selectedItemOverrideId)
+      ? selectedItemOverrideId
+      : (eligibleItems[0]?.id ?? null);
   const selectedItem =
     eligibleItems.find((item) => item.id === selectedItemId) ?? null;
+
+  const close = () => {
+    if (sending) {
+      return;
+    }
+
+    setSelectedItemOverrideId(null);
+    onClose();
+  };
 
   const submit = async () => {
     if (!selectedItemId || sending) {
@@ -57,6 +67,7 @@ export function SendSwapOfferModal({
         'Angebot gesendet',
         'Das angebotene Kleidungsstück ist jetzt für dieses offene Tauschangebot reserviert.',
       );
+      setSelectedItemOverrideId(null);
       onClose();
     } catch (error: unknown) {
       console.error('Failed to send OmniSwap offer', error);
@@ -74,7 +85,7 @@ export function SendSwapOfferModal({
       animationType="slide"
       transparent
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={close}
     >
       <View className="flex-1 justify-end bg-black/60">
         <View
@@ -95,7 +106,7 @@ export function SendSwapOfferModal({
               accessibilityLabel="Tauschangebot-Dialog schließen"
               disabled={sending}
               hitSlop={8}
-              onPress={onClose}
+              onPress={close}
               className="min-h-12 px-3 items-center justify-center"
             >
               <Text className="text-zinc-500 font-bold">Schließen</Text>
@@ -131,7 +142,7 @@ export function SendSwapOfferModal({
           <MarketplaceSafetyActions
             listingId={listing.id}
             ownerId={listing.ownerId}
-            onBlocked={onClose}
+            onBlocked={close}
           />
 
           <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
@@ -146,7 +157,11 @@ export function SendSwapOfferModal({
             />
           ) : (
             <>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView
+                accessibilityRole="radiogroup"
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
                 {eligibleItems.map((item) => {
                   const selected = selectedItemId === item.id;
                   return (
@@ -156,7 +171,7 @@ export function SendSwapOfferModal({
                       accessibilityLabel={`${item.name}, ${item.category}, Zustand ${item.condition}`}
                       accessibilityState={{ selected }}
                       disabled={sending}
-                      onPress={() => setSelectedItemId(item.id)}
+                      onPress={() => setSelectedItemOverrideId(item.id)}
                       className={`w-36 mr-3 rounded-2xl overflow-hidden border ${
                         selected
                           ? 'border-indigo-500 bg-indigo-500/10'
