@@ -55,90 +55,126 @@ interface SwapContextType {
   advanceTransaction: (input: AdvanceSwapTransactionInput) => Promise<void>;
 }
 
+interface SwapSnapshot {
+  ownerId: string;
+  activeListings: SwapListing[];
+  ownListings: SwapListing[];
+  incomingOffers: SwapOffer[];
+  outgoingOffers: SwapOffer[];
+  transactions: SwapTransaction[];
+  loadedKeys: Set<string>;
+  error: string | null;
+}
+
 const SwapContext = createContext<SwapContextType | undefined>(undefined);
+
+function emptySwapSnapshot(ownerId: string): SwapSnapshot {
+  return {
+    ownerId,
+    activeListings: [],
+    ownListings: [],
+    incomingOffers: [],
+    outgoingOffers: [],
+    transactions: [],
+    loadedKeys: new Set(),
+    error: null,
+  };
+}
 
 export function SwapProvider({ children }: { children: React.ReactNode }) {
   const { user, isBackendConfigured } = useAuth();
   const { blockedUserIds, isLoading: isTrustSafetyLoading } = useTrustSafety();
-  const [activeListings, setActiveListings] = useState<SwapListing[]>([]);
-  const [ownListings, setOwnListings] = useState<SwapListing[]>([]);
-  const [incomingOffers, setIncomingOffers] = useState<SwapOffer[]>([]);
-  const [outgoingOffers, setOutgoingOffers] = useState<SwapOffer[]>([]);
-  const [transactions, setTransactions] = useState<SwapTransaction[]>([]);
-  const [loadedKeys, setLoadedKeys] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<SwapSnapshot | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const activeListings = currentSnapshot?.activeListings ?? [];
+  const ownListings = currentSnapshot?.ownListings ?? [];
+  const incomingOffers = currentSnapshot?.incomingOffers ?? [];
+  const outgoingOffers = currentSnapshot?.outgoingOffers ?? [];
+  const transactions = currentSnapshot?.transactions ?? [];
+  const error = currentSnapshot?.error ?? null;
 
   useEffect(() => {
-    setError(null);
-    setActiveListings([]);
-    setOwnListings([]);
-    setIncomingOffers([]);
-    setOutgoingOffers([]);
-    setTransactions([]);
-    setLoadedKeys(new Set());
-
-    const markLoaded = (key: string) => {
-      setLoadedKeys((current) => {
-        const next = new Set(current);
-        next.add(key);
-        return next;
-      });
-    };
-
     if (!user || !isCloudBacked) {
-      setLoadedKeys(
-        new Set(['active', 'own', 'incoming', 'outgoing', 'transactions']),
-      );
       return undefined;
     }
 
+    const ownerId = user.id;
+
+    const updateSnapshot = (
+      key: string,
+      update: (current: SwapSnapshot) => SwapSnapshot,
+    ) => {
+      setSnapshot((current) => {
+        const base =
+          current?.ownerId === ownerId ? current : emptySwapSnapshot(ownerId);
+        const next = update(base);
+        const loadedKeys = new Set(next.loadedKeys);
+        loadedKeys.add(key);
+        return { ...next, loadedKeys };
+      });
+    };
+
     const onSubscriptionError = (scope: string) => (subscriptionError: Error) => {
       console.error(`OmniSwap ${scope} subscription failed`, subscriptionError);
-      setError('OmniSwap-Daten konnten nicht vollständig geladen werden.');
-      markLoaded(scope);
+      updateSnapshot(scope, (current) => ({
+        ...current,
+        error: 'OmniSwap-Daten konnten nicht vollständig geladen werden.',
+      }));
     };
 
     const unsubscribers = [
       subscribeToActiveSwapListings(
         (listings) => {
-          setActiveListings(listings);
-          markLoaded('active');
+          updateSnapshot('active', (current) => ({
+            ...current,
+            activeListings: listings,
+          }));
         },
         onSubscriptionError('active'),
       ),
       subscribeToOwnSwapListings(
-        user.id,
+        ownerId,
         (listings) => {
-          setOwnListings(listings);
-          markLoaded('own');
+          updateSnapshot('own', (current) => ({
+            ...current,
+            ownListings: listings,
+          }));
         },
         onSubscriptionError('own'),
       ),
       subscribeToIncomingSwapOffers(
-        user.id,
+        ownerId,
         (offers) => {
-          setIncomingOffers(offers);
-          markLoaded('incoming');
+          updateSnapshot('incoming', (current) => ({
+            ...current,
+            incomingOffers: offers,
+          }));
         },
         onSubscriptionError('incoming'),
       ),
       subscribeToOutgoingSwapOffers(
-        user.id,
+        ownerId,
         (offers) => {
-          setOutgoingOffers(offers);
-          markLoaded('outgoing');
+          updateSnapshot('outgoing', (current) => ({
+            ...current,
+            outgoingOffers: offers,
+          }));
         },
         onSubscriptionError('outgoing'),
       ),
       subscribeToSwapTransactions(
-        user.id,
+        ownerId,
         (nextTransactions) => {
-          setTransactions(nextTransactions);
-          markLoaded('transactions');
+          updateSnapshot('transactions', (current) => ({
+            ...current,
+            transactions: nextTransactions,
+          }));
         },
         onSubscriptionError('transactions'),
       ),
@@ -208,6 +244,10 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
     await advanceSwapTransaction(input);
   };
 
+  const isLoading = isCloudBacked
+    ? !currentSnapshot || currentSnapshot.loadedKeys.size < 5 || isTrustSafetyLoading
+    : false;
+
   return (
     <SwapContext.Provider
       value={{
@@ -217,7 +257,7 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
         incomingOffers,
         outgoingOffers,
         transactions,
-        isLoading: loadedKeys.size < 5 || isTrustSafetyLoading,
+        isLoading,
         error,
         isCloudBacked,
         createListing,
