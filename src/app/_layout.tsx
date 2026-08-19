@@ -62,7 +62,7 @@ function AuthenticatedExperience() {
         <View className="mt-4">
           <AppButton
             label="Profil erneut laden"
-            onPress={() => void refreshProfile()}
+            onPress={() => void refreshProfile().catch(() => undefined)}
           />
         </View>
         <View className="mt-2">
