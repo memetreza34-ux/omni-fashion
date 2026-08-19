@@ -36,10 +36,12 @@ interface WardrobeContextType {
   isLoading: boolean;
   error: string | null;
   isCloudBacked: boolean;
+  uploadProgress: number | null;
   addItem: (input: CreateWardrobeItemInput) => Promise<WardrobeItem>;
   updateItem: (item: WardrobeItem) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   analyzeItem: (id: string) => Promise<void>;
+  cancelUpload: () => void;
 }
 
 interface WardrobeSnapshot {
@@ -85,7 +87,9 @@ async function hydrateImageUrls(
 export function WardrobeProvider({ children }: { children: React.ReactNode }) {
   const { user, isBackendConfigured } = useAuth();
   const [snapshot, setSnapshot] = useState<WardrobeSnapshot | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const itemsRef = useRef<WardrobeRefState>({ ownerId: null, items: [] });
+  const activeUploadControllerRef = useRef<AbortController | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
@@ -114,6 +118,17 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       itemsRef.current.ownerId === ownerId ? itemsRef.current.items : [],
     [],
   );
+
+  const cancelUpload = useCallback(() => {
+    activeUploadControllerRef.current?.abort();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      activeUploadControllerRef.current?.abort();
+      activeUploadControllerRef.current = null;
+    };
+  }, [activeOwnerId]);
 
   useEffect(() => {
     if (!user) {
@@ -184,12 +199,38 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString();
 
     if (isCloudBacked) {
+      if (activeUploadControllerRef.current) {
+        throw new Error(
+          'WARDROBE_UPLOAD_ALREADY_ACTIVE: Another wardrobe upload is still running.',
+        );
+      }
+
       const id = createWardrobeItemId();
-      const uploadedImage = await uploadWardrobeImage(
-        ownerId,
-        id,
-        input.localImageUri,
-      );
+      const uploadController = new AbortController();
+      activeUploadControllerRef.current = uploadController;
+      setUploadProgress(0);
+
+      let uploadedImage;
+      try {
+        uploadedImage = await uploadWardrobeImage(
+          ownerId,
+          id,
+          input.localImageUri,
+          {
+            signal: uploadController.signal,
+            onProgress: ({ fraction }) => {
+              if (activeUploadControllerRef.current === uploadController) {
+                setUploadProgress(fraction);
+              }
+            },
+          },
+        );
+      } finally {
+        if (activeUploadControllerRef.current === uploadController) {
+          activeUploadControllerRef.current = null;
+          setUploadProgress(null);
+        }
+      }
 
       try {
         await createCloudWardrobeItem({
@@ -386,10 +427,12 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         error,
         isCloudBacked,
+        uploadProgress,
         addItem,
         updateItem,
         deleteItem,
         analyzeItem,
+        cancelUpload,
       }}
     >
       {children}
