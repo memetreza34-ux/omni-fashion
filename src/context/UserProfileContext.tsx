@@ -32,6 +32,12 @@ interface UserProfileContextType {
   completeOnboarding: () => Promise<void>;
 }
 
+interface UserProfileSnapshot {
+  ownerId: string;
+  profile: UserProfile | null;
+  error: string | null;
+}
+
 const UserProfileContext = createContext<UserProfileContextType | undefined>(
   undefined,
 );
@@ -50,14 +56,18 @@ export function UserProfileProvider({
   children: React.ReactNode;
 }) {
   const { user, isBackendConfigured } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<UserProfileSnapshot | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const profile = currentSnapshot?.profile ?? null;
+  const isLoading = Boolean(activeOwnerId && !currentSnapshot);
+  const error = currentSnapshot?.error ?? null;
 
   const loadProfile = useCallback(async (): Promise<UserProfile | null> => {
     if (!user) {
@@ -79,55 +89,28 @@ export function UserProfileProvider({
     });
   }, [isCloudBacked, user]);
 
-  const refreshProfile = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      setProfile(await loadProfile());
-    } catch (loadError: unknown) {
-      console.error('Failed to load UserProfile', loadError);
-      setProfile(null);
-      setError('Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.');
-      throw loadError;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadProfile]);
-
   useEffect(() => {
-    let active = true;
-
     if (!user) {
-      setProfile(null);
-      setError(null);
-      setIsLoading(false);
-      return () => {
-        active = false;
-      };
+      return undefined;
     }
 
-    setIsLoading(true);
-    setError(null);
+    const ownerId = user.id;
+    let active = true;
 
     void loadProfile()
       .then((nextProfile) => {
         if (active) {
-          setProfile(nextProfile);
+          setSnapshot({ ownerId, profile: nextProfile, error: null });
         }
       })
       .catch((loadError: unknown) => {
         console.error('Failed to load UserProfile', loadError);
         if (active) {
-          setProfile(null);
-          setError(
-            'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
-          );
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
+          setSnapshot({
+            ownerId,
+            profile: null,
+            error: 'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
+          });
         }
       });
 
@@ -136,31 +119,63 @@ export function UserProfileProvider({
     };
   }, [loadProfile, user]);
 
+  const refreshProfile = useCallback(async (): Promise<void> => {
+    if (!user) {
+      return;
+    }
+
+    const ownerId = user.id;
+    setSnapshot(null);
+
+    try {
+      setSnapshot({
+        ownerId,
+        profile: await loadProfile(),
+        error: null,
+      });
+    } catch (loadError: unknown) {
+      console.error('Failed to load UserProfile', loadError);
+      setSnapshot({
+        ownerId,
+        profile: null,
+        error: 'Dein Profil konnte nicht geladen werden. Bitte erneut versuchen.',
+      });
+      throw loadError;
+    }
+  }, [loadProfile, user]);
+
   const updateProfile = useCallback(
     async (input: UpdateUserProfileInput): Promise<void> => {
       if (!user || !profile) {
         throw new Error('USER_PROFILE_NOT_READY');
       }
 
+      const ownerId = user.id;
       setIsSaving(true);
-      setError(null);
+      setSnapshot((current) =>
+        current?.ownerId === ownerId ? { ...current, error: null } : current,
+      );
 
       try {
         if (isCloudBacked) {
-          await updateUserProfile(user.id, input);
-          const refreshed = await getUserProfile(user.id);
+          await updateUserProfile(ownerId, input);
+          const refreshed = await getUserProfile(ownerId);
           if (!refreshed) {
             throw new Error('USER_PROFILE_MISSING_AFTER_UPDATE');
           }
-          setProfile(refreshed);
+          setSnapshot({ ownerId, profile: refreshed, error: null });
           return;
         }
 
         const updated = await updateLocalUserProfile(profile, input);
-        setProfile(updated);
+        setSnapshot({ ownerId, profile: updated, error: null });
       } catch (saveError: unknown) {
         console.error('Failed to update UserProfile', saveError);
-        setError('Dein Profil konnte nicht gespeichert werden.');
+        setSnapshot((current) =>
+          current?.ownerId === ownerId
+            ? { ...current, error: 'Dein Profil konnte nicht gespeichert werden.' }
+            : current,
+        );
         throw saveError;
       } finally {
         setIsSaving(false);
