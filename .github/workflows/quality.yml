@@ -32,6 +32,9 @@ jobs:
       - name: Expo ESLint
         run: npm run lint
 
+      - name: Prettier format check
+        run: npm run format:check
+
       - name: TypeScript, foundation and zero-any checks
         run: npm run verify:quality
 
