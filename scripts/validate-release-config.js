@@ -20,9 +20,7 @@ function requireString(value, label) {
 }
 
 function isReverseDnsIdentifier(value) {
-  return /^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9_-]*){1,}$/.test(
-    value,
-  );
+  return /^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9_-]*){1,}$/.test(value);
 }
 
 function isUuid(value) {

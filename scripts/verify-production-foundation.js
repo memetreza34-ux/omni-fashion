@@ -154,15 +154,14 @@ function main() {
       );
       requireConfigAsset('Web Favicon', expo.web?.favicon);
 
-      const splashConfig = getPluginConfig(
-        expo.plugins,
-        'expo-splash-screen',
-      );
+      const splashConfig = getPluginConfig(expo.plugins, 'expo-splash-screen');
       if (!splashConfig) {
         fail('expo-splash-screen Config Plugin fehlt.');
       } else {
         if (splashConfig.image !== expo.icon) {
-          fail('Native Splash und App Icon müssen dasselbe Omni-Fashion-Asset nutzen.');
+          fail(
+            'Native Splash und App Icon müssen dasselbe Omni-Fashion-Asset nutzen.',
+          );
         } else {
           pass('Native Splash nutzt das Omni-Fashion-App-Icon.');
         }
@@ -333,7 +332,9 @@ function main() {
     fs.existsSync(path.join(ROOT, relativePath)),
   );
   if (remainingStarterAsset) {
-    fail(`Veraltetes Expo-/React-Starterasset vorhanden: ${remainingStarterAsset}.`);
+    fail(
+      `Veraltetes Expo-/React-Starterasset vorhanden: ${remainingStarterAsset}.`,
+    );
   } else {
     pass('Veraltete Expo-/React-Starterassets entfernt.');
   }
