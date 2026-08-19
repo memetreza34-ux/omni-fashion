@@ -46,6 +46,10 @@ Implementiert:
 - Expo-SDK-Kompatibilitätsgate via `expo install --check`
 - Expo-Pakete auf aktuell erwarteten SDK-57-Stand ausgerichtet
 - AsyncStorage auf Expo-kompatibles `2.2.0` ausgerichtet
+- ESLint 9 Flat Config mit `eslint-config-expo/flat`
+- Prettier 3 mit zentraler Konfiguration und Ignore-Liste
+- gesamter Arbeitsbranch einmalig mit Prettier normalisiert
+- permanenter `format:check` im Quality-Workflow
 - TypeScript strict + Zero-any
 - Production-Foundation-Preflight
 - Functions Typecheck + Build + Unit Tests
@@ -53,25 +57,31 @@ Implementiert:
 - Expo Router Production-Webbundle-Smoke-Test
 - NativeWind-v4/Babel/Metro/Tailwind-Konfiguration repariert
 - Dependabot für Root npm, Functions npm und GitHub Actions
+- getrennte Dependency-Audit-/Fix-Plan-Workflows
+- sichere non-force Lockfile-Fix-Simulation für Root und Functions
 
-Aktueller vollständig bestätigter Code-Checkpoint nach Dependency-Ausrichtung + Onboarding:
+Dependency-Audit klassifiziert:
+
+```text
+Root-App: 22 Findings = 14 high + 8 moderate + 0 critical
+Functions: 7 Findings = 7 moderate + 0 high/critical
+```
+
+Die non-force Simulation erzeugt aktuell keine sichere Lockfile-Änderung. Die von npm vorgeschlagenen Force-Fixes würden unter anderem auf ältere Expo-/React-Native-/Firebase-Major-Linien zurückgehen und werden nicht angewendet. Details: [`../14-quality/DEPENDENCY_AUDIT.md`](../14-quality/DEPENDENCY_AUDIT.md).
+
+Permanente Repo-Gates:
 
 ```text
 Expo SDK compatibility ✅
+ESLint ✅
+Prettier ✅
 TypeScript / Zero-any / Foundation ✅
 Functions ✅
 Firebase Security Emulator ✅
 Production Web Bundle ✅
 ```
 
-Offen:
-
-- ESLint Flat Config final einrichten
-- Formatter final festlegen
-- Dependency-Audit paketweise bearbeiten
-- echte EAS Development-/Preview-Builds
-
-**Kein** `npm audit fix --force` ohne Expo-SDK-57-Kompatibilitätsprüfung.
+Offen bleibt nur kompatibilitätsgebundene Dependency-Debt, die über Dependabot, die Audit-Workflows und vor jedem Release Candidate neu bewertet wird.
 
 ---
 
@@ -84,8 +94,7 @@ Im Code:
 - `AppButton`, `AppCard`, `StatusBanner`, semantische Tokens
 - Busy / Disabled / Selected / Checked / Progress / Error States
 - zentrale Mindest-Controlhöhe
-- Auth / Verification / Privacy
-- Onboarding
+- Auth / Verification / Privacy / Onboarding
 - Wardrobe Grid + ItemDetailsModal
 - Style-DNA / Profil
 - Stylist / Wetter / Saved Outfits / Feedback
@@ -122,14 +131,11 @@ Detail: [`../03-design/ACCESSIBILITY.md`](../03-design/ACCESSIBILITY.md)
 
 Implementiert:
 
-- E-Mail/Passwort Login
-- Registrierung + DisplayName
+- E-Mail/Passwort Login + Registrierung + DisplayName
 - Verification Mail / Gate / Reload / Resend Cooldown
-- Passwort Reset
-- Logout / Auth State Listener
+- Passwort Reset / Logout / Auth State Listener
 - typisierte Fehlercodes
-- UserProfile + Repair
-- reaktiver `UserProfileProvider`
+- UserProfile + Repair + reaktiver Provider
 - Development UserProfile-Persistenz
 - Production fail-closed ohne Firebase
 - Passwort-Reauthentication für sensible Privacy-Aktionen
@@ -160,8 +166,6 @@ Extern offen:
 - native Auth-Persistenz über App-Neustart Android/iOS
 - vollständiges Auth-/Onboarding-E2E auf realen Geräten
 - Deep-Link-Rückkehr für Verification/Reset
-
-Detail: [`../04-auth/AUTH_IMPLEMENTATION.md`](../04-auth/AUTH_IMPLEMENTATION.md)
 
 ---
 
@@ -200,13 +204,11 @@ Wardrobe:
 
 - kanonisches `WardrobeItem`
 - Firestore Live-Sync
-- private Storage Uploads
-- Runtime Download URLs
+- private Storage Uploads + Runtime Download URLs
 - echte CRUD-Fehlerzustände
 - Brand / Material / Größe / Zustand / Dress
 - clientseitig geschützte AI-/Swap-Felder
-- virtualisiertes Grid
-- semantischer Editor
+- virtualisiertes Grid + semantischer Editor
 
 AI:
 
@@ -247,8 +249,7 @@ Extern offen:
 - optionale Outerwear / Accessories
 - Style/Farbe/Anlass/Saison/Datenqualität Scoring
 - fehlende Kategorien statt erfundener Produkte
-- Saved Outfits
-- Like / Dislike / Worn
+- Saved Outfits + Like / Dislike / Worn
 - Trusted Wetterkontext
 - kein Fake-Wetter
 - Wetter-Signale im Ranking
@@ -272,10 +273,8 @@ Marketplace:
 - reduzierte öffentliche Listing-Projektion
 - serverseitige öffentliche Medienkopie
 - Listing Create/Pause/Resume/Remove
-- echter Feed
-- echte Offers
-- Locks + Offer Keys
-- Block-Prüfungen
+- echter Feed + echte Offers
+- Locks + Offer Keys + Block-Prüfungen
 - Accept/Decline/Cancel
 - Query-Limits + Indizes + URL-Cache
 - Listing Rate Limit 30/Stunde
@@ -293,13 +292,9 @@ Trade:
 - Listing erst danach `traded`
 - Transaction erst danach `completed`
 - retry-fähige Finalization
-- Disputes
-- Reviews erst nach Completion
+- Disputes + Reviews erst nach Completion
 
-Extern offen:
-
-- echte Zwei-Nutzer-/Zwei-Geräte-E2E-Tests
-- Shipping/Tracking nur bei späterer Produktentscheidung
+Extern offen: echte Zwei-Nutzer-/Zwei-Geräte-E2E-Tests.
 
 ---
 
@@ -307,29 +302,18 @@ Extern offen:
 
 **Status: 🟡 technische Nutzer- und Betriebsbasis**
 
-- Reports
-- Block/Unblock
+- Reports + Block/Unblock
 - Block-Filter und serverseitige Offer-Prüfung
-- Disputes
-- Report Rate Limit 8/Stunde
-- Trade Reviews 1–5 + Kommentar
-- genau eine Review/Nutzer/Trade
+- Disputes + Report Rate Limit 8/Stunde
+- Trade Reviews 1–5 + Kommentar, genau eine Review/Nutzer/Trade
 - `admin|moderator` Custom Claim Guard
-- Report-/Dispute-Queue
-- auditiertes Resolution
+- Report-/Dispute-Queue + auditiertes Resolution
 - `resume_trade` / `manual_recovery`
 - interne UI hinter `internalModeratorUi=false`
 - Recovery Queue für failed Finalizations / Disputes / Push-Probleme
 - keine automatische gefährliche physische Trade-Rückabwicklung
 
-Offen:
-
-- Suspension/Ban Lifecycle
-- Listing Takedown
-- Appeals
-- Evidence Attachments
-- Support Case Domain
-- manuelle Recovery-Aktionen + operative SLAs
+Offen: Suspension/Ban Lifecycle, Listing Takedown, Appeals, Evidence Attachments, Support Case Domain und operative Recovery-SLAs.
 
 ---
 
@@ -339,8 +323,7 @@ Offen:
 
 - persistente Notifications
 - idempotente Trigger
-- Live Inbox + Read State
-- Activity Tab
+- Live Inbox + Read State + Activity Tab
 - kein Fake-Fallback
 - 100-neueste Query + Index + Virtualisierung
 
@@ -350,19 +333,11 @@ Offen:
 - server-only Push Collections
 - explizites `pushEnabled`
 - Delivery Claims
-- Expo Push Tickets
-- Receipt Worker
-- `DeviceNotRegistered` Cleanup
-- Stale Claims
+- Expo Push Tickets + Receipt Worker
+- `DeviceNotRegistered` Cleanup + Stale Claims
 - Rate Limit 20 Registrierungen/Stunde
 
-Extern offen:
-
-- EAS Projekt + App-Identifier
-- SDK-57-konformes `expo-notifications`
-- native Config / Permission Flow / Android Channel
-- echte Expo Push Tokens
-- physische Android/iOS Tests
+Extern offen: EAS Projekt/App-Identifier, SDK-57-konformes `expo-notifications`, native Config/Permission Flow/Android Channel, echte Expo Push Tokens und physische Tests.
 
 ---
 
@@ -374,21 +349,14 @@ Extern offen:
 - Credentials/Tokens aus Export ausgeschlossen
 - Deletion Readiness
 - aktive Marketplace-Zustände blockieren Löschung
-- Fresh Auth
-- Passwort-Reauthentication
+- Fresh Auth + Passwort-Reauthentication
 - doppelte destruktive Bestätigung
 - private Firestore-/Storage-/Push-/Rate-Limit-Daten löschen
 - gemeinsame abgeschlossene Historie pseudonymisieren/redigieren
 - minimaler pseudonymer Deletion Audit
 - Firebase Auth zuletzt löschen
 
-Extern offen:
-
-- reales Firebase E2E
-- Retention Policy
-- rechtliche Prüfung
-- finale Privacy Policy
-- Store Data Safety / Privacy Labels
+Extern offen: reales Firebase E2E, Retention Policy, rechtliche Prüfung, finale Privacy Policy und Store Data Safety / Privacy Labels.
 
 ---
 
@@ -408,14 +376,7 @@ Extern offen:
 - provider-neutrale Telemetry Boundary
 - ErrorBoundary `captureException`
 
-Extern offen:
-
-- Crash Provider
-- Analytics Provider
-- Cost/Budget Monitoring
-- Abuse-Metriken
-- App Check Enforcement
-- Firestore TTL
+Extern offen: Crash Provider, Analytics Provider, Cost/Budget Monitoring, Abuse-Metriken, App Check Enforcement und Firestore TTL.
 
 ---
 
@@ -428,13 +389,7 @@ Extern offen:
 - keine Fake-Produkte / Fake-Preise
 - Remote Kill-Switch vorhanden
 
-Offen:
-
-- echte Produktquelle
-- Gap-to-Shop
-- Affiliate-/Partner-Regeln
-- Tracking Consent
-- Monetarisierungs-Evaluation
+Offen: echte Produktquelle, Gap-to-Shop, Affiliate-/Partner-Regeln, Tracking Consent und Monetarisierungs-Evaluation.
 
 ---
 
@@ -452,6 +407,8 @@ Im Repo:
 - fail-closed Release-Config-Validator
 - Foundation Preflight
 - Expo Dependency Gate
+- ESLint + Prettier Gates
+- Dependency Audit / Safe Fix Simulation
 - guarded Firebase Commands
 - Remote Kill-Switches
 - App-Check-Strategie
@@ -462,11 +419,9 @@ Extern offen:
 - Android Package / iOS Bundle ID
 - Signing / Credentials
 - Firebase Dev/Prod Environments
-- Secrets
-- echte Deployments
+- Secrets + echte Deployments
 - Development/Internal Builds
-- native Push
-- App Check
+- native Push + App Check
 - Monitoring
 - Store Assets / Data Safety / Privacy Labels
 - Release Candidate auf realen Geräten
@@ -476,22 +431,22 @@ Extern offen:
 
 # Nächste verbindliche Reihenfolge
 
+Die intern lösbaren Lint-/Formatter-/Dependency-Schritte sind abgeschlossen. Der nächste große Fortschritt benötigt reale Infrastruktur.
+
 ```text
-1. ESLint Flat Config + Formatter im Repo finalisieren
-2. Dependency-Audit paketweise klassifizieren
-3. Firebase Dev-Projekt real anlegen
-4. Auth / Firestore / Storage konfigurieren
-5. guarded Rules / Indizes / Functions Deploy
-6. Gemini Secret + RuntimeConfig setzen
-7. App Check im echten Development Build validieren
-8. Expo/EAS Projekt + finale App-Identifier
-9. native Push-/Development-Build-Abhängigkeiten
-10. Android/iOS Builds
-11. DEVICE_E2E_PLAN mit zwei echten Konten/Geräten
-12. VoiceOver/TalkBack/Dynamic-Type/Performance
-13. Monitoring / Recht / Store
-14. Release Candidate
-15. kontrollierter Rollout
+1. Firebase Dev-Projekt real anlegen
+2. Auth / Firestore / Storage konfigurieren
+3. guarded Rules / Indizes / Functions Deploy
+4. Gemini Secret + RuntimeConfig setzen
+5. App Check im echten Development Build validieren
+6. Expo/EAS Projekt + finale App-Identifier
+7. native Push-/Development-Build-Abhängigkeiten
+8. Android/iOS Builds
+9. DEVICE_E2E_PLAN mit zwei echten Konten/Geräten
+10. VoiceOver/TalkBack/Dynamic-Type/Performance
+11. Monitoring / Recht / Store
+12. Release Candidate
+13. kontrollierter Rollout
 ```
 
 ## Release-Grenze
