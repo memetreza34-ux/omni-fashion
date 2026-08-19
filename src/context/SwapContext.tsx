@@ -189,12 +189,12 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
 
   const marketplaceListings = useMemo(
     () =>
-      activeListings.filter(
+      (currentSnapshot?.activeListings ?? []).filter(
         (listing) =>
           (!user || listing.ownerId !== user.id) &&
           !blockedUserIds.has(listing.ownerId),
       ),
-    [activeListings, blockedUserIds, user],
+    [blockedUserIds, currentSnapshot, user],
   );
 
   const requireCloud = () => {
@@ -245,7 +245,9 @@ export function SwapProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isLoading = isCloudBacked
-    ? !currentSnapshot || currentSnapshot.loadedKeys.size < 5 || isTrustSafetyLoading
+    ? !currentSnapshot ||
+      currentSnapshot.loadedKeys.size < 5 ||
+      isTrustSafetyLoading
     : false;
 
   return (
