@@ -19,7 +19,7 @@ WardrobeItem
 
 # 1. Aktueller Stand
 
-Produktiver Cloud-Pfad ist im Code vorbereitet:
+Der Cloud-Pfad ist im Code produktionsorientiert vorbereitet:
 
 ```text
 src/features/wardrobe/types.ts
@@ -40,11 +40,13 @@ tests/security/firestore.rules.integration.mjs
 tests/security/storage.rules.integration.mjs
 ```
 
+Der technische Upload-Kern unterstützt inzwischen Fortschritt, Nutzerabbruch und gezielten Retry. Reale Android-/iOS-Device-Validierung bleibt davon getrennt offen.
+
 ---
 
 # 2. Canonical WardrobeItem
 
-Das aktuelle MVP-Schema enthält:
+Das aktuelle MVP-Schema enthält unter anderem:
 
 ```text
 id
@@ -65,7 +67,11 @@ styleTags[]
 source
 aiStatus
 aiConfidence
+aiFieldConfidence
 aiModelVersion
+aiPromptVersion
+aiAnalyzedAt
+aiErrorCode
 isListedForSwap
 swapListingId
 createdAt
@@ -73,11 +79,7 @@ updatedAt
 schemaVersion
 ```
 
-## Warum bestehende Felder wie `category`, `color`, `season` erhalten bleiben
-
-Die aktuelle UI benutzt diese Felder bereits.
-
-Wir ersetzen nicht grundlos das komplette Frontend durch ein theoretisch perfektes Datenmodell. Stattdessen wurde das vorhandene Modell erweitert, damit die App schrittweise produktionsreif werden kann.
+Bestehende UI-Felder wie `category`, `color` und `season` bleiben bewusst erhalten. Das vorhandene Produkt wird schrittweise gehärtet statt durch einen unnötigen Big-Bang-Datenmodellwechsel ersetzt.
 
 ---
 
@@ -97,9 +99,11 @@ Eine lokale URI funktioniert nur auf dem Gerät, auf dem das Bild ausgewählt wu
 ```text
 Image Picker
 → lokale URI
-→ Bild validieren
-→ Firebase Storage
-→ imagePath in Firestore
+→ lokale Datei lesen
+→ Größe / Content-Type validieren
+→ resumable Firebase Storage Upload
+→ Firestore WardrobeItem
+→ imagePath als persistente Source of Truth
 → Download URL bei Laufzeit auflösen
 ```
 
@@ -109,13 +113,93 @@ Der kanonische Pfad lautet:
 users/{uid}/wardrobe/{itemId}/original.{extension}
 ```
 
-`imageUrl` wird nur für die Anzeige im laufenden Client benutzt und nicht als persistente Source of Truth behandelt.
+`imageUrl` wird nur für die Anzeige im laufenden Client benutzt. Persistiert wird `imagePath`.
 
 ---
 
-# 4. Upload-Regeln
+# 4. Resumable Upload
 
-Aktuell:
+Der Cloud-Upload verwendet Firebase `uploadBytesResumable`.
+
+Damit besitzt der Client einen echten Upload-Task statt eines blind abgewarteten One-shot-Uploads.
+
+Aktueller Flow:
+
+```text
+lokale URI
+→ expo/fetch + AbortSignal
+→ Blob
+→ UploadTask
+→ state_changed
+→ bytesTransferred / totalBytes
+→ UI-Prozentwert
+→ Upload abgeschlossen
+→ Firestore Item erstellen
+```
+
+Die UI zeigt:
+
+- echten Prozentwert
+- semantischen Progressbar-State
+- sichtbaren Fortschrittsbalken
+- `Abbrechen`-Aktion
+- blockierten Add-Button während eines laufenden Uploads
+
+Der `WardrobeContext` erlaubt absichtlich nur einen aktiven Cloud-Upload gleichzeitig. Bei Owner-Wechsel bzw. Provider-Unmount wird ein aktiver Upload abgebrochen.
+
+---
+
+# 5. Cancel-Verhalten
+
+Ein Nutzerabbruch läuft über einen `AbortController`.
+
+```text
+UI Abbrechen
+→ AbortSignal
+→ Firebase UploadTask.cancel()
+→ stabiler App-Cancel-Fehler
+→ kein falscher Fehlerdialog
+```
+
+Wenn ein Abort genau am Ende des Uploads eintrifft, versucht der Service die eventuell bereits geschriebene Storage-Datei wieder zu entfernen. Ein Abbruch darf kein erfolgreiches Firestore-Item erzeugen.
+
+---
+
+# 6. Retry- und Fehlerklassifizierung
+
+Cloud-Uploadfehler werden nicht mehr alle mit derselben pauschalen Meldung behandelt.
+
+Nicht automatisch retrybar:
+
+```text
+Bild >= 10 MB
+leere Datei
+lokale Datei nicht lesbar
+nicht authentifiziert
+Storage-Zugriff nicht erlaubt
+Storage-Quota erschöpft
+fehlende/falsche Bucket- oder Projektkonfiguration
+Nutzerabbruch
+```
+
+Gezielt retrybar:
+
+```text
+storage/retry-limit-exceeded
+storage/invalid-checksum
+storage/server-file-wrong-size
+storage/cannot-slice-blob
+storage/unknown
+unbekannter transienter Transferfehler
+```
+
+Bei retrybaren Fehlern kann der Nutzer `Erneut versuchen` wählen. Derselbe lokale URI-/Source-Kontext wird erneut in den normalen Upload-Flow gegeben. Nicht retrybare Fehler erhalten eine konkrete Meldung statt einer sinnlosen Retry-Schleife.
+
+---
+
+# 7. Upload-Regeln / Defense in Depth
+
+Client und Storage Rules schützen dieselbe Grenze:
 
 - nur Bild-Dateitypen
 - kleiner als 10 MB
@@ -123,21 +207,24 @@ Aktuell:
 - fremde Nutzer dürfen private Wardrobe-Bilder weder lesen noch überschreiben
 - Public Listing Media ist clientseitig schreibgeschützt
 
-Der Upload-Service verwendet den Expo-57-konformen Fetch/Blob-Pfad aus dem installierten `expo`-Paket.
+Client:
 
-Noch auf echten Geräten zu validieren:
+```text
+blob.size < 10 MB
+```
 
-- Kamera URI → Blob auf Android
-- Galerie URI → Blob auf Android
-- Kamera URI → Blob auf iOS
-- Galerie URI → Blob auf iOS
-- HEIC/HEIF Verhalten
-- große Bilder / Speicherverbrauch
-- langsame Verbindung
+Storage Rules:
+
+```text
+request.resource.size < 10 * 1024 * 1024
+request.resource.contentType.matches('image/.*')
+```
+
+Die Security-Emulator-Suite prüft inzwischen auch die harte Grenze: Ein Bild mit exakt 10 MB muss abgewiesen werden.
 
 ---
 
-# 5. Firestore Service
+# 8. Firestore Service
 
 Der Client greift nicht direkt überall auf Firestore zu.
 
@@ -153,9 +240,11 @@ deleteCloudWardrobeItem(...)
 
 Die UI kennt dadurch keine Firestore-Query-Details.
 
+Ein neues Cloud-Item wird erst nach erfolgreich bestätigtem Storage-Upload erstellt. Wenn die Firestore-Erstellung danach scheitert, versucht der Client die bereits hochgeladene Datei wieder zu löschen.
+
 ---
 
-# 6. Cloud Query
+# 9. Cloud Query
 
 Aktuell:
 
@@ -166,17 +255,13 @@ where ownerId == currentUser.uid
 
 Sortierung nach `createdAt` erfolgt derzeit clientseitig.
 
-Grund:
-
-Für den ersten MVP vermeiden wir einen unnötigen Composite Index nur für die Sortierung einer privaten Wardrobe-Liste.
-
-Wenn Nutzer später sehr große Kleiderschränke haben, werden Pagination und serverseitige Sortierung ergänzt.
+Für den ersten MVP vermeiden wir einen unnötigen Composite Index nur für die Sortierung einer privaten Wardrobe-Liste. Pagination wird erst ergänzt, wenn reale Nutzungsdaten bzw. große Wardrobes sie rechtfertigen.
 
 ---
 
-# 7. Development-Fallback
+# 10. Development-Fallback
 
-Solange noch keine echten Firebase-Projektwerte im Repo/Environment vorhanden sind, bleibt der Development-Demo-Pfad benutzbar.
+Solange noch keine echten Firebase-Projektwerte im Environment vorhanden sind, bleibt der Development-Demo-Pfad benutzbar.
 
 ```text
 Echter Firebase User
@@ -186,71 +271,60 @@ Development Demo User
 → AsyncStorage
 ```
 
-Der lokale Speicher wurde von:
-
-```text
-@wardrobe_items
-```
-
-auf ein neues V2-Schema migriert.
-
-Bestehende alte Items werden einmalig normalisiert.
-
-Production darf nicht auf diesen Demo-Pfad zurückfallen.
+Der lokale Speicher verwendet das migrierte V2-Schema. Production darf nicht auf diesen Demo-Pfad zurückfallen.
 
 ---
 
-# 8. Kein Fake-AI-Timer mehr
+# 11. Echte AI nach erfolgreichem Cloud-Upload
 
-Der ursprüngliche Screen simulierte Upload/KI mit:
+Der ursprüngliche Fake-Timer ist entfernt.
 
-```text
-setTimeout(..., 1000)
-```
-
-Dieser Pfad wurde entfernt.
-
-Aktuell bedeutet ein Upload nur:
+Der reale Cloud-Flow lautet inzwischen:
 
 ```text
-Bild speichern
-→ neutrales Kleidungsstück anlegen
-→ Nutzer kann Metadaten korrigieren
+Storage Upload erfolgreich
+→ Firestore WardrobeItem
+→ Trusted analyzeWardrobeItem Command
+→ pending
+→ Structured AI Result
+→ completed oder failed
 ```
 
-`aiStatus` beginnt mit:
+Der lokale Development-Demo-Pfad simuliert keine KI.
 
-```text
-not_requested
-```
+Ein Fehler der automatischen AI-Analyse zerstört das erfolgreich gespeicherte Kleidungsstück nicht. Das Item bleibt im Wardrobe und kann über den realen Analysepfad erneut analysiert werden.
 
-Erst die echte AI-Pipeline darf den AI-Zustand ändern.
+Geschützte AI-Systemfelder werden nicht direkt vom normalen Client frei geschrieben.
 
 ---
 
-# 9. Geschützte Systemfelder
+# 12. Geschützte Systemfelder
 
 Folgende Felder dürfen nicht von einem manipulierten normalen Client frei gesetzt werden:
 
 ```text
 aiStatus
 aiConfidence
+aiFieldConfidence
 aiModelVersion
+aiPromptVersion
+aiAnalyzedAt
+aiErrorCode
 isListedForSwap
 swapListingId
 ```
 
 Warum:
 
-- AI-Ergebnis soll vom Trusted Backend stammen.
-- Swap-Verknüpfung soll nur durch einen validierten Listing-/Trade-Flow entstehen.
-- ein Nutzer darf nicht durch direkten Firestore-Zugriff Systemzustände fälschen.
+- AI-Ergebnisse stammen vom Trusted Backend.
+- Swap-Verknüpfungen entstehen ausschließlich über validierte Listing-/Trade-Flows.
+- direkter Firestore-Zugriff darf Systemzustände nicht fälschen.
 
 Firestore Rules prüfen diese Invarianten.
 
 ---
 
-# 10. Löschen
+# 13. Löschen
 
 Aktueller Client-Flow:
 
@@ -259,17 +333,15 @@ Firestore-Dokument löschen
 → Storage-Datei best effort löschen
 ```
 
-Wenn Storage Cleanup fehlschlägt, bleibt schlimmstenfalls eine verwaiste Datei statt eines sichtbaren Kleidungsstücks mit kaputtem Bild.
+Wenn Storage Cleanup fehlschlägt, bleibt schlimmstenfalls eine verwaiste private Datei statt eines sichtbaren Kleidungsstücks mit kaputtem Bild.
 
-Später ergänzt das Trusted Backend einen Cleanup-/Maintenance-Job für verwaiste Dateien.
-
-Für Accountlöschung wird ohnehin ein serverseitiger vollständiger Cleanup benötigt.
+Für Accountlöschung existiert zusätzlich ein serverseitiger Cleanup-Lifecycle. Ein späterer Maintenance-Job kann allgemeine verwaiste Dateien zusätzlich bereinigen.
 
 ---
 
-# 11. Item Editor
+# 14. Item Editor
 
-Der Editor unterstützt inzwischen zusätzlich:
+Der Editor unterstützt unter anderem:
 
 - Name
 - Farbe
@@ -280,11 +352,11 @@ Der Editor unterstützt inzwischen zusätzlich:
 - Saison
 - Zustand
 
-Die Felder sind bewusst dieselben, die später für AI-Korrektur, Outfit-Ranking und OmniSwap relevant sind.
+Diese Felder werden gemeinsam von AI-Korrektur, Outfit-Ranking und OmniSwap genutzt.
 
 ---
 
-# 12. Security Tests
+# 15. Security Tests
 
 CI prüft mit Firebase Emulator Suite mindestens:
 
@@ -306,43 +378,44 @@ CI prüft mit Firebase Emulator Suite mindestens:
 - Owner kann eigenes Kleidungsbild schreiben/lesen
 - Fremder kann es nicht lesen/überschreiben
 - Nicht-Bild-Dateien werden abgewiesen
+- Bilder an der 10-MB-Grenze werden abgewiesen
 - Avatar ist für eingeloggte Nutzer sichtbar
 - anonyme Nutzer lesen Avatar nicht
 - Public Listing Media kann nicht direkt vom Client geschrieben werden
 
 ---
 
-# 13. Noch offene Wardrobe-Arbeit
+# 16. Noch offene Wardrobe-Arbeit
 
-Vor Status ✅ produktionsreif fehlen noch:
+Vor echter Production-Freigabe fehlen weiterhin reale Infrastruktur-/Device-Schritte:
 
 - [ ] echter Firebase-Dev-Account verbunden
 - [ ] Android Upload real getestet
 - [ ] iOS Upload real getestet
 - [ ] Offline-/Reconnect-Verhalten validiert
-- [ ] Upload-Fortschritt statt nur globalem Spinner
+- [x] echter Upload-Fortschritt
+- [x] Nutzer-Cancel
+- [x] gezielter Retry + Fehlerklassifizierung
+- [x] Storage Rules Max-Size Regression
 - [ ] Bildkompression/Resize vor Upload
-- [ ] Retry / Cancel bei Upload
-- [ ] Storage Rules Max-Size Test
-- [ ] echte Firestore-Service-Integrationtests
-- [ ] Pagination bei Bedarf
+- [ ] HEIC/HEIF auf echten Geräten validiert
+- [ ] echte Firestore-Service-Integration gegen Dev-Projekt
+- [ ] Pagination bei realem Bedarf
 - [ ] Cloud Item Delete + Storage Cleanup real validiert
-- [ ] Account-Cleanup im Trusted Backend
+- [ ] Account-Cleanup gegen reales Dev-Projekt validiert
 
 ---
 
-# 14. Nächster Block
+# 17. Nächster interner Wardrobe-Block
 
-Nach dem stabilen Cloud-Schrank:
+Ohne reales Firebase-/Device-Setup ist der nächste sinnvolle interne Schritt:
 
 ```text
-Wardrobe Image
-→ Trusted AI Command
-→ Vision Model
-→ Schema Validation
-→ Confidence
-→ sichere Systemfeld-Aktualisierung
-→ Nutzer bestätigt/korrigiert
+lokales Picker-Bild
+→ sichere Dimensionen bestimmen
+→ Resize / Kompression
+→ Upload-Blob unter kontrollierter Größe
+→ bestehender resumable Upload
 ```
 
-Das ist die Grundlage für die echte KI-Kleidungsanalyse.
+Danach müssen Kamera, Galerie, HEIC/HEIF, langsame Verbindung, Cancel und Reconnect auf echten Android-/iOS-Builds validiert werden.
