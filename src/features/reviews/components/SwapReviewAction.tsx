@@ -32,17 +32,15 @@ export function SwapReviewAction({
   const [comment, setComment] = useState('');
   const [expanded, setExpanded] = useState(false);
 
+  const reviewAvailable =
+    transaction.status === 'completed' &&
+    transaction.finalizationState === 'completed';
+
   useEffect(() => {
-    if (
-      transaction.status !== 'completed' ||
-      transaction.finalizationState !== 'completed'
-    ) {
-      setExistingReview(null);
-      setLoading(false);
+    if (!reviewAvailable) {
       return undefined;
     }
 
-    setLoading(true);
     return subscribeToSwapReview(
       transaction.id,
       currentUserId,
@@ -55,12 +53,9 @@ export function SwapReviewAction({
         setLoading(false);
       },
     );
-  }, [currentUserId, transaction.finalizationState, transaction.id, transaction.status]);
+  }, [currentUserId, reviewAvailable, transaction.id]);
 
-  if (
-    transaction.status !== 'completed' ||
-    transaction.finalizationState !== 'completed'
-  ) {
+  if (!reviewAvailable) {
     return null;
   }
 
