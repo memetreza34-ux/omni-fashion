@@ -40,6 +40,12 @@ interface TrustSafetyContextType {
   }) => Promise<string>;
 }
 
+interface TrustSafetySnapshot {
+  ownerId: string;
+  blockedIds: string[];
+  error: string | null;
+}
+
 const TrustSafetyContext = createContext<TrustSafetyContextType | undefined>(
   undefined,
 );
@@ -50,34 +56,40 @@ export function TrustSafetyProvider({
   children: React.ReactNode;
 }) {
   const { user, isBackendConfigured } = useAuth();
-  const [blockedIds, setBlockedIds] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<TrustSafetySnapshot | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const blockedIds = currentSnapshot?.blockedIds ?? [];
+  const isLoading = Boolean(activeOwnerId && isCloudBacked && !currentSnapshot);
+  const error = currentSnapshot?.error ?? null;
 
   useEffect(() => {
-    setError(null);
-    setBlockedIds([]);
-    setIsLoading(true);
-
     if (!user || !isCloudBacked) {
-      setIsLoading(false);
       return undefined;
     }
 
+    const ownerId = user.id;
     return subscribeToUserBlocks(
-      user.id,
+      ownerId,
       (blocks) => {
-        setBlockedIds(blocks.map((block) => block.blockedId));
-        setIsLoading(false);
+        setSnapshot({
+          ownerId,
+          blockedIds: blocks.map((block) => block.blockedId),
+          error: null,
+        });
       },
       (subscriptionError) => {
         console.error('Trust & Safety blocks subscription failed', subscriptionError);
-        setError('Blockierte Konten konnten nicht geladen werden.');
-        setIsLoading(false);
+        setSnapshot({
+          ownerId,
+          blockedIds: [],
+          error: 'Blockierte Konten konnten nicht geladen werden.',
+        });
       },
     );
   }, [isCloudBacked, user]);
