@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -166,15 +166,9 @@ export default function ProfileScreen() {
   } = useStyleProfile();
   const [editing, setEditing] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(
-    defaultQuestionnaire(),
+  const [questionnaire, setQuestionnaire] = useState<StyleQuestionnaire>(() =>
+    profile?.questionnaire ?? defaultQuestionnaire(),
   );
-
-  useEffect(() => {
-    if (profile) {
-      setQuestionnaire(profile.questionnaire);
-    }
-  }, [profile]);
 
   const handlePreferredColor = (color: StyleColorOption) => {
     setQuestionnaire((current) => ({
@@ -229,6 +223,11 @@ export default function ProfileScreen() {
         'Der Kleiderschrank konnte gerade nicht neu ausgewertet werden.',
       );
     }
+  };
+
+  const openEditor = () => {
+    setQuestionnaire(profile?.questionnaire ?? defaultQuestionnaire());
+    setEditing(true);
   };
 
   if (showPrivacy) {
@@ -416,7 +415,7 @@ export default function ProfileScreen() {
             <View className="mb-4">
               <AppButton
                 label="Präferenzen bearbeiten"
-                onPress={() => setEditing(true)}
+                onPress={openEditor}
               />
             </View>
 
