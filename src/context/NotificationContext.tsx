@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -81,10 +80,9 @@ export function NotificationProvider({
     );
   }, [isCloudBacked, user]);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((notification) => notification.readAt === null).length,
-    [notifications],
-  );
+  const unreadCount = notifications.filter(
+    (notification) => notification.readAt === null,
+  ).length;
 
   const markRead = async (notificationId: string): Promise<void> => {
     if (!user || !isCloudBacked) {
