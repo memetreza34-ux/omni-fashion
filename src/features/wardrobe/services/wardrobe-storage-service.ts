@@ -36,6 +36,27 @@ function errorCode(error: unknown): string {
     : '';
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '';
+}
+
+export type WardrobeImageUploadFailureKind =
+  | 'canceled'
+  | 'too_large'
+  | 'empty'
+  | 'read_failed'
+  | 'unauthenticated'
+  | 'unauthorized'
+  | 'quota_exceeded'
+  | 'configuration'
+  | 'retryable_transfer'
+  | 'unknown';
+
+export interface WardrobeImageUploadFailure {
+  kind: WardrobeImageUploadFailureKind;
+  retryable: boolean;
+}
+
 export function isWardrobeImageUploadCanceled(error: unknown): boolean {
   if (error instanceof Error) {
     return (
@@ -45,6 +66,55 @@ export function isWardrobeImageUploadCanceled(error: unknown): boolean {
   }
 
   return errorCode(error).includes('storage/canceled');
+}
+
+export function classifyWardrobeImageUploadFailure(
+  error: unknown,
+): WardrobeImageUploadFailure {
+  if (isWardrobeImageUploadCanceled(error)) {
+    return { kind: 'canceled', retryable: false };
+  }
+
+  const message = errorMessage(error);
+  if (message.includes('WARDROBE_IMAGE_TOO_LARGE')) {
+    return { kind: 'too_large', retryable: false };
+  }
+  if (message.includes('WARDROBE_IMAGE_EMPTY')) {
+    return { kind: 'empty', retryable: false };
+  }
+  if (message.includes('WARDROBE_IMAGE_READ_FAILED')) {
+    return { kind: 'read_failed', retryable: false };
+  }
+
+  const code = errorCode(error);
+  if (code.includes('storage/unauthenticated')) {
+    return { kind: 'unauthenticated', retryable: false };
+  }
+  if (code.includes('storage/unauthorized')) {
+    return { kind: 'unauthorized', retryable: false };
+  }
+  if (code.includes('storage/quota-exceeded')) {
+    return { kind: 'quota_exceeded', retryable: false };
+  }
+  if (
+    code.includes('storage/bucket-not-found') ||
+    code.includes('storage/project-not-found') ||
+    code.includes('storage/no-default-bucket') ||
+    code.includes('storage/invalid-default-bucket')
+  ) {
+    return { kind: 'configuration', retryable: false };
+  }
+  if (
+    code.includes('storage/retry-limit-exceeded') ||
+    code.includes('storage/invalid-checksum') ||
+    code.includes('storage/server-file-wrong-size') ||
+    code.includes('storage/cannot-slice-blob') ||
+    code.includes('storage/unknown')
+  ) {
+    return { kind: 'retryable_transfer', retryable: true };
+  }
+
+  return { kind: 'unknown', retryable: true };
 }
 
 export interface WardrobeImageUploadProgress {
