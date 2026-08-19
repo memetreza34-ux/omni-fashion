@@ -64,7 +64,6 @@ export function TrustSafetyProvider({
   const activeOwnerId = user?.id ?? null;
   const currentSnapshot =
     activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
-  const blockedIds = currentSnapshot?.blockedIds ?? [];
   const isLoading = Boolean(activeOwnerId && isCloudBacked && !currentSnapshot);
   const error = currentSnapshot?.error ?? null;
 
@@ -94,7 +93,10 @@ export function TrustSafetyProvider({
     );
   }, [isCloudBacked, user]);
 
-  const blockedUserIds = useMemo(() => new Set(blockedIds), [blockedIds]);
+  const blockedUserIds = useMemo(
+    () => new Set(currentSnapshot?.blockedIds ?? []),
+    [currentSnapshot],
+  );
 
   const requireCloud = () => {
     if (!user || !isCloudBacked) {
