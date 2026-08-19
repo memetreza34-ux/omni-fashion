@@ -37,6 +37,12 @@ interface StyleProfileContextType {
   refreshFromWardrobe: () => Promise<void>;
 }
 
+interface StyleProfileSnapshot {
+  ownerId: string;
+  profile: StyleProfile | null;
+  error: string | null;
+}
+
 const StyleProfileContext = createContext<StyleProfileContextType | undefined>(
   undefined,
 );
@@ -48,47 +54,44 @@ export function StyleProfileProvider({
 }) {
   const { user, isBackendConfigured } = useAuth();
   const { items } = useWardrobe();
-  const [profile, setProfile] = useState<StyleProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<StyleProfileSnapshot | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const profile = currentSnapshot?.profile ?? null;
+  const isLoading = Boolean(activeOwnerId && !currentSnapshot);
+  const error = currentSnapshot?.error ?? null;
 
   useEffect(() => {
-    let active = true;
-    setIsLoading(true);
-    setError(null);
-
     if (!user) {
-      setProfile(null);
-      setIsLoading(false);
-      return () => {
-        active = false;
-      };
+      return undefined;
     }
 
+    const ownerId = user.id;
+    let active = true;
     const load = isCloudBacked
-      ? getStyleProfile(user.id)
-      : loadLocalStyleProfile(user.id);
+      ? getStyleProfile(ownerId)
+      : loadLocalStyleProfile(ownerId);
 
     void load
       .then((nextProfile) => {
         if (active) {
-          setProfile(nextProfile);
+          setSnapshot({ ownerId, profile: nextProfile, error: null });
         }
       })
       .catch((loadError: unknown) => {
         console.error('Failed to load StyleProfile', loadError);
         if (active) {
-          setError('Deine Style-DNA konnte nicht geladen werden.');
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
+          setSnapshot({
+            ownerId,
+            profile: null,
+            error: 'Deine Style-DNA konnte nicht geladen werden.',
+          });
         }
       });
 
@@ -120,44 +123,61 @@ export function StyleProfileProvider({
       throw new Error('STYLE_PROFILE_AUTH_REQUIRED');
     }
 
+    const ownerId = user.id;
     const draft = buildStyleProfileDraft(questionnaire, items);
     const now = new Date().toISOString();
 
     if (isCloudBacked) {
-      await saveStyleProfile(user.id, {
+      await saveStyleProfile(ownerId, {
         questionnaire,
         ...draft,
       });
 
-      setProfile({
-        userId: user.id,
-        questionnaire,
-        ...draft,
-        createdAt: profile?.createdAt ?? now,
-        updatedAt: now,
-        schemaVersion: STYLE_PROFILE_SCHEMA_VERSION,
+      setSnapshot({
+        ownerId,
+        profile: {
+          userId: ownerId,
+          questionnaire,
+          ...draft,
+          createdAt: profile?.createdAt ?? now,
+          updatedAt: now,
+          schemaVersion: STYLE_PROFILE_SCHEMA_VERSION,
+        },
+        error: null,
       });
       return;
     }
 
-    const saved = await saveLocalStyleProfile(user.id, {
+    const saved = await saveLocalStyleProfile(ownerId, {
       questionnaire,
       ...draft,
     });
-    setProfile(saved);
+    setSnapshot({ ownerId, profile: saved, error: null });
+  };
+
+  const setCurrentError = (nextError: string | null) => {
+    if (!user) {
+      return;
+    }
+
+    setSnapshot((current) =>
+      current?.ownerId === user.id
+        ? { ...current, error: nextError }
+        : { ownerId: user.id, profile: null, error: nextError },
+    );
   };
 
   const saveQuestionnaire = async (
     questionnaire: StyleQuestionnaire,
   ): Promise<void> => {
     setIsSaving(true);
-    setError(null);
+    setCurrentError(null);
 
     try {
       await persistProfile(questionnaire);
     } catch (saveError: unknown) {
       console.error('Failed to save StyleProfile', saveError);
-      setError('Deine Style-DNA konnte nicht gespeichert werden.');
+      setCurrentError('Deine Style-DNA konnte nicht gespeichert werden.');
       throw saveError;
     } finally {
       setIsSaving(false);
@@ -170,13 +190,13 @@ export function StyleProfileProvider({
     }
 
     setIsSaving(true);
-    setError(null);
+    setCurrentError(null);
 
     try {
       await persistProfile(profile.questionnaire);
     } catch (refreshError: unknown) {
       console.error('Failed to refresh StyleProfile', refreshError);
-      setError('Dein Kleiderschrank konnte nicht neu ausgewertet werden.');
+      setCurrentError('Dein Kleiderschrank konnte nicht neu ausgewertet werden.');
       throw refreshError;
     } finally {
       setIsSaving(false);
