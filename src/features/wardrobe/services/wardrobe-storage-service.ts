@@ -33,7 +33,8 @@ function canceledUploadError(): Error {
 export function isWardrobeImageUploadCanceled(error: unknown): boolean {
   if (error instanceof Error) {
     return (
-      error.name === 'AbortError' || error.message.includes(UPLOAD_CANCELED_CODE)
+      error.name === 'AbortError' ||
+      error.message.includes(UPLOAD_CANCELED_CODE)
     );
   }
 
