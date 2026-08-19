@@ -12,8 +12,76 @@ import {
 
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
 import { useWardrobe } from '../context/WardrobeContext';
-import { isWardrobeImageUploadCanceled } from '../features/wardrobe/services/wardrobe-storage-service';
+import { classifyWardrobeImageUploadFailure } from '../features/wardrobe/services/wardrobe-storage-service';
+import type { WardrobeImageUploadFailureKind } from '../features/wardrobe/services/wardrobe-storage-service';
 import type { WardrobeItem, WardrobeSource } from '../types/wardrobe';
+
+interface UploadFailureCopy {
+  title: string;
+  message: string;
+}
+
+function uploadFailureCopy(kind: WardrobeImageUploadFailureKind): UploadFailureCopy {
+  switch (kind) {
+    case 'too_large':
+      return {
+        title: 'Bild zu groß',
+        message: 'Bitte wähle ein Bild, das kleiner als 10 MB ist.',
+      };
+    case 'empty':
+      return {
+        title: 'Bild ist leer',
+        message: 'Die ausgewählte Datei enthält keine Bilddaten.',
+      };
+    case 'read_failed':
+      return {
+        title: 'Bild nicht lesbar',
+        message:
+          'Die ausgewählte Datei konnte nicht gelesen werden. Bitte wähle sie erneut über Kamera oder Galerie aus.',
+      };
+    case 'unauthenticated':
+      return {
+        title: 'Anmeldung erforderlich',
+        message:
+          'Deine Cloud-Sitzung ist nicht mehr gültig. Bitte melde dich erneut an, bevor du ein Bild hochlädst.',
+      };
+    case 'unauthorized':
+      return {
+        title: 'Upload nicht erlaubt',
+        message:
+          'Der Cloud-Speicher hat den Upload abgelehnt. Deine Daten wurden nicht als erfolgreich gespeichert markiert.',
+      };
+    case 'quota_exceeded':
+      return {
+        title: 'Cloud-Speicher nicht verfügbar',
+        message:
+          'Das Speicher-Kontingent ist derzeit ausgeschöpft. Ein sofortiger erneuter Upload würde nicht helfen.',
+      };
+    case 'configuration':
+      return {
+        title: 'Cloud-Speicher nicht konfiguriert',
+        message:
+          'Die Firebase-Storage-Konfiguration ist unvollständig. Der Upload wurde sicher beendet.',
+      };
+    case 'retryable_transfer':
+      return {
+        title: 'Upload unterbrochen',
+        message:
+          'Die Übertragung wurde nicht vollständig bestätigt. Du kannst denselben Upload erneut versuchen.',
+      };
+    case 'unknown':
+      return {
+        title: 'Speichern fehlgeschlagen',
+        message:
+          'Das Kleidungsstück konnte nicht vollständig gespeichert werden. Du kannst den Vorgang erneut versuchen.',
+      };
+    case 'canceled':
+      return {
+        title: 'Upload abgebrochen',
+        message: 'Der Upload wurde abgebrochen.',
+      };
+  }
+}
 
 function aiBadge(item: WardrobeItem): string | null {
   switch (item.aiStatus) {
@@ -146,16 +214,34 @@ export default function WardrobeScreen() {
         });
       }
     } catch (saveError: unknown) {
-      if (isWardrobeImageUploadCanceled(saveError)) {
+      if (!isCloudBacked) {
+        console.error('Failed to add local wardrobe item', saveError);
+        Alert.alert(
+          'Speichern fehlgeschlagen',
+          'Das Kleidungsstück konnte lokal nicht gespeichert werden.',
+        );
         return;
       }
 
-      console.error('Failed to add wardrobe item', saveError);
+      const failure = classifyWardrobeImageUploadFailure(saveError);
+      if (failure.kind === 'canceled') {
+        return;
+      }
+
+      console.error('Failed to add cloud wardrobe item', saveError);
+      const copy = uploadFailureCopy(failure.kind);
       Alert.alert(
-        'Speichern fehlgeschlagen',
-        isCloudBacked
-          ? 'Das Kleidungsstück konnte nicht in deinen Cloud-Schrank geladen werden. Bitte Verbindung prüfen und erneut versuchen.'
-          : 'Das Kleidungsstück konnte lokal nicht gespeichert werden.',
+        copy.title,
+        copy.message,
+        failure.retryable
+          ? [
+              { text: 'Abbrechen', style: 'cancel' },
+              {
+                text: 'Erneut versuchen',
+                onPress: () => void processAndSaveImage(uri, source),
+              },
+            ]
+          : [{ text: 'OK' }],
       );
     } finally {
       setIsProcessing(false);
