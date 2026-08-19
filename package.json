@@ -45,6 +45,7 @@
     "lint": "expo lint",
     "check-no-any": "node scripts/check-no-any.js",
     "verify:foundation": "node scripts/verify-production-foundation.js",
+    "verify:expo": "npx expo install --check",
     "verify:quality": "node scripts/check-no-any.js && node scripts/verify-production-foundation.js && npx tsc --noEmit",
     "validate:release-config": "node scripts/validate-release-config.js",
     "firebase:preflight": "node scripts/firebase-project-command.js preflight",
