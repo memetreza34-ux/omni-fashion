@@ -24,12 +24,16 @@ Der Cloud-Pfad ist im Code produktionsorientiert vorbereitet:
 ```text
 src/features/wardrobe/types.ts
 src/features/wardrobe/services/wardrobe-service.ts
+src/features/wardrobe/services/wardrobe-command-service.ts
 src/features/wardrobe/services/wardrobe-image-preparation-service.ts
 src/features/wardrobe/services/wardrobe-storage-service.ts
 src/features/wardrobe/services/local-wardrobe-service.ts
 src/context/WardrobeContext.tsx
 src/app/index.tsx
 src/components/ItemDetailsModal.tsx
+functions/src/callables/delete-wardrobe-item.ts
+functions/src/wardrobe/delete-policy.ts
+functions/src/maintenance/wardrobe-storage-cleanup.ts
 ```
 
 Security:
@@ -39,9 +43,10 @@ firestore.rules
 storage.rules
 tests/security/firestore.rules.integration.mjs
 tests/security/storage.rules.integration.mjs
+functions/test/wardrobe-delete-policy.test.mjs
 ```
 
-Der technische Upload-Kern unterstützt inzwischen lokale Bildaufbereitung, Fortschritt, Nutzerabbruch und gezielten Retry. Reale Android-/iOS-Device-Validierung bleibt davon getrennt offen.
+Der technische Upload-Kern unterstützt lokale Bildaufbereitung, Fortschritt, Nutzerabbruch und gezielten Retry. Destruktive Cloud-Löschungen laufen über einen Trusted-Backend-Command mit Recovery-Auftrag. Reale Android-/iOS-/Firebase-Dev-Validierung bleibt davon getrennt offen.
 
 ---
 
@@ -251,21 +256,26 @@ Die Security-Emulator-Suite prüft auch die harte Grenze: Ein Bild mit exakt 10 
 
 ---
 
-# 9. Firestore Service
+# 9. Firestore / Command Services
 
-Der Client greift nicht direkt überall auf Firestore zu.
-
-Zentral:
+Normale Reads und nicht-kritische User-Metadatenänderungen bleiben hinter einem zentralen Firestore-Service.
 
 ```text
 createWardrobeItemId()
 subscribeToWardrobe(ownerId)
 createCloudWardrobeItem(...)
 updateCloudWardrobeItem(...)
-deleteCloudWardrobeItem(...)
 ```
 
-Ein neues Cloud-Item wird erst nach erfolgreich bestätigtem Storage-Upload erstellt. Wenn die Firestore-Erstellung danach scheitert, versucht der Client die bereits hochgeladene Datei wieder zu löschen.
+Destruktive Cloud-Löschung ist dagegen ein Trusted Command:
+
+```text
+deleteCloudWardrobeItem(...)
+→ requestCloudWardrobeItemDelete(...)
+→ Callable deleteWardrobeItem
+```
+
+Ein neues Cloud-Item wird erst nach erfolgreich bestätigtem Storage-Upload erstellt. Wenn die Firestore-Erstellung danach scheitert, versucht der Client die bereits hochgeladene, noch keinem persistenten Item zugeordnete Datei wieder zu löschen.
 
 ---
 
@@ -331,40 +341,76 @@ Firestore Rules prüfen diese Invarianten.
 
 ---
 
-# 14. Löschen
+# 14. Trusted Cloud Delete
 
-Der aktuelle Client-Flow ist noch:
+Direkte Client-Löschung von `wardrobeItems` ist vollständig gesperrt:
 
 ```text
-Firestore-Dokument löschen
-→ Storage-Datei best effort löschen
+allow delete: if false
 ```
 
-Das ist sicherer als ein sichtbares Item mit kaputtem Bild, kann bei einem Cleanup-Fehler aber eine verwaiste private Datei hinterlassen.
+Der normale App-Flow ruft `deleteWardrobeItem` als Callable auf.
 
-Der nächste interne Härtungsschritt ist deshalb ein idempotenter Trusted-Backend-Delete, der Ownership/Systemzustand prüft und Dokument + private Wardrobe-Medien kontrolliert gemeinsam entfernt.
+Der Backend-Command prüft:
+
+```text
+Auth
+→ Owner
+→ Item-ID
+→ isListedForSwap / swapListingId
+→ swapLocks/{itemId}
+→ aktive SwapTransactions, in denen das Item referenziert wird
+→ privater imagePath muss exakt unter users/{ownerId}/wardrobe/{itemId}/ liegen
+```
+
+Als aktive Trade-Zustände gelten auch `disputed` und alle nicht-terminalen Zustände. Nur `completed` und `cancelled` blockieren die spätere Löschung nicht mehr.
+
+Damit kann weder der normale Client noch ein manipulierter Client ein Kleidungsstück während eines aktiven OmniSwap-Vorgangs aus dem Wardrobe entfernen.
 
 ---
 
-# 15. Item Editor
+# 15. Delete + Storage Recovery
+
+Firestore und Cloud Storage besitzen keine gemeinsame atomare Transaktion. Der Backend-Flow verwendet deshalb einen recoverbaren Zwei-Phasen-Ansatz:
+
+```text
+Firestore Transaction
+→ Item + Lock erneut lesen
+→ Policy prüfen
+→ server-only wardrobeStorageCleanupTask schreiben
+→ WardrobeItem löschen
+→ Commit
+
+anschließend
+→ private Storage-Datei sofort idempotent löschen
+→ bei Erfolg Cleanup-Task löschen
+→ bei Fehler Task = retry
+```
+
+Ein Scheduler verarbeitet `pending/retry` Cleanup-Aufträge erneut. Unsichere oder inkonsistente Pfade werden nicht blind gelöscht, sondern als `needs_review` markiert.
+
+Der Client führt nach erfolgreichem Trusted Command keinen zweiten direkten Storage-Delete mehr aus.
+
+---
+
+# 16. Item Editor
 
 Der Editor unterstützt unter anderem Name, Farbe, Marke, Größe, Material, Kategorie, Saison und Zustand. Diese Felder werden gemeinsam von AI-Korrektur, Outfit-Ranking und OmniSwap genutzt.
 
 ---
 
-# 16. Security Tests
+# 17. Security / Unit Tests
 
-CI deckt unter anderem ab:
-
-## Firestore
+## Firestore Emulator
 
 - Owner kann eigenes gültiges Wardrobe Item erstellen/lesen/ändern
 - Fremder kann privates Item nicht lesen oder verändern
+- **auch der Owner kann das Dokument nicht direkt löschen**
 - `ownerId` und `imagePath` können nicht manipuliert transferiert werden
 - Client kann AI-/Swap-Systemfelder nicht fälschen
 - unbekannte Collections bleiben default-deny
 
-## Storage
+## Storage Emulator
 
 - Owner kann eigenes Kleidungsbild schreiben/lesen
 - Fremder kann es nicht lesen/überschreiben
@@ -372,9 +418,19 @@ CI deckt unter anderem ab:
 - Bilder an der 10-MB-Grenze werden abgewiesen
 - Public Listing Media kann nicht direkt vom Client geschrieben werden
 
+## Functions Unit Test
+
+`wardrobe-delete-policy.test.mjs` deckt die deterministische Delete-Policy ab:
+
+- erlaubtes eigenes Item
+- Fremdeigentum
+- Listing / Lock / aktiver Trade
+- sichere vs. fremde/abweichende Storage-Pfade
+- terminale vs. aktive Trade-Status
+
 ---
 
-# 17. Noch offene Wardrobe-Arbeit
+# 18. Noch offene Wardrobe-Arbeit
 
 Vor echter Production-Freigabe fehlen weiterhin reale Infrastruktur-/Device-Schritte:
 
@@ -388,24 +444,28 @@ Vor echter Production-Freigabe fehlen weiterhin reale Infrastruktur-/Device-Schr
 - [x] Storage Rules Max-Size Regression
 - [x] Bildkompression/Resize vor Upload
 - [ ] HEIC/HEIF auf echten Geräten validiert
-- [ ] echte Firestore-Service-Integration gegen Dev-Projekt
+- [ ] echte Firestore-/Callable-Integration gegen Dev-Projekt
 - [ ] Pagination bei realem Bedarf
-- [ ] Trusted Cloud Item Delete + Storage Cleanup
+- [x] Trusted Cloud Item Delete + recoverbarer Storage Cleanup
 - [ ] Cloud Item Delete + Storage Cleanup real validiert
 - [ ] Account-Cleanup gegen reales Dev-Projekt validiert
 
 ---
 
-# 18. Nächster interner Wardrobe-Block
+# 19. Nächster sinnvoller Wardrobe-Schritt
+
+Der intern implementierbare Wardrobe-Core ist weitgehend geschlossen. Der nächste belastbare Fortschritt ist reale Integration:
 
 ```text
-Delete Wardrobe Item Command
-→ Auth + Owner Check
-→ blockieren, falls aktive Swap-Verknüpfung
-→ private Storage-Datei idempotent löschen
-→ Firestore-Dokument löschen
-→ strukturierter Erfolg/Fehler
-→ Client nutzt Trusted Command statt best-effort Doppelwrite
+Firebase Dev
+→ Rules + Functions deployen
+→ echtes Konto
+→ Kamera/Galerie Android + iOS
+→ HEIC/HEIF
+→ langsamer Upload + Cancel + Retry
+→ Offline/Reconnect
+→ Trusted Delete + Cleanup Worker
+→ Zwei-Geräte/OmniSwap Regression
 ```
 
-Danach bleiben insbesondere echte Firebase-, Android-/iOS-, HEIC/HEIF-, langsame Netzwerk-, Reconnect- und Cleanup-Tests offen.
+Solange diese Infrastruktur fehlt, werden keine Device-/Cloud-Ergebnisse als erledigt markiert.
