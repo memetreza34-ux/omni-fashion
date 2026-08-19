@@ -26,7 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript and zero-any checks
+      - name: Expo SDK dependency compatibility
+        run: npm run verify:expo
+
+      - name: TypeScript, foundation and zero-any checks
         run: npm run verify:quality
 
   expo-bundle-smoke:
