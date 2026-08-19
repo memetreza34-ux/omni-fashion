@@ -1,0 +1,98 @@
+name: Connect Saved Outfits Once
+
+on:
+  push:
+    branches:
+      - docs/app-development-a-z
+    paths:
+      - .github/workflows/connect-saved-outfits-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v6
+        with:
+          ref: docs/app-development-a-z
+
+      - name: Connect saved outfits to app, rules and CI
+        shell: python
+        run: |
+          from pathlib import Path
+
+          layout = Path('src/app/_layout.tsx')
+          text = layout.read_text()
+          old = "import { StyleProfileProvider } from '@/context/StyleProfileContext';\nimport { WardrobeProvider } from '@/context/WardrobeContext';"
+          new = "import { SavedOutfitsProvider } from '@/context/SavedOutfitsContext';\nimport { StyleProfileProvider } from '@/context/StyleProfileContext';\nimport { WardrobeProvider } from '@/context/WardrobeContext';"
+          if old not in text:
+              raise SystemExit('layout import anchor not found')
+          text = text.replace(old, new, 1)
+          old = "      <StyleProfileProvider>\n        <AnimatedSplashOverlay />\n        <AppTabs />\n      </StyleProfileProvider>"
+          new = "      <StyleProfileProvider>\n        <SavedOutfitsProvider>\n          <AnimatedSplashOverlay />\n          <AppTabs />\n        </SavedOutfitsProvider>\n      </StyleProfileProvider>"
+          if old not in text:
+              raise SystemExit('layout provider anchor not found')
+          layout.write_text(text.replace(old, new, 1))
+
+          stylist = Path('src/app/stylist.tsx')
+          text = stylist.read_text()
+          old = "import { useMemo, useState } from 'react';\nimport {\n  Image,\n  ScrollView,"
+          new = "import { useMemo, useState } from 'react';\nimport {\n  ActivityIndicator,\n  Alert,\n  Image,\n  ScrollView,"
+          if old not in text:
+              raise SystemExit('stylist react-native import anchor not found')
+          text = text.replace(old, new, 1)
+          old = "import { useStyleProfile } from '@/context/StyleProfileContext';\nimport { useWardrobe } from '@/context/WardrobeContext';"
+          new = "import { useSavedOutfits } from '@/context/SavedOutfitsContext';\nimport { useStyleProfile } from '@/context/StyleProfileContext';\nimport { useWardrobe } from '@/context/WardrobeContext';\nimport { SavedOutfitsPanel } from '@/features/stylist/components/SavedOutfitsPanel';"
+          if old not in text:
+              raise SystemExit('stylist context import anchor not found')
+          text = text.replace(old, new, 1)
+          old = "  const { items, isLoading: wardrobeLoading } = useWardrobe();\n  const { profile, isLoading: profileLoading } = useStyleProfile();\n  const [occasion, setOccasion] = useState<OutfitOccasion>('everyday');"
+          new = "  const { items, isLoading: wardrobeLoading } = useWardrobe();\n  const { profile, isLoading: profileLoading } = useStyleProfile();\n  const {\n    outfits: savedOutfits,\n    isLoading: savedOutfitsLoading,\n    saveOutfit,\n    setFeedback,\n    deleteOutfit,\n    hasRecommendation,\n  } = useSavedOutfits();\n  const [occasion, setOccasion] = useState<OutfitOccasion>('everyday');\n  const [saveBusy, setSaveBusy] = useState(false);"
+          if old not in text:
+              raise SystemExit('stylist context state anchor not found')
+          text = text.replace(old, new, 1)
+          old = "  const nextOutfit = () => {\n    if (recommendations.length > 1) {\n      setResultIndex((currentIndex) =>\n        (currentIndex + 1) % recommendations.length,\n      );\n    }\n  };\n\n  const loading = wardrobeLoading || profileLoading;"
+          new = "  const nextOutfit = () => {\n    if (recommendations.length > 1) {\n      setResultIndex((currentIndex) =>\n        (currentIndex + 1) % recommendations.length,\n      );\n    }\n  };\n\n  const currentIsSaved = current\n    ? hasRecommendation(current.itemIds)\n    : false;\n\n  const saveCurrentOutfit = async () => {\n    if (!current || currentIsSaved || saveBusy) {\n      return;\n    }\n\n    setSaveBusy(true);\n    try {\n      await saveOutfit({ recommendation: current, season });\n    } catch (error: unknown) {\n      console.error('Failed to save outfit', error);\n      Alert.alert(\n        'Outfit nicht gespeichert',\n        'Bitte versuche es erneut. Deine Kleidungsstücke bleiben unverändert.',\n      );\n    } finally {\n      setSaveBusy(false);\n    }\n  };\n\n  const loading = wardrobeLoading || profileLoading;"
+          if old not in text:
+              raise SystemExit('stylist next handler anchor not found')
+          text = text.replace(old, new, 1)
+          old = "            <View className=\"px-4\">\n              <TouchableOpacity\n                onPress={nextOutfit}\n                disabled={recommendations.length <= 1}\n                className={`rounded-2xl py-4 items-center ${\n                  recommendations.length > 1\n                    ? 'bg-black dark:bg-white'\n                    : 'bg-zinc-200 dark:bg-zinc-800'\n                }`}\n              >\n                <Text\n                  className={\n                    recommendations.length > 1\n                      ? 'text-white dark:text-black font-bold'\n                      : 'text-zinc-500 font-bold'\n                  }\n                >\n                  {recommendations.length > 1\n                    ? `Alternative ${safeIndex + 1}/${recommendations.length}`\n                    : 'Keine weitere vollständige Alternative'}\n                </Text>\n              </TouchableOpacity>\n            </View>\n          </>\n        ) : null}\n      </ScrollView>"
+          new = "            <View className=\"px-4\">\n              <TouchableOpacity\n                onPress={nextOutfit}\n                disabled={recommendations.length <= 1}\n                className={`rounded-2xl py-4 items-center ${\n                  recommendations.length > 1\n                    ? 'bg-black dark:bg-white'\n                    : 'bg-zinc-200 dark:bg-zinc-800'\n                }`}\n              >\n                <Text\n                  className={\n                    recommendations.length > 1\n                      ? 'text-white dark:text-black font-bold'\n                      : 'text-zinc-500 font-bold'\n                  }\n                >\n                  {recommendations.length > 1\n                    ? `Alternative ${safeIndex + 1}/${recommendations.length}`\n                    : 'Keine weitere vollständige Alternative'}\n                </Text>\n              </TouchableOpacity>\n\n              <TouchableOpacity\n                onPress={() => void saveCurrentOutfit()}\n                disabled={currentIsSaved || saveBusy}\n                className={`rounded-2xl py-4 items-center mt-3 border ${\n                  currentIsSaved\n                    ? 'bg-emerald-500/10 border-emerald-500/25'\n                    : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700'\n                }`}\n              >\n                {saveBusy ? (\n                  <ActivityIndicator />\n                ) : (\n                  <Text\n                    className={\n                      currentIsSaved\n                        ? 'text-emerald-600 dark:text-emerald-400 font-bold'\n                        : 'text-black dark:text-white font-bold'\n                    }\n                  >\n                    {currentIsSaved ? 'Outfit gespeichert' : 'Outfit speichern'}\n                  </Text>\n                )}\n              </TouchableOpacity>\n            </View>\n          </>\n        ) : null}\n\n        {!savedOutfitsLoading ? (\n          <View className=\"px-4\">\n            <SavedOutfitsPanel\n              outfits={savedOutfits}\n              wardrobeItems={items}\n              onFeedback={setFeedback}\n              onDelete={deleteOutfit}\n            />\n          </View>\n        ) : null}\n      </ScrollView>"
+          if old not in text:
+              raise SystemExit('stylist footer anchor not found')
+          stylist.write_text(text.replace(old, new, 1))
+
+          rules = Path('firestore.rules')
+          text = rules.read_text()
+          helper_anchor = "    function wardrobeItemHasValidShape() {"
+          helpers = """    function isScorePercent(value) {\n      return value is number && value >= 0 && value <= 100;\n    }\n\n    function outfitScoreBreakdownIsValid(value) {\n      return value is map\n        && value.keys().hasAll([\n          'styleMatch', 'colorHarmony', 'occasionFit', 'seasonFit', 'dataQuality'\n        ])\n        && value.keys().hasOnly([\n          'styleMatch', 'colorHarmony', 'occasionFit', 'seasonFit', 'dataQuality'\n        ])\n        && isScorePercent(value.styleMatch)\n        && isScorePercent(value.colorHarmony)\n        && isScorePercent(value.occasionFit)\n        && isScorePercent(value.seasonFit)\n        && isScorePercent(value.dataQuality);\n    }\n\n    function savedOutfitHasValidShape() {\n      return request.resource.data.keys().hasAll([\n          'ownerId', 'itemIds', 'occasion', 'season', 'score',\n          'scoreBreakdown', 'reasons', 'feedback', 'createdAt',\n          'updatedAt', 'schemaVersion'\n        ])\n        && request.resource.data.keys().hasOnly([\n          'ownerId', 'itemIds', 'occasion', 'season', 'score',\n          'scoreBreakdown', 'reasons', 'feedback', 'createdAt',\n          'updatedAt', 'schemaVersion'\n        ])\n        && request.resource.data.ownerId is string\n        && request.resource.data.itemIds is list\n        && request.resource.data.itemIds.size() >= 2\n        && request.resource.data.itemIds.size() <= 5\n        && request.resource.data.occasion in [\n          'everyday', 'office', 'date', 'sport', 'party'\n        ]\n        && request.resource.data.season in [\n          'Spring', 'Summer', 'Autumn', 'Winter', 'All'\n        ]\n        && isScorePercent(request.resource.data.score)\n        && outfitScoreBreakdownIsValid(request.resource.data.scoreBreakdown)\n        && request.resource.data.reasons is list\n        && request.resource.data.reasons.size() >= 1\n        && request.resource.data.reasons.size() <= 3\n        && request.resource.data.feedback in [\n          'none', 'liked', 'disliked', 'worn'\n        ]\n        && request.resource.data.createdAt is timestamp\n        && request.resource.data.updatedAt is timestamp\n        && request.resource.data.schemaVersion == 1;\n    }\n\n    function savedOutfitProtectedFieldsAreUnchanged() {\n      return request.resource.data.itemIds == resource.data.itemIds\n        && request.resource.data.occasion == resource.data.occasion\n        && request.resource.data.season == resource.data.season\n        && request.resource.data.score == resource.data.score\n        && request.resource.data.scoreBreakdown == resource.data.scoreBreakdown\n        && request.resource.data.reasons == resource.data.reasons\n        && request.resource.data.createdAt == resource.data.createdAt\n        && request.resource.data.schemaVersion == resource.data.schemaVersion;\n    }\n\n"""
+          if helper_anchor not in text:
+              raise SystemExit('firestore helper anchor not found')
+          text = text.replace(helper_anchor, helpers + helper_anchor, 1)
+          old = "    match /outfits/{outfitId} {\n      allow read: if ownsExistingDocument();\n      allow create: if ownsIncomingDocument();\n      allow update: if ownsExistingDocument() && ownerIdIsUnchanged();\n      allow delete: if ownsExistingDocument();\n    }"
+          new = "    match /outfits/{outfitId} {\n      allow read: if ownsExistingDocument();\n      allow create: if ownsIncomingDocument()\n        && savedOutfitHasValidShape()\n        && request.resource.data.feedback == 'none';\n      allow update: if ownsExistingDocument()\n        && ownerIdIsUnchanged()\n        && savedOutfitHasValidShape()\n        && savedOutfitProtectedFieldsAreUnchanged();\n      allow delete: if ownsExistingDocument();\n    }"
+          if old not in text:
+              raise SystemExit('outfit rules anchor not found')
+          rules.write_text(text.replace(old, new, 1))
+
+          quality = Path('.github/workflows/quality.yml')
+          text = quality.read_text()
+          old = "node tests/security/firestore.rules.integration.mjs && node tests/security/style-profile.rules.integration.mjs && node tests/security/storage.rules.integration.mjs"
+          new = "node tests/security/firestore.rules.integration.mjs && node tests/security/style-profile.rules.integration.mjs && node tests/security/outfit.rules.integration.mjs && node tests/security/storage.rules.integration.mjs"
+          if old not in text:
+              raise SystemExit('quality security command anchor not found')
+          quality.write_text(text.replace(old, new, 1))
+
+          workflow = Path('.github/workflows/connect-saved-outfits-once.yml')
+          workflow.unlink()
+
+      - name: Commit patch and self-cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: connect saved outfits and feedback"
+          git push origin HEAD:docs/app-development-a-z

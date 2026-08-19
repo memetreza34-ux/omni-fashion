@@ -1,0 +1,447 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isCurrentUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function ownsExistingDocument() {
+      return signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    function ownsIncomingDocument() {
+      return signedIn() && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    function ownerIdIsUnchanged() {
+      return request.resource.data.ownerId == resource.data.ownerId;
+    }
+
+    function isSwapParticipant() {
+      return signedIn()
+        && (
+          resource.data.requesterId == request.auth.uid
+          || resource.data.listingOwnerId == request.auth.uid
+        );
+    }
+
+    function isTransactionParticipant() {
+      return signedIn()
+        && request.auth.uid in resource.data.participantIds;
+    }
+
+    function isNullableString(value) {
+      return value == null || value is string;
+    }
+
+    function isNullableTimestamp(value) {
+      return value == null || value is timestamp;
+    }
+
+    function isConfidence(value) {
+      return value is number && value >= 0 && value <= 1;
+    }
+
+    function aiFieldConfidenceIsValid(value) {
+      return value == null
+        || (
+          value is map
+          && value.keys().hasAll([
+            'category',
+            'subcategory',
+            'color',
+            'brand',
+            'material',
+            'season',
+            'styleTags'
+          ])
+          && value.keys().hasOnly([
+            'category',
+            'subcategory',
+            'color',
+            'brand',
+            'material',
+            'season',
+            'styleTags'
+          ])
+          && isConfidence(value.category)
+          && isConfidence(value.subcategory)
+          && isConfidence(value.color)
+          && isConfidence(value.brand)
+          && isConfidence(value.material)
+          && isConfidence(value.season)
+          && isConfidence(value.styleTags)
+        );
+    }
+
+    function userProfileHasValidShape() {
+      return request.resource.data.keys().hasAll([
+          'displayName',
+          'avatarUrl',
+          'locale',
+          'country',
+          'city',
+          'onboardingCompleted',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'displayName',
+          'avatarUrl',
+          'locale',
+          'country',
+          'city',
+          'onboardingCompleted',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && isNullableString(request.resource.data.avatarUrl)
+        && request.resource.data.locale is string
+        && isNullableString(request.resource.data.country)
+        && isNullableString(request.resource.data.city)
+        && request.resource.data.onboardingCompleted is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.schemaVersion is int;
+    }
+
+    function styleQuestionnaireIsValid(value) {
+      return value is map
+        && value.keys().hasAll([
+          'preferredStyles',
+          'preferredColors',
+          'avoidedColors',
+          'fitPreferences',
+          'formalVsCasual',
+          'minimalVsBold',
+          'questionnaireVersion'
+        ])
+        && value.keys().hasOnly([
+          'preferredStyles',
+          'preferredColors',
+          'avoidedColors',
+          'fitPreferences',
+          'formalVsCasual',
+          'minimalVsBold',
+          'questionnaireVersion'
+        ])
+        && value.preferredStyles is list
+        && value.preferredStyles.size() >= 1
+        && value.preferredStyles.size() <= 5
+        && value.preferredStyles.hasOnly([
+          'minimal', 'classic', 'smart-casual', 'streetwear', 'sporty',
+          'vintage', 'y2k', 'dark-academia', 'romantic', 'edgy'
+        ])
+        && value.preferredColors is list
+        && value.preferredColors.size() <= 8
+        && value.preferredColors.hasOnly([
+          'Schwarz', 'Weiß', 'Grau', 'Beige', 'Braun', 'Blau', 'Grün',
+          'Rot', 'Rosa', 'Lila', 'Gelb', 'Orange'
+        ])
+        && value.avoidedColors is list
+        && value.avoidedColors.size() <= 8
+        && value.avoidedColors.hasOnly([
+          'Schwarz', 'Weiß', 'Grau', 'Beige', 'Braun', 'Blau', 'Grün',
+          'Rot', 'Rosa', 'Lila', 'Gelb', 'Orange'
+        ])
+        && value.fitPreferences is list
+        && value.fitPreferences.size() >= 1
+        && value.fitPreferences.size() <= 3
+        && value.fitPreferences.hasOnly(['slim', 'regular', 'oversized'])
+        && isConfidence(value.formalVsCasual)
+        && isConfidence(value.minimalVsBold)
+        && value.questionnaireVersion == 1;
+    }
+
+    function wardrobeStyleSignalsAreValid(value) {
+      return value is map
+        && value.keys().hasAll([
+          'dominantCategories',
+          'dominantColors',
+          'dominantStyleTags',
+          'analyzedItemCount',
+          'totalItemCount'
+        ])
+        && value.keys().hasOnly([
+          'dominantCategories',
+          'dominantColors',
+          'dominantStyleTags',
+          'analyzedItemCount',
+          'totalItemCount'
+        ])
+        && value.dominantCategories is list
+        && value.dominantCategories.size() <= 5
+        && value.dominantColors is list
+        && value.dominantColors.size() <= 5
+        && value.dominantStyleTags is list
+        && value.dominantStyleTags.size() <= 8
+        && value.analyzedItemCount is int
+        && value.analyzedItemCount >= 0
+        && value.totalItemCount is int
+        && value.totalItemCount >= 0
+        && value.analyzedItemCount <= value.totalItemCount;
+    }
+
+    function styleSummaryIsValid(value) {
+      return value is map
+        && value.keys().hasAll([
+          'title', 'archetype', 'description', 'topStyles'
+        ])
+        && value.keys().hasOnly([
+          'title', 'archetype', 'description', 'topStyles'
+        ])
+        && value.title is string
+        && value.title.size() > 0
+        && value.title.size() <= 80
+        && value.archetype is string
+        && value.archetype.size() > 0
+        && value.archetype.size() <= 80
+        && value.description is string
+        && value.description.size() > 0
+        && value.description.size() <= 400
+        && value.topStyles is list
+        && value.topStyles.size() >= 1
+        && value.topStyles.size() <= 3
+        && value.topStyles.hasOnly([
+          'minimal', 'classic', 'smart-casual', 'streetwear', 'sporty',
+          'vintage', 'y2k', 'dark-academia', 'romantic', 'edgy'
+        ]);
+    }
+
+    function styleProfileHasValidShape(userId) {
+      return request.resource.data.keys().hasAll([
+          'userId',
+          'questionnaire',
+          'wardrobeSignals',
+          'summary',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'userId',
+          'questionnaire',
+          'wardrobeSignals',
+          'summary',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion'
+        ])
+        && request.resource.data.userId == userId
+        && styleQuestionnaireIsValid(request.resource.data.questionnaire)
+        && wardrobeStyleSignalsAreValid(request.resource.data.wardrobeSignals)
+        && styleSummaryIsValid(request.resource.data.summary)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.schemaVersion == 1;
+    }
+
+    function wardrobeItemHasValidShape() {
+      return request.resource.data.keys().hasAll([
+          'ownerId', 'imagePath', 'name', 'category', 'subcategory', 'color',
+          'secondaryColors', 'brand', 'material', 'size', 'season', 'condition',
+          'styleTags', 'source', 'aiStatus', 'aiConfidence',
+          'aiFieldConfidence', 'aiModelVersion', 'aiPromptVersion',
+          'aiAnalyzedAt', 'aiErrorCode', 'isListedForSwap', 'swapListingId',
+          'createdAt', 'updatedAt', 'schemaVersion'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ownerId', 'imagePath', 'name', 'category', 'subcategory', 'color',
+          'secondaryColors', 'brand', 'material', 'size', 'season', 'condition',
+          'styleTags', 'source', 'aiStatus', 'aiConfidence',
+          'aiFieldConfidence', 'aiModelVersion', 'aiPromptVersion',
+          'aiAnalyzedAt', 'aiErrorCode', 'isListedForSwap', 'swapListingId',
+          'createdAt', 'updatedAt', 'schemaVersion'
+        ])
+        && request.resource.data.ownerId is string
+        && request.resource.data.imagePath is string
+        && request.resource.data.imagePath.matches(
+          'users/' + request.auth.uid + '/wardrobe/.*'
+        )
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.category in [
+          'Top', 'Bottom', 'Dress', 'Shoes', 'Accessory', 'Outerwear', 'Other'
+        ]
+        && isNullableString(request.resource.data.subcategory)
+        && request.resource.data.color is string
+        && request.resource.data.color.size() <= 60
+        && request.resource.data.secondaryColors is list
+        && request.resource.data.secondaryColors.size() <= 5
+        && isNullableString(request.resource.data.brand)
+        && isNullableString(request.resource.data.material)
+        && isNullableString(request.resource.data.size)
+        && request.resource.data.season in [
+          'Spring', 'Summer', 'Autumn', 'Winter', 'All'
+        ]
+        && request.resource.data.condition in [
+          'new_with_tags', 'like_new', 'good', 'worn'
+        ]
+        && request.resource.data.styleTags is list
+        && request.resource.data.styleTags.size() <= 20
+        && request.resource.data.source in [
+          'camera', 'library', 'migration', 'manual'
+        ]
+        && request.resource.data.aiStatus in [
+          'not_requested', 'pending', 'completed', 'failed'
+        ]
+        && (
+          request.resource.data.aiConfidence == null
+          || isConfidence(request.resource.data.aiConfidence)
+        )
+        && aiFieldConfidenceIsValid(request.resource.data.aiFieldConfidence)
+        && isNullableString(request.resource.data.aiModelVersion)
+        && (
+          request.resource.data.aiModelVersion == null
+          || request.resource.data.aiModelVersion.size() <= 120
+        )
+        && isNullableString(request.resource.data.aiPromptVersion)
+        && (
+          request.resource.data.aiPromptVersion == null
+          || request.resource.data.aiPromptVersion.size() <= 80
+        )
+        && isNullableTimestamp(request.resource.data.aiAnalyzedAt)
+        && isNullableString(request.resource.data.aiErrorCode)
+        && (
+          request.resource.data.aiErrorCode == null
+          || request.resource.data.aiErrorCode.size() <= 120
+        )
+        && request.resource.data.isListedForSwap is bool
+        && isNullableString(request.resource.data.swapListingId)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.schemaVersion == 1;
+    }
+
+    function wardrobeCreateHasSafeSystemDefaults() {
+      return request.resource.data.aiStatus == 'not_requested'
+        && request.resource.data.aiConfidence == null
+        && request.resource.data.aiFieldConfidence == null
+        && request.resource.data.aiModelVersion == null
+        && request.resource.data.aiPromptVersion == null
+        && request.resource.data.aiAnalyzedAt == null
+        && request.resource.data.aiErrorCode == null
+        && request.resource.data.isListedForSwap == false
+        && request.resource.data.swapListingId == null;
+    }
+
+    function wardrobeProtectedFieldsAreUnchanged() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.imagePath == resource.data.imagePath
+        && request.resource.data.aiStatus == resource.data.aiStatus
+        && request.resource.data.aiConfidence == resource.data.aiConfidence
+        && request.resource.data.aiFieldConfidence == resource.data.aiFieldConfidence
+        && request.resource.data.aiModelVersion == resource.data.aiModelVersion
+        && request.resource.data.aiPromptVersion == resource.data.aiPromptVersion
+        && request.resource.data.aiAnalyzedAt == resource.data.aiAnalyzedAt
+        && request.resource.data.aiErrorCode == resource.data.aiErrorCode
+        && request.resource.data.isListedForSwap == resource.data.isListedForSwap
+        && request.resource.data.swapListingId == resource.data.swapListingId;
+    }
+
+    match /users/{userId} {
+      allow read: if isCurrentUser(userId);
+      allow create: if isCurrentUser(userId)
+        && userProfileHasValidShape();
+      allow update: if isCurrentUser(userId)
+        && userProfileHasValidShape()
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+
+    match /styleProfiles/{userId} {
+      allow read: if isCurrentUser(userId);
+      allow create: if isCurrentUser(userId)
+        && styleProfileHasValidShape(userId);
+      allow update: if isCurrentUser(userId)
+        && styleProfileHasValidShape(userId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isCurrentUser(userId);
+    }
+
+    match /wardrobeItems/{itemId} {
+      allow read: if ownsExistingDocument();
+      allow create: if ownsIncomingDocument()
+        && wardrobeItemHasValidShape()
+        && wardrobeCreateHasSafeSystemDefaults();
+      allow update: if ownsExistingDocument()
+        && ownerIdIsUnchanged()
+        && wardrobeItemHasValidShape()
+        && wardrobeProtectedFieldsAreUnchanged();
+      allow delete: if false;
+    }
+
+    match /outfits/{outfitId} {
+      allow read: if ownsExistingDocument();
+      allow create: if ownsIncomingDocument();
+      allow update: if ownsExistingDocument() && ownerIdIsUnchanged();
+      allow delete: if ownsExistingDocument();
+    }
+
+    match /swapListings/{listingId} {
+      allow read: if resource.data.status == 'active'
+        || (signedIn() && resource.data.ownerId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    match /swapOffers/{offerId} {
+      allow read: if isSwapParticipant();
+      allow create, update, delete: if false;
+    }
+
+    match /swapTransactions/{transactionId} {
+      allow read: if isTransactionParticipant();
+      allow create, update, delete: if false;
+    }
+
+    match /swapDisputes/{transactionId} {
+      allow read: if signedIn()
+        && request.auth.uid in resource.data.participantIds;
+      allow create, update, delete: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
+    }
+
+    // Moderation reports are private moderation records. Users submit them only
+    // through the trusted backend and cannot enumerate or mutate them later.
+    match /reports/{reportId} {
+      allow read, create, update, delete: if false;
+    }
+
+    // Users may read their own block list for local feed filtering. Creation
+    // and removal run through trusted backend validation.
+    match /blocks/{blockId} {
+      allow read: if signedIn()
+        && resource.data.blockerId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /notificationPreferences/{userId} {
+      allow read, create, update, delete: if isCurrentUser(userId);
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn()
+        && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

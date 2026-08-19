@@ -1,0 +1,27 @@
+{
+  "name": "omni-fashion-functions",
+  "version": "0.1.0",
+  "description": "Trusted backend for Omni Fashion callable commands and AI workflows.",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf lib",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "verify": "npm run typecheck && npm run build && npm test"
+  },
+  "dependencies": {
+    "@google/genai": "2.15.0",
+    "firebase-admin": "14.2.0",
+    "firebase-functions": "7.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "6.0.3"
+  }
+}

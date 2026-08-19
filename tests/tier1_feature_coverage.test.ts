@@ -49,7 +49,7 @@ test('Tier 1: Data Model Type Specification & Schema Verification', () => {
   const sampleItem: SwapItem = {
     id: 'item-101',
     title: 'Vintage Denim Jacket',
-    brand: 'Levi\'s',
+    brand: "Levi's",
     category: 'Outerwear',
     size: 'M',
     condition: 'Excellent',
@@ -61,15 +61,23 @@ test('Tier 1: Data Model Type Specification & Schema Verification', () => {
     ownerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
     ownerLocation: 'Berlin, DE',
     aestheticTag: 'Vintage',
-    description: 'Classic 90s vintage denim jacket in excellent condition.'
+    description: 'Classic 90s vintage denim jacket in excellent condition.',
   };
 
   assert.strictEqual(typeof sampleItem.id, 'string');
   assert.strictEqual(typeof sampleItem.title, 'string');
   assert.strictEqual(typeof sampleItem.brand, 'string');
-  assert.ok(['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'].includes(sampleItem.category));
+  assert.ok(
+    ['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'].includes(
+      sampleItem.category,
+    ),
+  );
   assert.strictEqual(typeof sampleItem.size, 'string');
-  assert.ok(['Like New', 'Excellent', 'Good', 'Upcycled'].includes(sampleItem.condition));
+  assert.ok(
+    ['Like New', 'Excellent', 'Good', 'Upcycled'].includes(
+      sampleItem.condition,
+    ),
+  );
   assert.strictEqual(typeof sampleItem.estimatedValue, 'number');
   assert.strictEqual(typeof sampleItem.co2SavedKg, 'number');
   assert.strictEqual(typeof sampleItem.waterSavedLiters, 'number');
@@ -87,13 +95,15 @@ test('Tier 1: Swap Trade Proposal Schema Verification', () => {
     offeredItemId: 'item-101',
     requestedItemId: 'item-102',
     status: 'pending',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 
   assert.strictEqual(typeof sampleProposal.id, 'string');
   assert.strictEqual(typeof sampleProposal.offeredItemId, 'string');
   assert.strictEqual(typeof sampleProposal.requestedItemId, 'string');
-  assert.ok(['pending', 'accepted', 'declined'].includes(sampleProposal.status));
+  assert.ok(
+    ['pending', 'accepted', 'declined'].includes(sampleProposal.status),
+  );
   assert.ok(!isNaN(Date.parse(sampleProposal.createdAt)));
 });
 
@@ -102,14 +112,16 @@ test('Tier 1: User Swap Profile Stats Schema Verification', () => {
     totalSwaps: 12,
     totalCo2SavedKg: 145.8,
     totalWaterSavedLiters: 18400,
-    reputationScore: 98
+    reputationScore: 98,
   };
 
   assert.strictEqual(typeof sampleStats.totalSwaps, 'number');
   assert.strictEqual(typeof sampleStats.totalCo2SavedKg, 'number');
   assert.strictEqual(typeof sampleStats.totalWaterSavedLiters, 'number');
   assert.strictEqual(typeof sampleStats.reputationScore, 'number');
-  assert.ok(sampleStats.reputationScore >= 0 && sampleStats.reputationScore <= 100);
+  assert.ok(
+    sampleStats.reputationScore >= 0 && sampleStats.reputationScore <= 100,
+  );
 });
 
 test('Tier 1: Component File Existence & Module Declarations', () => {
@@ -121,7 +133,7 @@ test('Tier 1: Component File Existence & Module Declarations', () => {
     'src/components/swap/ClosetHubView.tsx',
     'src/components/swap/EcoImpactBanner.tsx',
     'src/app/swap.tsx',
-    'src/components/app-tabs.web.tsx'
+    'src/components/app-tabs.web.tsx',
   ];
 
   const fileChecks = requiredFiles.map((relPath) => {
@@ -139,7 +151,10 @@ test('Tier 1: Component File Existence & Module Declarations', () => {
 
   // Ensure app-tabs.web.tsx exists as it is part of baseline
   const tabFilePath = path.join(rootDir, 'src/components/app-tabs.web.tsx');
-  assert.ok(fs.existsSync(tabFilePath), 'src/components/app-tabs.web.tsx must exist');
+  assert.ok(
+    fs.existsSync(tabFilePath),
+    'src/components/app-tabs.web.tsx must exist',
+  );
 });
 
 test('Tier 1: Route & Navigation Contract Verification', () => {

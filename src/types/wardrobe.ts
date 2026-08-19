@@ -1,9 +1,21 @@
-export interface WardrobeItem {
-  id: string;
-  imageUrl: string;
-  name: string;
-  category: 'Top' | 'Bottom' | 'Shoes' | 'Accessory' | 'Outerwear' | 'Other';
-  color: string;
-  season: 'Spring' | 'Summer' | 'Autumn' | 'Winter' | 'All';
-  createdAt: string;
-}
+export type {
+  CreateWardrobeItemInput,
+  PersistedWardrobeItem,
+  UpdateWardrobeItemInput,
+  WardrobeAiFieldConfidence,
+  WardrobeAiStatus,
+  WardrobeCategory,
+  WardrobeCondition,
+  WardrobeItem,
+  WardrobeSeason,
+  WardrobeSource,
+} from '@/features/wardrobe/types';
+
+export {
+  WARDROBE_AI_STATUSES,
+  WARDROBE_CATEGORIES,
+  WARDROBE_CONDITIONS,
+  WARDROBE_SCHEMA_VERSION,
+  WARDROBE_SEASONS,
+  WARDROBE_SOURCES,
+} from '@/features/wardrobe/types';

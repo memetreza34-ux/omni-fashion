@@ -1,5 +1,9 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+import { Text, View } from 'react-native';
+
+import { AppButton } from '@/design-system/AppButton';
+import { captureException } from '@/observability/telemetry';
 
 interface Props {
   children?: ReactNode;
@@ -13,16 +17,23 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
-    errorMsg: ''
+    errorMsg: '',
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI.
     return { hasError: true, errorMsg: error.message };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    captureException(error, {
+      area: 'app-shell',
+      operation: 'react-error-boundary',
+      errorCode: error.name,
+    });
+
+    if (__DEV__) {
+      console.error('React component stack:', errorInfo.componentStack);
+    }
   }
 
   private handleReset = () => {
@@ -32,25 +43,34 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <View className="flex-1 bg-white dark:bg-zinc-900 items-center justify-center px-6">
-          <Text className="text-5xl mb-4">💥</Text>
+        <View
+          accessibilityRole="alert"
+          className="flex-1 bg-white dark:bg-zinc-900 items-center justify-center px-6"
+        >
+          <Text className="text-4xl mb-4">!</Text>
           <Text className="text-2xl font-bold text-black dark:text-white mb-2 text-center">
-            Oops, das hätte nicht passieren dürfen!
+            Ein unerwarteter Fehler ist aufgetreten
           </Text>
-          <Text className="text-zinc-500 text-center mb-8">
-            Unser KI-Stylist ist wohl kurz gestolpert. Keine Sorge, deine Daten sind sicher.
+          <Text className="text-zinc-500 text-center mb-8 leading-6">
+            Diese Ansicht konnte nicht korrekt dargestellt werden. Es wird kein
+            erfolgreicher Vorgang vorgetäuscht.
           </Text>
-          <View className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-8 w-full">
-             <Text className="text-red-500 font-mono text-xs text-center">
-               Error: {this.state.errorMsg || 'Unbekannter Fehler'}
-             </Text>
+
+          {__DEV__ ? (
+            <View className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl mb-8 w-full">
+              <Text className="text-red-500 font-mono text-xs text-center">
+                {this.state.errorMsg || 'Unbekannter Fehler'}
+              </Text>
+            </View>
+          ) : null}
+
+          <View className="w-full">
+            <AppButton
+              label="Ansicht erneut versuchen"
+              accessibilityLabel="Fehleransicht zurücksetzen und erneut versuchen"
+              onPress={this.handleReset}
+            />
           </View>
-          <TouchableOpacity 
-            onPress={this.handleReset}
-            className="bg-black dark:bg-white px-8 py-4 rounded-2xl w-full items-center shadow-lg"
-          >
-            <Text className="text-white dark:text-black font-bold text-lg">App neu laden</Text>
-          </TouchableOpacity>
         </View>
       );
     }

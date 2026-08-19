@@ -2,16 +2,19 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { useFeatureFlag } from '@/context/FeatureFlagContext';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const shopEnabled = useFeatureFlag('shopPartnerFeed');
 
   return (
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      labelStyle={{ selected: { color: colors.text } }}
+    >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Schrank</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -28,7 +31,7 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="shop">
+      <NativeTabs.Trigger name="shop" hidden={!shopEnabled}>
         <NativeTabs.Trigger.Label>Entdecken</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/shop.png')}
@@ -38,6 +41,14 @@ export default function AppTabs() {
 
       <NativeTabs.Trigger name="swap">
         <NativeTabs.Trigger.Label>OmniSwap</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="notifications">
+        <NativeTabs.Trigger.Label>Aktivität</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

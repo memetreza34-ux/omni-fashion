@@ -4,12 +4,8 @@
     "strict": true,
     "allowImportingTsExtensions": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/assets/*": [
-        "./assets/*"
-      ]
+      "@/*": ["./src/*"],
+      "@/assets/*": ["./assets/*"]
     }
   },
   "include": [
@@ -18,5 +14,6 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "app.d.ts"
-  ]
+  ],
+  "exclude": ["functions", "functions/lib"]
 }

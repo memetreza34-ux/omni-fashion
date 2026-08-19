@@ -47,13 +47,18 @@ function calculateEcoImpact(items: SwapItem[]): EcoImpactMetrics {
   return items.reduce<EcoImpactMetrics>(
     (acc, item) => ({
       co2SavedKg: Number((acc.co2SavedKg + (item.co2SavedKg || 0)).toFixed(2)),
-      waterSavedLiters: Math.round(acc.waterSavedLiters + (item.waterSavedLiters || 0))
+      waterSavedLiters: Math.round(
+        acc.waterSavedLiters + (item.waterSavedLiters || 0),
+      ),
     }),
-    { co2SavedKg: 0, waterSavedLiters: 0 }
+    { co2SavedKg: 0, waterSavedLiters: 0 },
   );
 }
 
-function createTradeProposal(offeredItemId: string, requestedItemId: string): SwapTradeProposal {
+function createTradeProposal(
+  offeredItemId: string,
+  requestedItemId: string,
+): SwapTradeProposal {
   if (!offeredItemId.trim() || !requestedItemId.trim()) {
     throw new Error('Item IDs cannot be empty');
   }
@@ -65,7 +70,7 @@ function createTradeProposal(offeredItemId: string, requestedItemId: string): Sw
     offeredItemId,
     requestedItemId,
     status: 'pending',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 }
 
@@ -74,7 +79,7 @@ export function acceptTradeProposal(
   currentStats: UserSwapProfileStats,
   proposal: SwapTradeProposal,
   offeredItem: SwapItem,
-  requestedItem: SwapItem
+  requestedItem: SwapItem,
 ): { updatedStats: UserSwapProfileStats; updatedProposal: SwapTradeProposal } {
   if (proposal.status !== 'pending') {
     throw new Error(`Cannot accept proposal with status '${proposal.status}'`);
@@ -83,14 +88,17 @@ export function acceptTradeProposal(
   const combinedEco = calculateEcoImpact([offeredItem, requestedItem]);
   const newProposal: SwapTradeProposal = {
     ...proposal,
-    status: 'accepted'
+    status: 'accepted',
   };
 
   const newStats: UserSwapProfileStats = {
     totalSwaps: currentStats.totalSwaps + 1,
-    totalCo2SavedKg: Number((currentStats.totalCo2SavedKg + combinedEco.co2SavedKg).toFixed(2)),
-    totalWaterSavedLiters: currentStats.totalWaterSavedLiters + combinedEco.waterSavedLiters,
-    reputationScore: Math.min(100, currentStats.reputationScore + 2)
+    totalCo2SavedKg: Number(
+      (currentStats.totalCo2SavedKg + combinedEco.co2SavedKg).toFixed(2),
+    ),
+    totalWaterSavedLiters:
+      currentStats.totalWaterSavedLiters + combinedEco.waterSavedLiters,
+    reputationScore: Math.min(100, currentStats.reputationScore + 2),
   };
 
   return { updatedStats: newStats, updatedProposal: newProposal };
@@ -101,14 +109,20 @@ export function stageTradeFromCloset(
   closetItems: SwapItem[],
   deckItems: SwapItem[],
   filterTag: string,
-  targetItemId: string
-): { selectedOfferedItem: SwapItem; selectedRequestedItem: SwapItem; proposal: SwapTradeProposal } {
-  const filteredCloset = closetItems.filter(item => item.aestheticTag === filterTag);
+  targetItemId: string,
+): {
+  selectedOfferedItem: SwapItem;
+  selectedRequestedItem: SwapItem;
+  proposal: SwapTradeProposal;
+} {
+  const filteredCloset = closetItems.filter(
+    (item) => item.aestheticTag === filterTag,
+  );
   if (filteredCloset.length === 0) {
     throw new Error(`No closet items found matching tag '${filterTag}'`);
   }
 
-  const requestedItem = deckItems.find(item => item.id === targetItemId);
+  const requestedItem = deckItems.find((item) => item.id === targetItemId);
   if (!requestedItem) {
     throw new Error(`Target item '${targetItemId}' not found in SwapDeck`);
   }
@@ -119,7 +133,7 @@ export function stageTradeFromCloset(
   return {
     selectedOfferedItem: offeredItem,
     selectedRequestedItem: requestedItem,
-    proposal
+    proposal,
   };
 }
 
@@ -139,7 +153,7 @@ test('Tier 3: SwapDeck Item to Trade Proposal Mapping', () => {
     ownerAvatar: 'https://example.com/chloe.jpg',
     ownerLocation: 'Berlin, DE',
     aestheticTag: 'Streetwear',
-    description: 'Classic oversized streetwear bomber.'
+    description: 'Classic oversized streetwear bomber.',
   };
 
   const userItem: SwapItem = {
@@ -157,7 +171,7 @@ test('Tier 3: SwapDeck Item to Trade Proposal Mapping', () => {
     ownerAvatar: 'https://example.com/you.jpg',
     ownerLocation: 'Berlin, DE',
     aestheticTag: 'Streetwear',
-    description: 'Pristine graphic hoodie.'
+    description: 'Pristine graphic hoodie.',
   };
 
   const proposal = createTradeProposal(userItem.id, deckItem.id);
@@ -183,7 +197,7 @@ test('Tier 3: Combined Eco Impact Calculation Across Paired Trade Items', () => 
     ownerAvatar: 'https://example.com/marc.jpg',
     ownerLocation: 'Copenhagen, DK',
     aestheticTag: 'Vintage',
-    description: 'Worn vintage denim.'
+    description: 'Worn vintage denim.',
   };
 
   const itemB: SwapItem = {
@@ -201,7 +215,7 @@ test('Tier 3: Combined Eco Impact Calculation Across Paired Trade Items', () => 
     ownerAvatar: 'https://example.com/sophie.jpg',
     ownerLocation: 'Stockholm, SE',
     aestheticTag: 'Minimalist',
-    description: 'Soft merino knit.'
+    description: 'Soft merino knit.',
   };
 
   const combinedEco = calculateEcoImpact([itemA, itemB]);
@@ -214,7 +228,7 @@ test('Tier 3: Cross-Feature State Update — Trade Acceptance updates User Stats
     totalSwaps: 10,
     totalCo2SavedKg: 120.0,
     totalWaterSavedLiters: 15000,
-    reputationScore: 94
+    reputationScore: 94,
   };
 
   const offeredItem: SwapItem = {
@@ -232,7 +246,7 @@ test('Tier 3: Cross-Feature State Update — Trade Acceptance updates User Stats
     ownerAvatar: 'https://example.com/u.jpg',
     ownerLocation: 'Berlin, DE',
     aestheticTag: 'Grunge',
-    description: 'Sturdy black boots.'
+    description: 'Sturdy black boots.',
   };
 
   const requestedItem: SwapItem = {
@@ -250,12 +264,17 @@ test('Tier 3: Cross-Feature State Update — Trade Acceptance updates User Stats
     ownerAvatar: 'https://example.com/p.jpg',
     ownerLocation: 'London, UK',
     aestheticTag: 'Classic',
-    description: 'Heritage trench coat.'
+    description: 'Heritage trench coat.',
   };
 
   const proposal = createTradeProposal(offeredItem.id, requestedItem.id);
 
-  const result = acceptTradeProposal(initialStats, proposal, offeredItem, requestedItem);
+  const result = acceptTradeProposal(
+    initialStats,
+    proposal,
+    offeredItem,
+    requestedItem,
+  );
 
   assert.strictEqual(result.updatedProposal.status, 'accepted');
   assert.strictEqual(result.updatedStats.totalSwaps, 11);
@@ -281,7 +300,7 @@ test('Tier 3: Closet Hub Filter to Staged Trade Proposal Interaction', () => {
       ownerAvatar: 'https://example.com/me.jpg',
       ownerLocation: 'Berlin, DE',
       aestheticTag: 'Vintage',
-      description: 'Classic G logo belt.'
+      description: 'Classic G logo belt.',
     },
     {
       id: 'closet-2',
@@ -298,8 +317,8 @@ test('Tier 3: Closet Hub Filter to Staged Trade Proposal Interaction', () => {
       ownerAvatar: 'https://example.com/me.jpg',
       ownerLocation: 'Berlin, DE',
       aestheticTag: 'Athleisure',
-      description: 'Air Max sneakers.'
-    }
+      description: 'Air Max sneakers.',
+    },
   ];
 
   const deckItems: SwapItem[] = [
@@ -318,11 +337,16 @@ test('Tier 3: Closet Hub Filter to Staged Trade Proposal Interaction', () => {
       ownerAvatar: 'https://example.com/alex.jpg',
       ownerLocation: 'Amsterdam, NL',
       aestheticTag: 'Vintage',
-      description: 'Iconic 3D knit sweater.'
-    }
+      description: 'Iconic 3D knit sweater.',
+    },
   ];
 
-  const staged = stageTradeFromCloset(closetItems, deckItems, 'Vintage', 'deck-target');
+  const staged = stageTradeFromCloset(
+    closetItems,
+    deckItems,
+    'Vintage',
+    'deck-target',
+  );
 
   assert.strictEqual(staged.selectedOfferedItem.id, 'closet-1');
   assert.strictEqual(staged.selectedRequestedItem.id, 'deck-target');

@@ -1,189 +1,469 @@
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { useState } from 'react';
-import { AvatarViewer3D } from '../components/AvatarViewer3D';
-import { AIStyleRatingCard } from '../components/AIStyleRatingCard';
-import { StyleDeciderModal } from '../components/StyleDeciderModal';
+import { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
-const MOODS = ['Alltag', 'Büro', 'Date Night', 'Sport', 'Party'];
+import { useSavedOutfits } from '@/context/SavedOutfitsContext';
+import { useStyleProfile } from '@/context/StyleProfileContext';
+import { useWardrobe } from '@/context/WardrobeContext';
+import { AppButton } from '@/design-system/AppButton';
+import { StatusBanner } from '@/design-system/StatusBanner';
+import { SavedOutfitsPanel } from '@/features/stylist/components/SavedOutfitsPanel';
+import { generateOutfitRecommendations } from '@/features/stylist/outfit-engine';
+import {
+  generateWeatherAwareOutfits,
+  seasonFromWeather,
+} from '@/features/stylist/weather-outfit-engine';
+import type {
+  OutfitOccasion,
+  OutfitRecommendation,
+} from '@/features/stylist/types';
+import { StylistWeatherPanel } from '@/features/weather/components/StylistWeatherPanel';
+import { getOutfitWeather } from '@/features/weather/weather-service';
+import type { OutfitWeatherContext } from '@/features/weather/types';
+import type { WardrobeSeason } from '@/features/wardrobe/types';
 
-const OUTFITS = [
-  {
-    top: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80',
-    bottom: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=500&q=80',
-    shoes: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=500&q=80'
-  },
-  {
-    top: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
-    bottom: 'https://images.unsplash.com/photo-1555689502-c4b22d76c56f?auto=format&fit=crop&w=500&q=80',
-    shoes: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&w=500&q=80'
-  },
-  {
-    top: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=500&q=80',
-    bottom: 'https://images.unsplash.com/photo-1584865288642-42078afe6942?auto=format&fit=crop&w=500&q=80',
-    shoes: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=500&q=80'
-  }
+const OCCASIONS: readonly { value: OutfitOccasion; label: string }[] = [
+  { value: 'everyday', label: 'Alltag' },
+  { value: 'office', label: 'Büro' },
+  { value: 'date', label: 'Date' },
+  { value: 'sport', label: 'Sport' },
+  { value: 'party', label: 'Party' },
 ];
 
-const WEATHER_CONDITIONS = [
-  { icon: '☀️', temp: '25°C', desc: 'Sonnig' },
-  { icon: '⛅️', temp: '18°C', desc: 'Bewölkt' },
-  { icon: '🌧️', temp: '14°C', desc: 'Regnerisch' },
-  { icon: '❄️', temp: '2°C', desc: 'Schnee' }
+const SEASONS: readonly { value: WardrobeSeason; label: string }[] = [
+  { value: 'Spring', label: 'Frühling' },
+  { value: 'Summer', label: 'Sommer' },
+  { value: 'Autumn', label: 'Herbst' },
+  { value: 'Winter', label: 'Winter' },
+  { value: 'All', label: 'Ganzjährig' },
 ];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  Top: 'Oberteil',
+  Bottom: 'Unterteil',
+  Dress: 'Kleid',
+  Shoes: 'Schuhe',
+  Accessory: 'Accessoire',
+  Outerwear: 'Außenschicht',
+  Other: 'Sonstiges',
+};
+
+function breakdownRows(recommendation: OutfitRecommendation) {
+  return [
+    ['Style-DNA', recommendation.scoreBreakdown.styleMatch],
+    ['Farben', recommendation.scoreBreakdown.colorHarmony],
+    ['Anlass', recommendation.scoreBreakdown.occasionFit],
+    ['Saison/Wetter', recommendation.scoreBreakdown.seasonFit],
+    ['Datenqualität', recommendation.scoreBreakdown.dataQuality],
+  ] as const;
+}
 
 export default function StylistScreen() {
-  const [activeMood, setActiveMood] = useState(MOODS[0]);
-  const [isShuffling, setIsShuffling] = useState(false);
-  const [currentOutfitIndex, setCurrentOutfitIndex] = useState(0);
-  const [weatherIndex, setWeatherIndex] = useState(1);
-  const [viewMode, setViewMode] = useState<'3d' | 'canvas'>('3d');
-  const [showStyleDecider, setShowStyleDecider] = useState(false);
+  const { items, isLoading: wardrobeLoading } = useWardrobe();
+  const {
+    profile,
+    isLoading: profileLoading,
+    isCloudBacked,
+    wardrobeNeedsRefresh,
+  } = useStyleProfile();
+  const {
+    outfits: savedOutfits,
+    isLoading: savedOutfitsLoading,
+    saveOutfit,
+    setFeedback,
+    deleteOutfit,
+    hasRecommendation,
+  } = useSavedOutfits();
 
-  const outfit = OUTFITS[currentOutfitIndex];
-  const weather = WEATHER_CONDITIONS[weatherIndex];
+  const [occasion, setOccasion] = useState<OutfitOccasion>('everyday');
+  const [manualSeason, setManualSeason] = useState<WardrobeSeason>('All');
+  const [recommendationIndex, setRecommendationIndex] = useState(0);
+  const [city, setCity] = useState('Berlin');
+  const [weather, setWeather] = useState<OutfitWeatherContext | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  // Dynamic greeting based on time of day
-  const hour = new Date().getHours();
-  let greeting = 'Guten Tag!';
-  if (hour < 12) greeting = 'Guten Morgen!';
-  else if (hour > 18) greeting = 'Guten Abend!';
+  const result = useMemo(() => {
+    if (weather) {
+      return generateWeatherAwareOutfits(items, profile, occasion, weather, 12);
+    }
 
-  const handleShuffle = () => {
-    setIsShuffling(true);
-    // Simuliere die KI-Bedenkzeit
-    setTimeout(() => {
-      let nextIndex = Math.floor(Math.random() * OUTFITS.length);
-      if (nextIndex === currentOutfitIndex) {
-        nextIndex = (nextIndex + 1) % OUTFITS.length;
-      }
-      setCurrentOutfitIndex(nextIndex);
-      setWeatherIndex(Math.floor(Math.random() * WEATHER_CONDITIONS.length));
-      setIsShuffling(false);
-    }, 800);
+    return generateOutfitRecommendations(items, profile, {
+      occasion,
+      season: manualSeason,
+      maxResults: 12,
+    });
+  }, [items, manualSeason, occasion, profile, weather]);
+
+  const recommendation =
+    result.recommendations.length > 0
+      ? result.recommendations[
+          recommendationIndex % result.recommendations.length
+        ]
+      : null;
+
+  const effectiveSeason = weather ? seasonFromWeather(weather) : manualSeason;
+  const recommendationSaved = recommendation
+    ? hasRecommendation(recommendation.itemIds)
+    : false;
+
+  const chooseOccasion = (nextOccasion: OutfitOccasion) => {
+    setOccasion(nextOccasion);
+    setRecommendationIndex(0);
   };
+
+  const chooseSeason = (nextSeason: WardrobeSeason) => {
+    setManualSeason(nextSeason);
+    setRecommendationIndex(0);
+  };
+
+  const loadWeather = async () => {
+    setWeatherError(null);
+    setWeatherLoading(true);
+
+    try {
+      const nextWeather = await getOutfitWeather(city);
+      setWeather(nextWeather);
+      setRecommendationIndex(0);
+    } catch (error: unknown) {
+      console.error('Failed to load outfit weather', error);
+      setWeatherError(
+        'Wetter konnte nicht geladen werden. Nutze vorerst die manuelle Saison.',
+      );
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  const clearWeather = () => {
+    setWeather(null);
+    setWeatherError(null);
+    setRecommendationIndex(0);
+  };
+
+  const handleSave = async () => {
+    if (!recommendation || saving || recommendationSaved) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await saveOutfit({
+        recommendation,
+        season: effectiveSeason,
+      });
+    } catch (error: unknown) {
+      console.error('Failed to save outfit', error);
+      Alert.alert(
+        'Outfit nicht gespeichert',
+        'Bitte versuche es erneut. Es wurde kein Erfolg vorgetäuscht.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (wardrobeLoading || profileLoading || savedOutfitsLoading) {
+    return (
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel="Stylist wird geladen"
+        className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center"
+      >
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white dark:bg-zinc-950 pt-16">
-      
-      {/* Header & Wetter */}
-      <View className="px-4 flex-row justify-between items-center mb-3">
-        <View>
-          <Text className="text-3xl font-extrabold text-black dark:text-white">KI-Stylist</Text>
-          <Text className="text-zinc-500 text-xs mt-0.5">{greeting} Dein personalisierter Look.</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="flex-1 px-4"
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        <View className="mb-5">
+          <Text className="text-3xl font-extrabold text-black dark:text-white">
+            Stylist
+          </Text>
+          <Text className="text-zinc-500 text-sm mt-1">
+            Echte Kombinationen aus deinem eigenen Kleiderschrank.
+          </Text>
         </View>
-        <View className="flex-row items-center gap-2">
-          <TouchableOpacity 
-            onPress={() => setShowStyleDecider(true)}
-            className="bg-purple-600/20 border border-purple-500/40 p-2.5 rounded-2xl items-center justify-center shadow-sm"
-          >
-            <Text className="text-lg">🔮</Text>
-          </TouchableOpacity>
-          <View className="bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-2xl items-center shadow-sm border border-zinc-200 dark:border-zinc-700">
-            <Text className="text-xl">{weather.icon}</Text>
-            <Text className="text-[10px] font-bold text-black dark:text-white mt-0.5">{weather.temp}</Text>
-          </View>
-        </View>
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 mb-20">
-        
-        {/* Anlass-Filter (Mood Selector) */}
-        <View className="mb-3">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4" contentContainerStyle={{ paddingRight: 32 }}>
-            {MOODS.map(mood => (
-              <TouchableOpacity 
-                key={mood}
-                onPress={() => setActiveMood(mood)}
-                className={`mr-2 px-3.5 py-1.5 rounded-full border ${
-                  activeMood === mood 
-                    ? 'bg-black dark:bg-white border-black dark:border-white' 
+        {!profile ? (
+          <View className="mb-4">
+            <StatusBanner
+              tone="warning"
+              title="Noch keine Style-DNA"
+              message="Der Stylist funktioniert bereits mit deinem Schrank. Mit einer Style-DNA im Profil wird die persönliche Gewichtung stärker."
+            />
+          </View>
+        ) : null}
+
+        {wardrobeNeedsRefresh ? (
+          <View className="mb-4">
+            <StatusBanner
+              tone="neutral"
+              title="Style-DNA ist nicht mehr vollständig synchron"
+              message="Dein Schrank hat sich seit der letzten Style-DNA-Auswertung verändert. Du kannst ihn im Profil neu auswerten."
+            />
+          </View>
+        ) : null}
+
+        <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
+          Anlass
+        </Text>
+        <ScrollView
+          accessibilityRole="radiogroup"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="-mx-4 px-4 mb-5"
+          contentContainerStyle={{ paddingRight: 32 }}
+        >
+          {OCCASIONS.map((entry) => {
+            const selected = occasion === entry.value;
+            return (
+              <Pressable
+                key={entry.value}
+                accessibilityRole="radio"
+                accessibilityLabel={`Anlass ${entry.label}`}
+                accessibilityState={{ selected }}
+                onPress={() => chooseOccasion(entry.value)}
+                className={`mr-2 min-h-12 px-4 rounded-full border items-center justify-center ${
+                  selected
+                    ? 'bg-black dark:bg-white border-black dark:border-white'
                     : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
                 }`}
               >
-                <Text className={`font-bold text-xs ${activeMood === mood ? 'text-white dark:text-black' : 'text-zinc-600 dark:text-zinc-400'}`}>
-                  {mood}
+                <Text
+                  className={
+                    selected
+                      ? 'text-white dark:text-black font-bold text-xs'
+                      : 'text-zinc-600 dark:text-zinc-300 font-semibold text-xs'
+                  }
+                >
+                  {entry.label}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-        {/* View Mode Toggle: 3D Runway vs 2D Canvas */}
-        <View className="flex-row bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl mb-2 border border-zinc-200 dark:border-zinc-800">
-          <TouchableOpacity
-            onPress={() => setViewMode('3d')}
-            className={`flex-1 py-2 rounded-xl items-center flex-row justify-center ${viewMode === '3d' ? 'bg-blue-600' : ''}`}
-          >
-            <Text className="text-sm mr-1.5">🧍‍♂️</Text>
-            <Text className={`text-xs font-bold ${viewMode === '3d' ? 'text-white' : 'text-zinc-500 dark:text-zinc-400'}`}>
-              3D Runway Model (360°)
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setViewMode('canvas')}
-            className={`flex-1 py-2 rounded-xl items-center flex-row justify-center ${viewMode === 'canvas' ? 'bg-black dark:bg-white' : ''}`}
-          >
-            <Text className="text-sm mr-1.5">🖼️</Text>
-            <Text className={`text-xs font-bold ${viewMode === 'canvas' ? 'text-white dark:text-black' : 'text-zinc-500 dark:text-zinc-400'}`}>
-              Flat Lay Canvas
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Main Display: 3D Avatar OR 2D Layer Canvas */}
-        {isShuffling ? (
-          <View className="bg-zinc-100 dark:bg-zinc-900/60 rounded-[36px] p-12 items-center justify-center border border-zinc-200 dark:border-zinc-800 min-h-[420px] my-3">
-            <Text className="text-4xl mb-4 animate-bounce">✨</Text>
-            <Text className="text-black dark:text-white font-bold text-lg">KI kalkuliert perfekte Passform...</Text>
-            <Text className="text-zinc-500 text-xs mt-1 text-center">Analysiere Silhouette, Schnittproportionen & Wetterdaten ({weather.temp})</Text>
+        {isCloudBacked ? (
+          <View className="mb-5">
+            <StylistWeatherPanel
+              city={city}
+              weather={weather}
+              loading={weatherLoading}
+              error={weatherError}
+              onCityChange={setCity}
+              onLoad={() => void loadWeather()}
+              onClear={clearWeather}
+            />
           </View>
-        ) : (
-          viewMode === '3d' ? (
-            <AvatarViewer3D outfit={outfit} activeMood={activeMood} />
-          ) : (
-            <View className="bg-zinc-50 dark:bg-zinc-900 rounded-[36px] p-6 items-center justify-center border border-zinc-200 dark:border-zinc-800 relative overflow-hidden min-h-[420px] my-3">
-              {/* Oberteil */}
-              <View className="w-44 h-44 bg-white dark:bg-zinc-800 rounded-3xl shadow-md p-2 z-20 rotate-[-2deg]">
-                <Image source={{ uri: outfit.top }} className="w-full h-full rounded-2xl" resizeMode="cover" />
-              </View>
-              
-              {/* Hose */}
-              <View className="w-44 h-52 bg-white dark:bg-zinc-800 rounded-3xl shadow-sm p-2 z-10 rotate-[3deg] -mt-10">
-                <Image source={{ uri: outfit.bottom }} className="w-full h-full rounded-2xl" resizeMode="cover" />
+        ) : null}
+
+        {!weather ? (
+          <View className="mb-5">
+            <Text className="text-zinc-500 text-xs font-bold uppercase mb-2">
+              Saison
+            </Text>
+            <View accessibilityRole="radiogroup" className="flex-row flex-wrap">
+              {SEASONS.map((entry) => {
+                const selected = manualSeason === entry.value;
+                return (
+                  <Pressable
+                    key={entry.value}
+                    accessibilityRole="radio"
+                    accessibilityLabel={`Saison ${entry.label}`}
+                    accessibilityState={{ selected }}
+                    onPress={() => chooseSeason(entry.value)}
+                    className={`mr-2 mb-2 min-h-12 px-3.5 rounded-full border items-center justify-center ${
+                      selected
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
+                    }`}
+                  >
+                    <Text
+                      className={
+                        selected
+                          ? 'text-white text-xs font-bold'
+                          : 'text-zinc-600 dark:text-zinc-300 text-xs font-semibold'
+                      }
+                    >
+                      {entry.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        {result.missingCategories.length > 0 ? (
+          <View className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6">
+            <Text className="text-black dark:text-white text-xl font-extrabold mb-2">
+              Für ein vollständiges Outfit fehlen noch Teile
+            </Text>
+            <Text className="text-zinc-500 text-sm leading-6 mb-4">
+              Omni Fashion erfindet keine Produkte. Ergänze mindestens die
+              fehlenden Kategorien in deinem Schrank.
+            </Text>
+            <View className="flex-row flex-wrap">
+              {result.missingCategories.map((category) => (
+                <View
+                  key={category}
+                  className="bg-white dark:bg-zinc-800 rounded-full px-3 py-2 mr-2 mb-2"
+                >
+                  <Text className="text-black dark:text-white text-xs font-bold">
+                    {CATEGORY_LABELS[category] ?? category}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : recommendation ? (
+          <View>
+            <View className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5">
+              <View className="flex-row justify-between items-start mb-5">
+                <View className="flex-1 pr-3">
+                  <Text className="text-zinc-500 text-xs font-bold uppercase">
+                    Empfehlung {recommendationIndex + 1} von{' '}
+                    {result.recommendations.length}
+                  </Text>
+                  <Text
+                    accessibilityLabel={`${recommendation.score} Prozent Outfit Match`}
+                    className="text-black dark:text-white text-3xl font-black mt-1"
+                  >
+                    {recommendation.score}% Match
+                  </Text>
+                </View>
+                <View>
+                  <AppButton
+                    label={recommendationSaved ? 'Gespeichert' : 'Speichern'}
+                    accessibilityLabel={
+                      recommendationSaved
+                        ? 'Dieses Outfit ist bereits gespeichert'
+                        : 'Dieses Outfit speichern'
+                    }
+                    variant={recommendationSaved ? 'secondary' : 'primary'}
+                    loading={saving}
+                    disabled={recommendationSaved}
+                    onPress={() => void handleSave()}
+                  />
+                </View>
               </View>
 
-              {/* Schuhe */}
-              <View className="w-36 h-28 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-2 z-30 -mt-8">
-                <Image source={{ uri: outfit.shoes }} className="w-full h-full rounded-xl" resizeMode="cover" />
+              <View className="flex-row flex-wrap -mx-1 mb-4">
+                {recommendation.items.map((item) => (
+                  <View key={item.id} className="w-1/2 px-1 mb-2">
+                    <View
+                      accessibilityLabel={`${item.name}, ${CATEGORY_LABELS[item.category] ?? item.category}, ${item.color}`}
+                      className="bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                    >
+                      <View className="h-36 items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+                        {item.imageUrl ? (
+                          <Image
+                            accessibilityLabel={`Bild von ${item.name}`}
+                            source={{ uri: item.imageUrl }}
+                            className="w-full h-full"
+                            resizeMode="contain"
+                          />
+                        ) : (
+                          <Text className="text-zinc-400 text-xs px-3 text-center">
+                            Bild nicht verfügbar
+                          </Text>
+                        )}
+                      </View>
+                      <View className="p-3">
+                        <Text
+                          className="text-black dark:text-white font-bold text-sm"
+                          numberOfLines={1}
+                        >
+                          {item.name}
+                        </Text>
+                        <Text className="text-zinc-500 text-[11px] mt-1">
+                          {CATEGORY_LABELS[item.category] ?? item.category} ·{' '}
+                          {item.color}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <View className="bg-white dark:bg-zinc-800 rounded-2xl p-4 mb-4">
+                <Text className="text-black dark:text-white font-bold mb-3">
+                  Warum dieses Outfit?
+                </Text>
+                {recommendation.reasons.map((reason) => (
+                  <Text
+                    key={reason}
+                    className="text-zinc-600 dark:text-zinc-300 text-xs leading-5 mb-1"
+                  >
+                    • {reason}
+                  </Text>
+                ))}
+              </View>
+
+              <View className="bg-white dark:bg-zinc-800 rounded-2xl p-4">
+                <Text className="text-black dark:text-white font-bold mb-3">
+                  Match-Breakdown
+                </Text>
+                {breakdownRows(recommendation).map(([label, value]) => (
+                  <View key={label} className="flex-row justify-between mb-2">
+                    <Text className="text-zinc-500 text-xs">{label}</Text>
+                    <Text className="text-black dark:text-white text-xs font-bold">
+                      {value}%
+                    </Text>
+                  </View>
+                ))}
               </View>
             </View>
-          )
+
+            {result.recommendations.length > 1 ? (
+              <View className="mt-4">
+                <AppButton
+                  label="Nächste echte Kombination"
+                  accessibilityLabel="Nächste Outfit-Empfehlung anzeigen"
+                  onPress={() =>
+                    setRecommendationIndex(
+                      (current) =>
+                        (current + 1) % result.recommendations.length,
+                    )
+                  }
+                />
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          <View className="bg-zinc-100 dark:bg-zinc-900 rounded-3xl p-6">
+            <Text className="text-black dark:text-white font-bold text-lg">
+              Noch keine passende Kombination
+            </Text>
+            <Text className="text-zinc-500 text-sm mt-2 leading-6">
+              Prüfe Kategorie- und Saisondaten deiner Kleidungsstücke oder wähle
+              einen anderen Anlass.
+            </Text>
+          </View>
         )}
 
-        {/* 2. KI-Style Rating & Fit Evaluation Component */}
-        <AIStyleRatingCard mood={activeMood} weatherTemp={weather.temp} />
-
-        <View className="h-16" />
+        <SavedOutfitsPanel
+          outfits={savedOutfits}
+          wardrobeItems={items}
+          onFeedback={setFeedback}
+          onDelete={deleteOutfit}
+        />
       </ScrollView>
-
-      {/* Floating Shuffle Button */}
-      <View className="absolute bottom-5 w-full px-6">
-        <TouchableOpacity 
-          onPress={handleShuffle}
-          disabled={isShuffling}
-          className="bg-blue-600 dark:bg-blue-500 w-full py-4 rounded-2xl items-center justify-center shadow-xl shadow-blue-500/40 flex-row"
-        >
-          <Text className="text-white font-extrabold text-base">✨ Neues Outfit & Silhouette würfeln</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Style Decider Modal */}
-      <StyleDeciderModal
-        visible={showStyleDecider}
-        onClose={() => setShowStyleDecider(false)}
-      />
-
     </View>
   );
 }

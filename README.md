@@ -1,56 +1,68 @@
-# Welcome to your Expo app 👋
+# Omni Fashion
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Omni Fashion wird auf diesem Branch vom High-End-Prototyp in einen produktionsorientierten Core überführt.
 
-## Get started
+## Produktkern
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+OWN → STYLE → SWAP → BUY BETTER
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Der digitale Kleiderschrank ist die private Source of Truth. Darauf bauen Style-DNA, Outfit-Empfehlungen, OmniSwap und später echte Shop-/Partnerdaten auf.
 
-### Other setup steps
+## Aktueller technischer Stand
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Bereits im Repo vorhanden:
 
-## Learn more
+- Firebase Auth mit Registrierung, Verifikation und Passwort-Reset
+- Cloud Wardrobe mit Firestore + privatem Storage
+- Trusted AI-Kleidungsanalyse mit strukturiertem Ergebnis
+- StyleProfile + deterministischer Outfit Engine
+- Saved Outfits + Feedback
+- Trusted Wetterkontext
+- echtes OmniSwap Listing-/Offer-/Trade-System
+- Trust & Safety, Disputes und completed-Trade Reviews
+- In-App Notifications
+- Remote-Push-Backend-Grundlage
+- Moderations-/Recovery-Backend + interne UI-Basis
+- Privacy Export / Deletion Readiness / Account Deletion
+- Remote Feature Flags / Kill-Switches
+- serverseitige Rate Limits für kosten-/abuse-relevante Callables
+- Designsystem-/Accessibility-Grundlage
+- Performance-Query-Limits und Listen-Virtualisierung
+- permanente TypeScript-/Functions-/Security-/Production-Bundle-CI-Gates
+- EAS-/Release-/Rollback-Vorbereitung
 
-To learn more about developing your project with Expo, look at the following resources:
+## Noch nicht als Production fertig markieren
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Es fehlen weiterhin reale externe Voraussetzungen und Device-Validierung:
 
-## Join the community
+- echte Firebase Dev-/Prod-Projekte und Deployments
+- Gemini Secret im Dev-/Prod-Backend
+- App Check
+- echtes Expo/EAS-Projekt
+- finale Android Package ID / iOS Bundle ID
+- Signing/Credentials
+- SDK-57-konforme native Push-Konfiguration
+- reale Android-/iOS-Zwei-Nutzer-E2E-Tests
+- Crash-/Analytics-/Cost-Monitoring mit realen Daten
+- finale Privacy-/Retention-/Store-Angaben
+- Store Release Candidate und kontrollierter Rollout
 
-Join our community of developers creating universal apps.
+## Dokumentation
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Die operative Dokumentation liegt unter [`docs/`](./docs/).
+
+Wichtige Einstiege:
+
+- [`APP_ENTWICKLUNG_A_BIS_Z.md`](./APP_ENTWICKLUNG_A_BIS_Z.md)
+- [`docs/README.md`](./docs/README.md)
+- [`docs/00-governance/ROADMAP_STATUS.md`](./docs/00-governance/ROADMAP_STATUS.md)
+- [`docs/14-operations/FEATURE_FLAGS.md`](./docs/14-operations/FEATURE_FLAGS.md)
+- [`docs/14-operations/RATE_LIMITS.md`](./docs/14-operations/RATE_LIMITS.md)
+
+## Entwicklungsregel
+
+Keine Mock-Funktion wird als echte Produktfunktion ausgegeben. Kritische AI-, Marketplace-, Trade-, Moderations-, Push-, Feature-Flag- und Privacy-Mutationen laufen über Trusted Backend Grenzen.
+
+Der große Arbeits-PR bleibt Draft, bis reale Firebase-/EAS-/Device-/Store-Validierung abgeschlossen ist.
