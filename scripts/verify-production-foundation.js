@@ -59,6 +59,10 @@ function functionsSources(functionsConfig) {
   return [];
 }
 
+function isExpoSdk57Version(value) {
+  return typeof value === 'string' && /^~?57\.0\.\d+$/.test(value);
+}
+
 function main() {
   console.log('🔎 Omni Fashion Production Foundation Preflight');
 
@@ -150,10 +154,10 @@ function main() {
     const reactNativeVersion = packageJson.dependencies?.['react-native'];
     const reactVersion = packageJson.dependencies?.react;
 
-    if (expoVersion !== '~57.0.11') {
-      fail(`Unerwartete Expo-Version ${String(expoVersion)}; erwartet ~57.0.11.`);
+    if (!isExpoSdk57Version(expoVersion)) {
+      fail(`Unerwartete Expo-Version ${String(expoVersion)}; erwartet Expo SDK 57.x.`);
     } else {
-      pass('Expo SDK 57 Version entspricht der aktuellen Repo-Basis.');
+      pass(`Expo SDK 57 Familie bestätigt (${expoVersion}).`);
     }
 
     if (reactNativeVersion !== '0.86.2') {
