@@ -10,7 +10,6 @@ const easJson = JSON.parse(
 );
 
 const errors = [];
-const warnings = [];
 
 function requireString(value, label) {
   if (typeof value !== 'string' || !value.trim()) {
@@ -21,7 +20,29 @@ function requireString(value, label) {
 }
 
 function isReverseDnsIdentifier(value) {
-  return /^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9_-]*){1,}$/.test(value);
+  return /^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9_-]*){1,}$/.test(
+    value,
+  );
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
+function hasNonProductionMarker(value) {
+  return /(^|[-_.])(dev|demo|test|preview|staging|stage|ci|local|example)([-_.]|$)/i.test(
+    value,
+  );
+}
+
+function looksLikePlaceholder(value) {
+  return (
+    /^(changeme|replace[-_ ]?me|your[-_]|example|demo|test|ci[-_]|localhost)/i.test(
+      value,
+    ) || /example\.(com|org|net)$/i.test(value)
+  );
 }
 
 const expo = appJson.expo ?? {};
@@ -39,19 +60,36 @@ if (androidPackage && !isReverseDnsIdentifier(androidPackage)) {
     'expo.android.package ist kein plausibler permanenter Reverse-DNS-Identifier.',
   );
 }
+if (androidPackage && hasNonProductionMarker(androidPackage)) {
+  errors.push(
+    `expo.android.package (${androidPackage}) enthält einen Nicht-Production-/Platzhalter-Marker.`,
+  );
+}
+
 if (iosBundleIdentifier && !isReverseDnsIdentifier(iosBundleIdentifier)) {
   errors.push(
     'expo.ios.bundleIdentifier ist kein plausibler permanenter Reverse-DNS-Identifier.',
   );
 }
-
-const easProjectId = expo.extra?.eas?.projectId;
-if (typeof easProjectId !== 'string' || !easProjectId.trim()) {
+if (iosBundleIdentifier && hasNonProductionMarker(iosBundleIdentifier)) {
   errors.push(
-    'expo.extra.eas.projectId fehlt. Führe zuerst EAS init/linking mit dem echten Projekt aus.',
+    `expo.ios.bundleIdentifier (${iosBundleIdentifier}) enthält einen Nicht-Production-/Platzhalter-Marker.`,
   );
 }
 
+const easProjectId = requireString(
+  expo.extra?.eas?.projectId,
+  'expo.extra.eas.projectId',
+);
+if (easProjectId && !isUuid(easProjectId)) {
+  errors.push(
+    'expo.extra.eas.projectId muss die echte UUID des verknüpften EAS-Projekts sein.',
+  );
+}
+
+if (easJson.cli?.appVersionSource !== 'remote') {
+  errors.push('eas.json cli.appVersionSource muss "remote" sein.');
+}
 if (easJson.build?.preview?.environment !== 'preview') {
   errors.push(
     'eas.json build.preview.environment muss explizit "preview" sein.',
@@ -62,6 +100,9 @@ if (easJson.build?.production?.environment !== 'production') {
     'eas.json build.production.environment muss explizit "production" sein.',
   );
 }
+if (easJson.build?.production?.autoIncrement !== true) {
+  errors.push('eas.json build.production.autoIncrement muss true sein.');
+}
 
 const requiredPublicEnvironment = [
   'EXPO_PUBLIC_FIREBASE_API_KEY',
@@ -70,12 +111,18 @@ const requiredPublicEnvironment = [
   'EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET',
   'EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
   'EXPO_PUBLIC_FIREBASE_APP_ID',
+  'EXPO_PUBLIC_FIREBASE_FUNCTIONS_REGION',
 ];
 
 for (const name of requiredPublicEnvironment) {
   const value = process.env[name];
   if (typeof value !== 'string' || !value.trim()) {
     errors.push(`${name} fehlt in der geladenen Release-Umgebung.`);
+    continue;
+  }
+
+  if (looksLikePlaceholder(value.trim())) {
+    errors.push(`${name} enthält einen Platzhalterwert.`);
   }
 }
 
@@ -86,12 +133,21 @@ if (process.env.EXPO_PUBLIC_APP_ENV !== 'production') {
 }
 
 const firebaseProjectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+if (firebaseProjectId && hasNonProductionMarker(firebaseProjectId)) {
+  errors.push(
+    `EXPO_PUBLIC_FIREBASE_PROJECT_ID (${firebaseProjectId}) ist kein zulässiges Production-Projekt.`,
+  );
+}
+
+const firebaseAuthDomain = process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim();
 if (
   firebaseProjectId &&
-  /(^|[-_.])(dev|test|preview|staging|ci)([-_.]|$)/i.test(firebaseProjectId)
+  firebaseAuthDomain &&
+  firebaseAuthDomain.endsWith('.firebaseapp.com') &&
+  firebaseAuthDomain !== `${firebaseProjectId}.firebaseapp.com`
 ) {
-  warnings.push(
-    `EXPO_PUBLIC_FIREBASE_PROJECT_ID (${firebaseProjectId}) wirkt wie ein Nicht-Production-Projekt. Manuell prüfen.`,
+  errors.push(
+    `Firebase Auth Domain (${firebaseAuthDomain}) passt nicht zur Project ID (${firebaseProjectId}).`,
   );
 }
 
@@ -105,13 +161,6 @@ for (const [key] of publicValues) {
     errors.push(
       `${key} sieht nach einem Secret aus und darf nicht als EXPO_PUBLIC_* in den Client gelangen.`,
     );
-  }
-}
-
-if (warnings.length > 0) {
-  console.warn('\nRelease-Konfigurationswarnungen:');
-  for (const warning of warnings) {
-    console.warn(`- ${warning}`);
   }
 }
 
