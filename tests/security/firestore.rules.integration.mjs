@@ -138,6 +138,31 @@ async function run() {
     await setDoc(ownerProfileRef, validUserProfile('Owner'));
     assert.equal((await getDoc(ownerProfileRef)).exists(), true);
 
+    await updateDoc(ownerProfileRef, {
+      onboardingCompleted: true,
+      updatedAt: Timestamp.now(),
+    });
+    assert.equal(
+      (await getDoc(ownerProfileRef)).data()?.onboardingCompleted,
+      true,
+    );
+
+    await expectPermissionDenied(
+      updateDoc(doc(stranger.db, 'users', ownerId), {
+        onboardingCompleted: false,
+        updatedAt: Timestamp.now(),
+      }),
+      'stranger changes onboarding completion state',
+    );
+
+    await expectPermissionDenied(
+      updateDoc(ownerProfileRef, {
+        onboardingCompleted: 'yes',
+        updatedAt: Timestamp.now(),
+      }),
+      'owner writes invalid onboarding completion type',
+    );
+
     await expectPermissionDenied(
       setDoc(doc(stranger.db, 'users', strangerId), {
         displayName: 'Incomplete Profile',
