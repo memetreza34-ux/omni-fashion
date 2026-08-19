@@ -136,37 +136,43 @@ export function UserProfileProvider({
     };
   }, [loadProfile, user]);
 
-  const updateProfile = async (
-    input: UpdateUserProfileInput,
-  ): Promise<void> => {
-    if (!user || !profile) {
-      throw new Error('USER_PROFILE_NOT_READY');
-    }
-
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      if (isCloudBacked) {
-        await updateUserProfile(user.id, input);
-        const refreshed = await getUserProfile(user.id);
-        if (!refreshed) {
-          throw new Error('USER_PROFILE_MISSING_AFTER_UPDATE');
-        }
-        setProfile(refreshed);
-        return;
+  const updateProfile = useCallback(
+    async (input: UpdateUserProfileInput): Promise<void> => {
+      if (!user || !profile) {
+        throw new Error('USER_PROFILE_NOT_READY');
       }
 
-      const updated = await updateLocalUserProfile(profile, input);
-      setProfile(updated);
-    } catch (saveError: unknown) {
-      console.error('Failed to update UserProfile', saveError);
-      setError('Dein Profil konnte nicht gespeichert werden.');
-      throw saveError;
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      setIsSaving(true);
+      setError(null);
+
+      try {
+        if (isCloudBacked) {
+          await updateUserProfile(user.id, input);
+          const refreshed = await getUserProfile(user.id);
+          if (!refreshed) {
+            throw new Error('USER_PROFILE_MISSING_AFTER_UPDATE');
+          }
+          setProfile(refreshed);
+          return;
+        }
+
+        const updated = await updateLocalUserProfile(profile, input);
+        setProfile(updated);
+      } catch (saveError: unknown) {
+        console.error('Failed to update UserProfile', saveError);
+        setError('Dein Profil konnte nicht gespeichert werden.');
+        throw saveError;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [isCloudBacked, profile, user],
+  );
+
+  const completeOnboarding = useCallback(
+    () => updateProfile({ onboardingCompleted: true }),
+    [updateProfile],
+  );
 
   const value = useMemo<UserProfileContextType>(
     () => ({
@@ -177,9 +183,18 @@ export function UserProfileProvider({
       isCloudBacked,
       refreshProfile,
       updateProfile,
-      completeOnboarding: () => updateProfile({ onboardingCompleted: true }),
+      completeOnboarding,
     }),
-    [error, isCloudBacked, isLoading, isSaving, profile, refreshProfile],
+    [
+      completeOnboarding,
+      error,
+      isCloudBacked,
+      isLoading,
+      isSaving,
+      profile,
+      refreshProfile,
+      updateProfile,
+    ],
   );
 
   return (
