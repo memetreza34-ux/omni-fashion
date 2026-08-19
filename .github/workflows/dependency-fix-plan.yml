@@ -1,0 +1,97 @@
+name: Dependency Fix Plan
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  root-fix-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+
+      - name: Install current dependencies
+        run: npm ci
+
+      - name: Simulate safe npm audit fix
+        run: npm audit fix --package-lock-only || true
+
+      - name: Reinstall simulated lockfile
+        run: npm ci
+
+      - name: Verify Expo SDK compatibility
+        run: npm run verify:expo
+
+      - name: Verify lint and TypeScript foundation
+        run: npm run lint && npm run verify:quality
+
+      - name: Summarize remaining vulnerabilities
+        run: |
+          npm audit --json > root-after.json || true
+          node <<'NODE'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync('root-after.json', 'utf8'));
+          console.log('ROOT AFTER SAFE FIX');
+          console.log(JSON.stringify(audit.metadata?.vulnerabilities ?? {}, null, 2));
+          for (const [name, item] of Object.entries(audit.vulnerabilities ?? {})) {
+            console.log(`${name}\tseverity=${item.severity}\tdirect=${Boolean(item.isDirect)}\tfix=${JSON.stringify(item.fixAvailable ?? false)}`);
+          }
+          NODE
+          echo '--- PACKAGE.JSON DIFF ---'
+          git diff -- package.json || true
+          echo '--- LOCKFILE DIFF STAT ---'
+          git diff --stat -- package-lock.json || true
+
+  functions-fix-plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install current dependencies
+        run: npm ci
+
+      - name: Simulate safe npm audit fix
+        run: npm audit fix --package-lock-only || true
+
+      - name: Reinstall simulated lockfile
+        run: npm ci
+
+      - name: Verify Functions
+        run: npm run verify
+
+      - name: Summarize remaining vulnerabilities
+        run: |
+          npm audit --json > functions-after.json || true
+          node <<'NODE'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync('functions-after.json', 'utf8'));
+          console.log('FUNCTIONS AFTER SAFE FIX');
+          console.log(JSON.stringify(audit.metadata?.vulnerabilities ?? {}, null, 2));
+          for (const [name, item] of Object.entries(audit.vulnerabilities ?? {})) {
+            console.log(`${name}\tseverity=${item.severity}\tdirect=${Boolean(item.isDirect)}\tfix=${JSON.stringify(item.fixAvailable ?? false)}`);
+          }
+          NODE
+          echo '--- PACKAGE.JSON DIFF ---'
+          git diff -- package.json || true
+          echo '--- LOCKFILE DIFF STAT ---'
+          git diff --stat -- package-lock.json || true
