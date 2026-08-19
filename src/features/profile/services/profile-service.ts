@@ -9,13 +9,12 @@ import {
 
 import { getFirebaseServices } from '@/services/firebase/app';
 
-import type {
-  CreateUserProfileInput,
-  UpdateUserProfileInput,
-  UserProfile,
+import {
+  USER_PROFILE_SCHEMA_VERSION,
+  type CreateUserProfileInput,
+  type UpdateUserProfileInput,
+  type UserProfile,
 } from '../types';
-
-const USER_PROFILE_SCHEMA_VERSION = 1;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -47,15 +46,6 @@ function readBoolean(
   return typeof value === 'boolean' ? value : fallback;
 }
 
-function readNumber(
-  record: Record<string, unknown>,
-  key: string,
-  fallback: number,
-): number {
-  const value = record[key];
-  return typeof value === 'number' ? value : fallback;
-}
-
 function timestampToIso(value: unknown): string | null {
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
@@ -67,6 +57,12 @@ function mapProfileDocument(
   if (!isRecord(rawData)) {
     return null;
   }
+
+  const rawSchemaVersion = rawData.schemaVersion;
+  const schemaVersion =
+    rawSchemaVersion === USER_PROFILE_SCHEMA_VERSION
+      ? USER_PROFILE_SCHEMA_VERSION
+      : USER_PROFILE_SCHEMA_VERSION;
 
   return {
     id,
@@ -82,11 +78,7 @@ function mapProfileDocument(
     ),
     createdAt: timestampToIso(rawData.createdAt),
     updatedAt: timestampToIso(rawData.updatedAt),
-    schemaVersion: readNumber(
-      rawData,
-      'schemaVersion',
-      USER_PROFILE_SCHEMA_VERSION,
-    ),
+    schemaVersion,
   };
 }
 
