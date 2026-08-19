@@ -1,0 +1,47 @@
+name: Bootstrap ESLint
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-eslint:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          ref: docs/app-development-a-z
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.13.x'
+          cache: npm
+
+      - name: Install current dependencies
+        run: npm ci
+
+      - name: Install Expo ESLint dependencies
+        run: npx expo install eslint eslint-config-expo --dev
+
+      - name: Verify Expo dependency compatibility
+        run: npx expo install --check
+
+      - name: Commit dependency files only
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "ESLint dependencies are already installed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "dev-deps: add Expo ESLint flat-config dependencies"
+          git push origin HEAD:docs/app-development-a-z
