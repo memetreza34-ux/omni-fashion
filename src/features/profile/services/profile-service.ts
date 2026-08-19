@@ -58,12 +58,6 @@ function mapProfileDocument(
     return null;
   }
 
-  const rawSchemaVersion = rawData.schemaVersion;
-  const schemaVersion =
-    rawSchemaVersion === USER_PROFILE_SCHEMA_VERSION
-      ? USER_PROFILE_SCHEMA_VERSION
-      : USER_PROFILE_SCHEMA_VERSION;
-
   return {
     id,
     displayName: readString(rawData, 'displayName', ''),
@@ -78,7 +72,7 @@ function mapProfileDocument(
     ),
     createdAt: timestampToIso(rawData.createdAt),
     updatedAt: timestampToIso(rawData.updatedAt),
-    schemaVersion,
+    schemaVersion: USER_PROFILE_SCHEMA_VERSION,
   };
 }
 
