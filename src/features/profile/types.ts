@@ -1,3 +1,5 @@
+export const USER_PROFILE_SCHEMA_VERSION = 1;
+
 export interface UserProfile {
   id: string;
   displayName: string;
@@ -8,7 +10,7 @@ export interface UserProfile {
   onboardingCompleted: boolean;
   createdAt: string | null;
   updatedAt: string | null;
-  schemaVersion: number;
+  schemaVersion: typeof USER_PROFILE_SCHEMA_VERSION;
 }
 
 export interface CreateUserProfileInput {
