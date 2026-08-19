@@ -109,21 +109,22 @@ export async function uploadWardrobeImage(
   });
 
   await new Promise<void>((resolve, reject) => {
-    let unsubscribe = () => undefined;
+    const subscribe = uploadTask.on('state_changed');
+    let unsubscribe: (() => void) | null = null;
 
     const handleAbort = () => {
       uploadTask.cancel();
     };
 
     const cleanup = () => {
-      unsubscribe();
+      unsubscribe?.();
+      unsubscribe = null;
       options.signal?.removeEventListener('abort', handleAbort);
     };
 
     options.signal?.addEventListener('abort', handleAbort, { once: true });
 
-    unsubscribe = uploadTask.on(
-      'state_changed',
+    unsubscribe = subscribe(
       (snapshot) => {
         const fraction =
           snapshot.totalBytes > 0
