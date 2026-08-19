@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -94,17 +95,23 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
   const isLoading = Boolean(activeOwnerId && !currentSnapshot);
   const error = currentSnapshot?.error ?? null;
 
-  const replaceItems = (
-    ownerId: string,
-    nextItems: WardrobeItem[],
-    nextError: string | null = null,
-  ) => {
-    itemsRef.current = { ownerId, items: nextItems };
-    setSnapshot({ ownerId, items: nextItems, error: nextError });
-  };
+  const replaceItems = useCallback(
+    (
+      ownerId: string,
+      nextItems: WardrobeItem[],
+      nextError: string | null = null,
+    ) => {
+      itemsRef.current = { ownerId, items: nextItems };
+      setSnapshot({ ownerId, items: nextItems, error: nextError });
+    },
+    [],
+  );
 
-  const currentItemsFor = (ownerId: string): WardrobeItem[] =>
-    itemsRef.current.ownerId === ownerId ? itemsRef.current.items : [];
+  const currentItemsFor = useCallback(
+    (ownerId: string): WardrobeItem[] =>
+      itemsRef.current.ownerId === ownerId ? itemsRef.current.items : [],
+    [],
+  );
 
   useEffect(() => {
     if (!user) {
@@ -162,7 +169,7 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
       active = false;
       unsubscribe();
     };
-  }, [isCloudBacked, user]);
+  }, [isCloudBacked, replaceItems, user]);
 
   const addItem = async (
     input: CreateWardrobeItemInput,
