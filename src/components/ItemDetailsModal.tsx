@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +23,10 @@ interface Props {
   onSave: (item: WardrobeItem) => void;
   onDelete: (id: string) => void;
   onAnalyze: (id: string) => Promise<void>;
+}
+
+interface FormProps extends Omit<Props, 'item'> {
+  item: WardrobeItem;
 }
 
 const CATEGORIES: readonly WardrobeItem['category'][] = [
@@ -73,7 +77,7 @@ function analysisDescription(item: WardrobeItem): string {
   }
 }
 
-export function ItemDetailsModal({
+function ItemDetailsForm({
   visible,
   item,
   canAnalyze,
@@ -81,42 +85,21 @@ export function ItemDetailsModal({
   onSave,
   onDelete,
   onAnalyze,
-}: Props) {
-  const [name, setName] = useState(item?.name ?? '');
+}: FormProps) {
+  const [name, setName] = useState(item.name);
   const [category, setCategory] = useState<WardrobeItem['category']>(
-    item?.category ?? 'Other',
+    item.category,
   );
-  const [season, setSeason] = useState<WardrobeItem['season']>(
-    item?.season ?? 'All',
-  );
-  const [color, setColor] = useState(item?.color ?? 'Unbekannt');
-  const [brand, setBrand] = useState(item?.brand ?? '');
-  const [material, setMaterial] = useState(item?.material ?? '');
-  const [size, setSize] = useState(item?.size ?? '');
+  const [season, setSeason] = useState<WardrobeItem['season']>(item.season);
+  const [color, setColor] = useState(item.color);
+  const [brand, setBrand] = useState(item.brand ?? '');
+  const [material, setMaterial] = useState(item.material ?? '');
+  const [size, setSize] = useState(item.size ?? '');
   const [condition, setCondition] = useState<WardrobeItem['condition']>(
-    item?.condition ?? 'good',
+    item.condition,
   );
   const [analysisRequesting, setAnalysisRequesting] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!item) {
-      return;
-    }
-
-    setName(item.name);
-    setCategory(item.category);
-    setSeason(item.season);
-    setColor(item.color);
-    setBrand(item.brand ?? '');
-    setMaterial(item.material ?? '');
-    setSize(item.size ?? '');
-    setCondition(item.condition);
-  }, [item]);
-
-  if (!item) {
-    return null;
-  }
 
   const handleSave = () => {
     onSave({
@@ -433,5 +416,21 @@ export function ItemDetailsModal({
         </View>
       </View>
     </Modal>
+  );
+}
+
+export function ItemDetailsModal(props: Props) {
+  if (!props.item) {
+    return null;
+  }
+
+  const formRevision = props.item.aiAnalyzedAt ?? 'not-analyzed';
+
+  return (
+    <ItemDetailsForm
+      key={`${props.item.id}:${formRevision}`}
+      {...props}
+      item={props.item}
+    />
   );
 }
