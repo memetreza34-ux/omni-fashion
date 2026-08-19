@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   Image,
@@ -41,7 +41,9 @@ export function CreateSwapListingModal({
   onClose: () => void;
   onCreate: (input: CreateSwapListingInput) => Promise<string>;
 }) {
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemOverrideId, setSelectedItemOverrideId] = useState<
+    string | null
+  >(null);
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('Berlin');
   const [shippingEnabled, setShippingEnabled] = useState(true);
@@ -49,20 +51,22 @@ export function CreateSwapListingModal({
   const [estimatedValue, setEstimatedValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!visible) {
+  const selectedItemId =
+    selectedItemOverrideId &&
+    items.some((item) => item.id === selectedItemOverrideId)
+      ? selectedItemOverrideId
+      : (items[0]?.id ?? null);
+  const selectedItem =
+    items.find((item) => item.id === selectedItemId) ?? null;
+
+  const close = () => {
+    if (isSubmitting) {
       return;
     }
 
-    setSelectedItemId((current) =>
-      current && items.some((item) => item.id === current)
-        ? current
-        : (items[0]?.id ?? null),
-    );
-  }, [items, visible]);
-
-  const selectedItem =
-    items.find((item) => item.id === selectedItemId) ?? null;
+    setSelectedItemOverrideId(null);
+    onClose();
+  };
 
   const submit = async () => {
     if (!selectedItem || isSubmitting) {
@@ -103,6 +107,7 @@ export function CreateSwapListingModal({
       });
       setDescription('');
       setEstimatedValue('');
+      setSelectedItemOverrideId(null);
       onClose();
     } catch (error: unknown) {
       console.error('Failed to create OmniSwap listing', error);
@@ -120,7 +125,7 @@ export function CreateSwapListingModal({
       animationType="slide"
       transparent
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={close}
     >
       <View className="flex-1 justify-end bg-black/60">
         <View
@@ -141,7 +146,7 @@ export function CreateSwapListingModal({
               accessibilityLabel="Listing-Dialog schließen"
               disabled={isSubmitting}
               hitSlop={8}
-              onPress={onClose}
+              onPress={close}
               className="min-h-12 px-3 items-center justify-center"
             >
               <Text className="text-zinc-500 font-bold">Schließen</Text>
@@ -164,6 +169,7 @@ export function CreateSwapListingModal({
                   Kleidungsstück
                 </Text>
                 <ScrollView
+                  accessibilityRole="radiogroup"
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   className="mb-5"
@@ -176,7 +182,7 @@ export function CreateSwapListingModal({
                         accessibilityRole="radio"
                         accessibilityLabel={`${item.name}, ${item.category}, Zustand ${item.condition}`}
                         accessibilityState={{ selected }}
-                        onPress={() => setSelectedItemId(item.id)}
+                        onPress={() => setSelectedItemOverrideId(item.id)}
                         className={`w-32 mr-3 rounded-2xl border overflow-hidden ${
                           selected
                             ? 'border-indigo-500 bg-indigo-500/10'
