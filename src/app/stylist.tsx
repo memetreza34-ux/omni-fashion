@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -97,10 +97,6 @@ export default function StylistScreen() {
     });
   }, [items, manualSeason, occasion, profile, weather]);
 
-  useEffect(() => {
-    setRecommendationIndex(0);
-  }, [occasion, manualSeason, weather]);
-
   const recommendation =
     result.recommendations.length > 0
       ? result.recommendations[
@@ -113,6 +109,16 @@ export default function StylistScreen() {
     ? hasRecommendation(recommendation.itemIds)
     : false;
 
+  const chooseOccasion = (nextOccasion: OutfitOccasion) => {
+    setOccasion(nextOccasion);
+    setRecommendationIndex(0);
+  };
+
+  const chooseSeason = (nextSeason: WardrobeSeason) => {
+    setManualSeason(nextSeason);
+    setRecommendationIndex(0);
+  };
+
   const loadWeather = async () => {
     setWeatherError(null);
     setWeatherLoading(true);
@@ -120,6 +126,7 @@ export default function StylistScreen() {
     try {
       const nextWeather = await getOutfitWeather(city);
       setWeather(nextWeather);
+      setRecommendationIndex(0);
     } catch (error: unknown) {
       console.error('Failed to load outfit weather', error);
       setWeatherError(
@@ -128,6 +135,12 @@ export default function StylistScreen() {
     } finally {
       setWeatherLoading(false);
     }
+  };
+
+  const clearWeather = () => {
+    setWeather(null);
+    setWeatherError(null);
+    setRecommendationIndex(0);
   };
 
   const handleSave = async () => {
@@ -218,7 +231,7 @@ export default function StylistScreen() {
                 accessibilityRole="radio"
                 accessibilityLabel={`Anlass ${entry.label}`}
                 accessibilityState={{ selected }}
-                onPress={() => setOccasion(entry.value)}
+                onPress={() => chooseOccasion(entry.value)}
                 className={`mr-2 min-h-12 px-4 rounded-full border items-center justify-center ${
                   selected
                     ? 'bg-black dark:bg-white border-black dark:border-white'
@@ -248,10 +261,7 @@ export default function StylistScreen() {
               error={weatherError}
               onCityChange={setCity}
               onLoad={() => void loadWeather()}
-              onClear={() => {
-                setWeather(null);
-                setWeatherError(null);
-              }}
+              onClear={clearWeather}
             />
           </View>
         ) : null}
@@ -270,7 +280,7 @@ export default function StylistScreen() {
                     accessibilityRole="radio"
                     accessibilityLabel={`Saison ${entry.label}`}
                     accessibilityState={{ selected }}
-                    onPress={() => setManualSeason(entry.value)}
+                    onPress={() => chooseSeason(entry.value)}
                     className={`mr-2 mb-2 min-h-12 px-3.5 rounded-full border items-center justify-center ${
                       selected
                         ? 'bg-blue-600 border-blue-600'
