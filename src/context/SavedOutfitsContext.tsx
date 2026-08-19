@@ -36,6 +36,13 @@ interface SavedOutfitsContextType {
   hasRecommendation: (itemIds: string[]) => boolean;
 }
 
+interface SavedOutfitsSnapshot {
+  ownerId: string;
+  outfits: SavedOutfit[];
+  isLoading: boolean;
+  error: string | null;
+}
+
 const SavedOutfitsContext = createContext<SavedOutfitsContextType | undefined>(
   undefined,
 );
@@ -50,41 +57,47 @@ export function SavedOutfitsProvider({
   children: React.ReactNode;
 }) {
   const { user, isBackendConfigured } = useAuth();
-  const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<SavedOutfitsSnapshot | null>(null);
 
   const isCloudBacked = Boolean(
     user && isBackendConfigured && !user.isDevelopmentDemo,
   );
+  const activeOwnerId = user?.id ?? null;
+  const currentSnapshot =
+    activeOwnerId && snapshot?.ownerId === activeOwnerId ? snapshot : null;
+  const outfits = currentSnapshot?.outfits ?? [];
+  const isLoading = activeOwnerId ? !currentSnapshot || currentSnapshot.isLoading : false;
+  const error = currentSnapshot?.error ?? null;
 
   useEffect(() => {
-    setError(null);
-    setIsLoading(true);
-
     if (!user) {
-      setOutfits([]);
-      setIsLoading(false);
       return undefined;
     }
 
+    const ownerId = user.id;
+
     if (!isCloudBacked) {
       let active = true;
-      void loadLocalSavedOutfits(user.id)
+      void loadLocalSavedOutfits(ownerId)
         .then((localOutfits) => {
           if (active) {
-            setOutfits(localOutfits);
+            setSnapshot({
+              ownerId,
+              outfits: localOutfits,
+              isLoading: false,
+              error: null,
+            });
           }
         })
         .catch((loadError: unknown) => {
           console.error('Failed to load local saved outfits', loadError);
           if (active) {
-            setError('Gespeicherte Outfits konnten nicht geladen werden.');
-          }
-        })
-        .finally(() => {
-          if (active) {
-            setIsLoading(false);
+            setSnapshot({
+              ownerId,
+              outfits: [],
+              isLoading: false,
+              error: 'Gespeicherte Outfits konnten nicht geladen werden.',
+            });
           }
         });
 
@@ -94,15 +107,23 @@ export function SavedOutfitsProvider({
     }
 
     return subscribeToSavedOutfits(
-      user.id,
+      ownerId,
       (nextOutfits) => {
-        setOutfits(nextOutfits);
-        setIsLoading(false);
+        setSnapshot({
+          ownerId,
+          outfits: nextOutfits,
+          isLoading: false,
+          error: null,
+        });
       },
       (subscriptionError) => {
         console.error('Saved outfit subscription failed', subscriptionError);
-        setError('Gespeicherte Outfits konnten nicht geladen werden.');
-        setIsLoading(false);
+        setSnapshot({
+          ownerId,
+          outfits: [],
+          isLoading: false,
+          error: 'Gespeicherte Outfits konnten nicht geladen werden.',
+        });
       },
     );
   }, [isCloudBacked, user]);
@@ -130,7 +151,16 @@ export function SavedOutfitsProvider({
     }
 
     const saved = await saveLocalOutfit(user.id, input);
-    setOutfits((current) => [saved, ...current]);
+    setSnapshot((current) =>
+      current?.ownerId === user.id
+        ? { ...current, outfits: [saved, ...current.outfits] }
+        : {
+            ownerId: user.id,
+            outfits: [saved],
+            isLoading: false,
+            error: null,
+          },
+    );
     return saved.id;
   };
 
@@ -148,12 +178,17 @@ export function SavedOutfitsProvider({
     }
 
     await updateLocalOutfitFeedback(user.id, outfitId, feedback);
-    setOutfits((current) =>
-      current.map((outfit) =>
-        outfit.id === outfitId
-          ? { ...outfit, feedback, updatedAt: new Date().toISOString() }
-          : outfit,
-      ),
+    setSnapshot((current) =>
+      current?.ownerId === user.id
+        ? {
+            ...current,
+            outfits: current.outfits.map((outfit) =>
+              outfit.id === outfitId
+                ? { ...outfit, feedback, updatedAt: new Date().toISOString() }
+                : outfit,
+            ),
+          }
+        : current,
     );
   };
 
@@ -168,7 +203,14 @@ export function SavedOutfitsProvider({
     }
 
     await deleteLocalOutfit(user.id, outfitId);
-    setOutfits((current) => current.filter((outfit) => outfit.id !== outfitId));
+    setSnapshot((current) =>
+      current?.ownerId === user.id
+        ? {
+            ...current,
+            outfits: current.outfits.filter((outfit) => outfit.id !== outfitId),
+          }
+        : current,
+    );
   };
 
   return (
