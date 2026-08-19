@@ -53,8 +53,6 @@
     "verify:foundation": "node scripts/verify-production-foundation.js",
     "verify:expo": "npx expo install --check",
     "verify:quality": "node scripts/check-no-any.js && node scripts/verify-production-foundation.js && npx tsc --noEmit",
-    "audit:runtime": "node scripts/classify-npm-audit.js .",
-    "audit:functions-runtime": "node scripts/classify-npm-audit.js functions",
     "validate:release-config": "node scripts/validate-release-config.js",
     "firebase:preflight": "node scripts/firebase-project-command.js preflight",
     "firebase:emulators": "node scripts/firebase-project-command.js emulators",
