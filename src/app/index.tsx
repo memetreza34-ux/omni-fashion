@@ -25,6 +25,12 @@ function uploadFailureCopy(
   kind: WardrobeImageUploadFailureKind,
 ): UploadFailureCopy {
   switch (kind) {
+    case 'preparation_failed':
+      return {
+        title: 'Bild konnte nicht vorbereitet werden',
+        message:
+          'Das Bild konnte nicht sicher verkleinert oder komprimiert werden. Bitte wähle es erneut über Kamera oder Galerie aus.',
+      };
     case 'too_large':
       return {
         title: 'Bild zu groß',
@@ -171,7 +177,7 @@ export default function WardrobeScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      await processAndSaveImage(result.assets[0].uri, 'camera');
+      await processAndSaveImage(result.assets[0], 'camera');
     }
   };
 
@@ -192,19 +198,21 @@ export default function WardrobeScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      await processAndSaveImage(result.assets[0].uri, 'library');
+      await processAndSaveImage(result.assets[0], 'library');
     }
   };
 
   const processAndSaveImage = async (
-    uri: string,
+    asset: ImagePicker.ImagePickerAsset,
     source: Extract<WardrobeSource, 'camera' | 'library'>,
   ) => {
     setIsProcessing(true);
 
     try {
       const newItem = await addItem({
-        localImageUri: uri,
+        localImageUri: asset.uri,
+        imageWidth: asset.width,
+        imageHeight: asset.height,
         source,
       });
 
@@ -240,7 +248,7 @@ export default function WardrobeScreen() {
               { text: 'Abbrechen', style: 'cancel' },
               {
                 text: 'Erneut versuchen',
-                onPress: () => void processAndSaveImage(uri, source),
+                onPress: () => void processAndSaveImage(asset, source),
               },
             ]
           : [{ text: 'OK' }],
