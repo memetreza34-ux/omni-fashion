@@ -12,6 +12,7 @@ import {
 
 import { ItemDetailsModal } from '../components/ItemDetailsModal';
 import { useWardrobe } from '../context/WardrobeContext';
+import { isWardrobeImageUploadCanceled } from '../features/wardrobe/services/wardrobe-storage-service';
 import type { WardrobeItem, WardrobeSource } from '../types/wardrobe';
 
 function aiBadge(item: WardrobeItem): string | null {
@@ -56,10 +57,12 @@ export default function WardrobeScreen() {
     isLoading,
     error,
     isCloudBacked,
+    uploadProgress,
     addItem,
     updateItem,
     deleteItem,
     analyzeItem,
+    cancelUpload,
   } = useWardrobe();
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -67,6 +70,12 @@ export default function WardrobeScreen() {
   const selectedItem = selectedItemId
     ? (items.find((item) => item.id === selectedItemId) ?? null)
     : null;
+  const uploadPercentage =
+    uploadProgress === null ? null : Math.round(uploadProgress * 100);
+  const uploadProgressWidth =
+    uploadPercentage === null
+      ? ('0%' as `${number}%`)
+      : (`${uploadPercentage}%` as `${number}%`);
 
   const handleAddPress = () => {
     Alert.alert('Neues Item hinzufügen', 'Wähle eine Option:', [
@@ -137,6 +146,10 @@ export default function WardrobeScreen() {
         });
       }
     } catch (saveError: unknown) {
+      if (isWardrobeImageUploadCanceled(saveError)) {
+        return;
+      }
+
       console.error('Failed to add wardrobe item', saveError);
       Alert.alert(
         'Speichern fehlgeschlagen',
@@ -235,6 +248,48 @@ export default function WardrobeScreen() {
           <Text className="text-red-600 dark:text-red-300 text-xs">
             {error}
           </Text>
+        </View>
+      ) : null}
+
+      {uploadPercentage !== null ? (
+        <View
+          accessibilityRole="progressbar"
+          accessibilityLabel="Kleidungsstück wird hochgeladen"
+          accessibilityValue={{
+            min: 0,
+            max: 100,
+            now: uploadPercentage,
+            text: `${uploadPercentage} Prozent`,
+          }}
+          className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4 mb-4"
+        >
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-1 pr-3">
+              <Text className="text-blue-700 dark:text-blue-300 font-bold text-sm">
+                Bild wird sicher hochgeladen
+              </Text>
+              <Text className="text-zinc-600 dark:text-zinc-400 text-xs mt-1">
+                {uploadPercentage}% übertragen
+              </Text>
+            </View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Bildupload abbrechen"
+              onPress={cancelUpload}
+              className="px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10"
+            >
+              <Text className="text-red-600 dark:text-red-300 text-xs font-bold">
+                Abbrechen
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="h-2 bg-blue-500/15 rounded-full overflow-hidden">
+            <View
+              className="h-full bg-blue-600 rounded-full"
+              style={{ width: uploadProgressWidth }}
+            />
+          </View>
         </View>
       ) : null}
 
