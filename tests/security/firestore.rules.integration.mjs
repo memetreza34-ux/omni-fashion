@@ -218,6 +218,10 @@ async function run() {
       deleteDoc(doc(stranger.db, 'wardrobeItems', itemId)),
       'stranger deletes private wardrobe item',
     );
+    await expectPermissionDenied(
+      deleteDoc(wardrobeRef),
+      'owner bypasses trusted wardrobe delete command',
+    );
 
     await expectPermissionDenied(
       updateDoc(wardrobeRef, { ownerId: strangerId }),
