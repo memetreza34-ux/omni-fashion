@@ -388,15 +388,6 @@ export function WardrobeProvider({ children }: { children: React.ReactNode }) {
 
     if (isCloudBacked) {
       await deleteCloudWardrobeItem(id);
-
-      try {
-        await deleteWardrobeImage(item.imagePath);
-      } catch (cleanupError: unknown) {
-        console.error(
-          'Failed to delete wardrobe image after item deletion',
-          cleanupError,
-        );
-      }
       return;
     }
 
