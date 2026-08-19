@@ -33,7 +33,7 @@ Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Tr
 | Support / Recovery          | [`12-support/`](./12-support/)             | 🟡 Backend + read-only interne UI                           |
 | Privacy / Account Lifecycle | [`13-privacy/`](./13-privacy/)             | 🟡 technischer Lifecycle, Recht/E2E offen                   |
 | Operations                  | [`14-operations/`](./14-operations/)       | 🟡 Remote Flags + Rate Limits                               |
-| Qualität                    | [`14-quality/`](./14-quality/)             | 🟡 permanente CI-Gates, Device-E2E offen                    |
+| Qualität                    | [`14-quality/`](./14-quality/)             | 🟡 CI vollständig, Device-E2E offen                         |
 | Release / EAS               | [`15-release/`](./15-release/)             | 🟡 vorbereitet, echte Cloud-/Store-Konfiguration offen      |
 
 ## Kern-Dokumente
@@ -42,17 +42,21 @@ Der private Wardrobe bleibt die Source of Truth. Kritische AI-, Marketplace-, Tr
 - [`05-backend/APP_CHECK_STRATEGY.md`](./05-backend/APP_CHECK_STRATEGY.md) – native Attestation und kontrolliertes Enforcement
 - [`14-operations/FEATURE_FLAGS.md`](./14-operations/FEATURE_FLAGS.md) – Trusted Remote Flags, Kill-Switches und Rollback
 - [`14-operations/RATE_LIMITS.md`](./14-operations/RATE_LIMITS.md) – serverseitige Abuse-/Cost-Grenzen
+- [`14-quality/DEPENDENCY_AUDIT.md`](./14-quality/DEPENDENCY_AUDIT.md) – aktuelle npm-Audit-Findings, Safe-Fix-Ergebnis und Upgrade-Regeln
 
 ## Permanente Quality-Gates
 
 Der aktuelle Arbeitsbranch prüft bei relevanten Änderungen:
 
-1. TypeScript strict + Zero-any
-2. echten Expo Router Production-Webbundle
-3. Functions Typecheck + Build + Unit Tests
-4. Firebase Auth/Firestore/Storage Emulator Security Tests
+1. Expo-SDK-Abhängigkeitskompatibilität
+2. ESLint
+3. Prettier
+4. TypeScript strict + Zero-any + Production Foundation
+5. echten Expo Router Production-Webbundle
+6. Functions Typecheck + Build + Unit Tests
+7. Firebase Auth/Firestore/Storage Emulator Security Tests
 
-Der kombinierte Kern-UI-Checkpoint `00f2a385a331e075c5c104fcb6f9b74006dcc4f2` war auf allen vier Gates grün.
+Zusätzlich laufen getrennte Dependency-Audit- und Safe-Fix-Simulationsworkflows. Sie dürfen keinen inkompatiblen Major-/SDK-Downgrade als automatische Sicherheitsbehebung übernehmen.
 
 ## Arbeitsregel
 
