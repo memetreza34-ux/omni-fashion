@@ -3,6 +3,7 @@ export { analyzeWardrobeItem } from './callables/analyze-wardrobe-item.js';
 export { cancelSwapOffer } from './callables/cancel-swap-offer.js';
 export { createSwapListing } from './callables/create-swap-listing.js';
 export { deleteMyAccount } from './callables/delete-my-account.js';
+export { deleteWardrobeItem } from './callables/delete-wardrobe-item.js';
 export { exportMyData } from './callables/export-my-data.js';
 export { getAccountDeletionReadiness } from './callables/get-account-deletion-readiness.js';
 export { getOutfitWeather } from './callables/get-outfit-weather.js';
@@ -26,6 +27,7 @@ export {
   cleanupInactiveSwapListingMedia,
   flagStalePushDeliveryClaims,
 } from './maintenance/recovery-jobs.js';
+export { cleanupWardrobeStorageTasks } from './maintenance/wardrobe-storage-cleanup.js';
 export { onNotificationCreatedPushDelivery } from './notifications/push-delivery.js';
 export { processExpoPushReceipts } from './notifications/push-receipts.js';
 export {
