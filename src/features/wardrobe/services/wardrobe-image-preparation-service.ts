@@ -1,7 +1,4 @@
-import {
-  ImageManipulator,
-  SaveFormat,
-} from 'expo-image-manipulator';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 const MAX_WARDROBE_IMAGE_LONG_SIDE = 2048;
 const WARDROBE_JPEG_COMPRESSION = 0.82;
