@@ -94,6 +94,8 @@ export interface WardrobeItem {
 
 export interface CreateWardrobeItemInput {
   localImageUri: string;
+  imageWidth?: number;
+  imageHeight?: number;
   source: Extract<WardrobeSource, 'camera' | 'library'>;
   name?: string;
   category?: WardrobeCategory;
